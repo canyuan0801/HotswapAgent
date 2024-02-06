@@ -30,12 +30,6 @@ import java.util.Map;
  */
 public class AgentLogger {
 
-    /**
-     * Get logger for a class
-     *
-     * @param clazz class to log
-     * @return logger
-     */
     public static AgentLogger getLogger(Class clazz) {
         return new AgentLogger(clazz);
     }
@@ -66,9 +60,6 @@ public class AgentLogger {
         handler.setDateTimeFormat(dateTimeFormat);
     }
 
-    /**
-     * Standard logging levels.
-     */
     public enum Level {
         ERROR,
         RELOAD,
