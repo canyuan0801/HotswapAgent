@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.tools.web;
 
@@ -34,19 +20,7 @@ import org.hotswap.agent.javassist.CtClass;
 import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.javassist.Translator;
 
-/**
- * A web server for running sample programs.
- *
- * <p>This enables a Java program to instrument class files loaded by
- * web browsers for applets.  Since the (standard) security manager
- * does not allow an applet to create and use a class loader,
- * instrumenting class files must be done by this web server.
- *
- * <p><b>Note:</b> although this class is included in the Javassist API,
- * it is provided as a sample implementation of the web server using
- * Javassist.  Especially, there might be security flaws in this server.
- * Please use this with YOUR OWN RISK.
- */
+
 public class Webserver {
     private ServerSocket socket;
     private ClassPool classPool;
@@ -60,34 +34,13 @@ public class Webserver {
     private final static int typeJpeg = 4;
     private final static int typeText = 5;
 
-    /**
-     * If this field is not null, the class files taken from
-     * <code>ClassPool</code> are written out under the directory
-     * specified by this field.  The directory name must not end
-     * with a directory separator.
-     */
+
     public String debugDir = null;
 
-    /**
-     * The top directory of html (and .gif, .class, ...) files.
-     * It must end with the directory separator such as "/".
-     * (For portability, "/" should be used as the directory separator.
-     * Javassist automatically translates "/" into a platform-dependent
-     * character.)
-     * If this field is null, the top directory is the current one where
-     * the JVM is running.
-     *
-     * <p>If the given URL indicates a class file and the class file
-     * is not found under the directory specified by this variable,
-     * then <code>Class.getResourceAsStream()</code> is called
-     * for searching the Java class paths.
-     */
+
     public String htmlfileBase = null;
 
-    /**
-     * Starts a web server.
-     * The port number is specified by the first argument.
-     */
+
     public static void main(String[] args) throws IOException {
         if (args.length == 1) {
             Webserver web = new Webserver(args[0]);
@@ -98,42 +51,24 @@ public class Webserver {
                         "Usage: java javassist.tools.web.Webserver <port number>");
     }
 
-    /**
-     * Constructs a web server.
-     *
-     * @param port      port number
-     */
+
     public Webserver(String port) throws IOException {
         this(Integer.parseInt(port));
     }
 
-    /**
-     * Constructs a web server.
-     *
-     * @param port      port number
-     */
+
     public Webserver(int port) throws IOException {
         socket = new ServerSocket(port);
         classPool = null;
         translator = null;
     }
 
-    /**
-     * Requests the web server to use the specified
-     * <code>ClassPool</code> object for obtaining a class file.
-     */
+
     public void setClassPool(ClassPool loader) {
         classPool = loader;
     }
 
-    /**
-     * Adds a translator, which is called whenever a client requests
-     * a class file.
-     *
-     * @param cp        the <code>ClassPool</code> object for obtaining
-     *                  a class file.
-     * @param t         a translator.
-     */
+
     public void addTranslator(ClassPool cp, Translator t)
         throws NotFoundException, CannotCompileException
     {
@@ -142,32 +77,24 @@ public class Webserver {
         t.start(classPool);
     }
 
-    /**
-     * Closes the socket.
-     */
+
     public void end() throws IOException {
         socket.close();
     }
 
-    /**
-     * Prints a log message.
-     */
+
     public void logging(String msg) {
         System.out.println(msg);
     }
 
-    /**
-     * Prints a log message.
-     */
+
     public void logging(String msg1, String msg2) {
         System.out.print(msg1);
         System.out.print(" ");
         System.out.println(msg2);
     }
 
-    /**
-     * Prints a log message.
-     */
+
     public void logging(String msg1, String msg2, String msg3) {
         System.out.print(msg1);
         System.out.print(" ");
@@ -176,17 +103,13 @@ public class Webserver {
         System.out.println(msg3);
     }
 
-    /**
-     * Prints a log message with indentation.
-     */
+
     public void logging2(String msg) {
         System.out.print("    ");
         System.out.println(msg);
     }
 
-    /**
-     * Begins the HTTP service.
-     */
+
     public void run() {
         System.err.println("ready to service...");
         for (;;)
@@ -227,7 +150,7 @@ public class Webserver {
         while ((c = in.read()) >= 0 && c != 0x0d)
             buf.append((char)c);
 
-        in.read();      /* skip 0x0a (LF) */
+        in.read();
         return buf.toString();
     }
 
@@ -237,16 +160,11 @@ public class Webserver {
         while ((c = in.read()) >= 0 && c != 0x0d)
             ++len;
 
-        in.read();      /* skip 0x0a (LF) */
+        in.read();
         return len;
     }
 
-    /**
-     * Proceses a HTTP request from a client.
-     *
-     * @param out       the output stream to a client
-     * @param cmd       the command received from a client
-     */
+
     public void doReply(InputStream in, OutputStream out, String cmd)
         throws IOException, BadHttpRequest
     {
@@ -268,7 +186,7 @@ public class Webserver {
         else if (filename.endsWith(".jpg"))
             fileType = typeJpeg;
         else
-            fileType = typeText;        // or textUnknown
+            fileType = typeText;
 
         len = filename.length();
         if (fileType == typeClass
@@ -298,8 +216,8 @@ public class Webserver {
             return;
         }
 
-        // If the file is not found under the html-file directory,
-        // then Class.getResourceAsStream() is tried.
+
+
 
         if (fileType == typeClass) {
             InputStream fin

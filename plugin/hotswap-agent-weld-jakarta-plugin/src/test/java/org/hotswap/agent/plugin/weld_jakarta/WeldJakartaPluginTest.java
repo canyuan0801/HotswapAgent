@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.weld_jakarta;
 
 import static org.junit.Assert.assertEquals;
@@ -55,13 +38,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-/**
- * Test Weld Plugin (test code could be synchronized with OWB test)
- *
- * See maven setup for javaagent and autohotswap settings.
- *
- * @author Vladimir Dvorak
- */
+
 @ApplicationScoped
 @RunWith(WeldJUnit4Runner.class)
 public class WeldJakartaPluginTest {
@@ -82,18 +59,14 @@ public class WeldJakartaPluginTest {
         return null;
     }
 
-    /**
-     * Check correct setup.
-     */
+    
     @Test
     public void basicTest() {
         assertEquals("HelloServiceImpl1.hello():HelloProducer1.hello()", getBeanInstance(HelloService.class).hello());
         assertEquals("DependentHello1.hello():HelloServiceImpl1.hello():HelloProducer1.hello()", getBeanInstance(DependentHello1.class).hello());
     }
 
-    /**
-     * Switch method implementation (using bean definition or interface).
-     */
+    
     @Test
     @Ignore
     public void hotswapServiceTest() throws Exception {
@@ -104,21 +77,19 @@ public class WeldJakartaPluginTest {
         swapClasses(HelloServiceImpl1.class, HelloServiceImpl2.class.getName());
         assertEquals("null:HelloProducer2.hello()", bean.hello());
 
-        // Test set name="Service2" by reflection call
+        
         HelloServiceImpl1.class.getMethod("initName", new Class[0]).invoke(bean, new Object[0]);
         assertEquals("HelloServiceImpl2.hello(initialized):HelloProducer2.hello()", getBeanInstance(HelloServiceImpl1.class).hello());
-        // ensure that using interface is Ok as well
+        
         assertEquals("HelloServiceImpl2.hello(initialized):HelloProducer2.hello()", getBeanInstance(HelloService.class).hello());
 
-        // return configuration
+        
         swapClasses(HelloServiceImpl1.class, HelloServiceImpl1.class.getName());
         assertEquals("HelloServiceImpl1.hello():HelloProducer1.hello()", bean.hello());
 
     }
 
-    /**
-     * Add new method - invoke via reflection (not available at compilation time).
-     */
+    
     @Test
     @Ignore
     public void hotswapSeviceAddMethodTest() throws Exception {
@@ -132,7 +103,7 @@ public class WeldJakartaPluginTest {
                 HelloServiceImpl1.class, "helloNewMethod", new Class[]{});
         assertEquals("HelloServiceImpl2.helloNewMethod()", helloNewMethodImplVal);
 
-        // return configuration
+        
         swapClasses(HelloServiceImpl1.class, HelloServiceImpl1.class.getName());
         assertEquals("HelloServiceImpl1.hello():HelloProducer1.hello()", getBeanInstance(HelloServiceImpl1.class).hello());
     }
@@ -155,7 +126,7 @@ public class WeldJakartaPluginTest {
         assertEquals("HelloServiceDependant.hello():HelloProducer3.hello():HelloProducer2.hello()",
                 getBeanInstance(HelloServiceDependant.class).hello());
 
-        // return configuration
+        
         swapClasses(HelloProducer1.class, HelloProducer1.class.getName());
         assertEquals("HelloServiceDependant.hello():HelloProducer1.hello()", bean.hello());
     }
@@ -169,7 +140,7 @@ public class WeldJakartaPluginTest {
                 HelloProducer1.class, "helloNewMethod", new Class[]{});
         assertEquals("HelloProducer3.helloNewMethod()", helloNewMethodImplVal);
 
-        // return configuration
+        
         swapClasses(HelloProducer1.class, HelloProducer1.class.getName());
         assertEquals("HelloServiceImpl1.hello():HelloProducer1.hello()", getBeanInstance(HelloServiceImpl1.class).hello());
     }
@@ -179,18 +150,18 @@ public class WeldJakartaPluginTest {
     public void hotswapPrototypeTest() throws Exception {
         assertEquals("DependentHello1.hello():HelloServiceImpl1.hello():HelloProducer1.hello()", getBeanInstance(DependentHello1.class).hello());
 
-        // swap service this prototype is dependent to
+        
         swapClasses(HelloServiceImpl1.class, HelloServiceImpl2.class.getName());
 
         assertEquals("DependentHello1.hello():null:HelloProducer2.hello()", getBeanInstance(DependentHello1.class).hello());
         HelloServiceImpl1.class.getMethod("initName", new Class[0]).invoke(getBeanInstance(HelloServiceImpl1.class), new Object[0]);
         assertEquals("DependentHello1.hello():HelloServiceImpl2.hello(initialized):HelloProducer2.hello()", getBeanInstance(DependentHello1.class).hello());
 
-        // swap Inject field
+        
         swapClasses(DependentHello1.class, DependentHello2.class.getName());
         assertEquals("DependentHello2.hello():HelloProducer1.hello()", getBeanInstance(DependentHello1.class).hello());
 
-        // return configuration
+        
         swapClasses(HelloServiceImpl1.class, HelloServiceImpl1.class.getName());
         swapClasses(DependentHello1.class, DependentHello1.class.getName());
         assertEquals("DependentHello1.hello():HelloServiceImpl1.hello():HelloProducer1.hello()", getBeanInstance(DependentHello1.class).hello());
@@ -203,19 +174,19 @@ public class WeldJakartaPluginTest {
         DependentHello1 dependentBeanInstance = getBeanInstance(DependentHello1.class);
         assertEquals("DependentHello1.hello():HelloServiceImpl1.hello():HelloProducer1.hello()", dependentBeanInstance.hello());
 
-        // swap service this is dependent to
+        
         swapClasses(HelloServiceImpl1.class, HelloServiceImpl2.class.getName());
         ReflectionHelper.invoke(getBeanInstance(HelloService.class),
                 HelloServiceImpl1.class, "initName", new Class[]{});
         assertEquals("DependentHello1.hello():HelloServiceImpl2.hello(initialized):HelloProducer2.hello()", dependentBeanInstance.hello());
 
-        // return configuration
+        
         swapClasses(HelloServiceImpl1.class, HelloServiceImpl1.class.getName());
         assertEquals("DependentHello1.hello():HelloServiceImpl1.hello():HelloProducer1.hello()", getBeanInstance(DependentHello1.class).hello());
     }
 
 
-    // Create new class and class file. rerun test only after clean
+    
     @Test
     @Ignore
     public void newBeanClassIsManagedBeanReRunTestOnlyAfterMvnClean() throws Exception {
@@ -223,10 +194,10 @@ public class WeldJakartaPluginTest {
             WeldJakartaPlugin.isTestEnvironment = true;
             Collection<BeanClassRefreshAgent> instances = BeanClassRefreshAgent.getInstances();
             for (BeanClassRefreshAgent instance : instances) {
-                //create new class and class file. rerun test only after clean
+                
                 Class newClass = HotSwapper.newClass("NewClass", instance.getBdaId(), getClass().getClassLoader());
                 URL resource = newClass.getClassLoader().getResource("NewClass.class");
-                Thread.sleep(1000); // wait redefine
+                Thread.sleep(1000); 
                 Object bean = getBeanInstance(newClass);
                 assertNotNull(bean);
                 break;
@@ -248,7 +219,7 @@ public class WeldJakartaPluginTest {
         String hello2 = (String) ReflectionHelper.invoke(proxy, ProxyHello1.class, "hello2", new Class[]{}, null);
         assertEquals("ProxyHello2.hello2()", hello2);
 
-        // return configuration
+        
         swapClasses(ProxyHello1.class, ProxyHello1.class.getName());
         assertEquals("ProxyHello1.hello()", proxyHosting.hello());
     }
@@ -262,7 +233,7 @@ public class WeldJakartaPluginTest {
 
         assertEquals("SessionBean2.hello():ProxyHello2.hello():ProxyHello1.hello()", sessionBean.hello());
 
-        // return configuration
+        
         swapClasses(SessionBean1.class, SessionBean1.class.getName());
         assertEquals("SessionBean1.hello():ProxyHello1.hello()", sessionBean.hello());
     }
@@ -276,7 +247,7 @@ public class WeldJakartaPluginTest {
 
         assertEquals("InterceptedBean2.hello():TestInterceptor:InterceptedBean2.hello2()", interceptedBean.hello());
 
-        // return configuration
+        
         swapClasses(InterceptedBean.class, InterceptedBean.class.getName());
         String s = interceptedBean.hello();
         System.out.println(s);
@@ -293,7 +264,7 @@ public class WeldJakartaPluginTest {
             }
         }));
 
-        // TODO do not know why sleep is needed, maybe a separate thread in weld refresh?
+        
         Thread.sleep(100);
     }
 }

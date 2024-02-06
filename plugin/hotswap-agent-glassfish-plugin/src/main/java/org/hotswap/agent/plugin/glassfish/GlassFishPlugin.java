@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.glassfish;
 
 import org.hotswap.agent.annotation.OnClassLoadEvent;
@@ -27,12 +10,7 @@ import org.hotswap.agent.javassist.CtConstructor;
 import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 
-/**
- * GlassFish Plugin
- *  - set boot delegation for hotswapagent's classes in felix class loader
- *
- * @author Vladimir Dvorak
- */
+
 @Plugin(name = "GlassFish",
         description = "GlassFish - glassfish server.",
         testedVersions = {""},
@@ -77,37 +55,19 @@ public class GlassFishPlugin {
                     "}" +
                 "}"
         );
-//        declaredConstructor.insertAfter(PluginManagerInvoker.buildInitializePlugin(GlassFishPlugin.class));
+
         LOGGER.debug("Class 'org.apache.felix.framework.Felix' patched in classLoader {}.");
     }
 
     @OnClassLoadEvent(classNameRegexp = "org.apache.felix.framework.BundleWiringImpl")
     public static void transformBundleClassLoader(ClassPool classPool, CtClass ctClass) throws NotFoundException, CannotCompileException {
 
-//        String initializePlugin = PluginManagerInvoker.buildInitializePlugin(GlassFishPlugin.class);
-//
-//        for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
-//            constructor.insertAfter(initializePlugin);
-//        }
-//
-        /*
-        CtMethod getClassLoaderInternalCopy = CtMethod.make("public ClassLoader __getClassLoaderInternal(){return null;}", ctClass);
-        getClassLoaderInternalCopy.setBody(ctClass.getDeclaredMethod("getClassLoaderInternal"), null);
-        ctClass.addMethod(getClassLoaderInternalCopy);
 
-        CtMethod getClassLoaderInternal = ctClass.getDeclaredMethod("getClassLoaderInternal");
-        getClassLoaderInternal.setBody(
-                "{  " +
-                    "boolean wasClassLoader = (m_classLoader == null); " +
-                    "ClassLoader ret = __getClassLoaderInternal();" +
-                    "if (!wasClassLoader && ret != null) {" +
-                        PluginManagerInvoker.buildInitializePlugin(GlassFishPlugin.class, "ret") +
-                    "}" +
-                    "return ret;" +
-                "}"
-        );
 
-        LOGGER.debug("org.apache.felix.framework.BundleWiringImpl resource bundles registration.");
-        */
+
+
+
+
+
     }
 }

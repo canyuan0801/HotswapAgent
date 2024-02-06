@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.weld_jakarta;
 
 import java.io.File;
@@ -53,13 +36,9 @@ import org.hotswap.agent.watch.WatchEventListener;
 import org.hotswap.agent.watch.WatchFileEvent;
 import org.hotswap.agent.watch.Watcher;
 
-/**
- * WeldPlugin
- *
- * @author Vladimir Dvorak
- */
+
 @Plugin(name = "WeldJakarta",
-        description = "Weld Jakarta framework(http://weld.cdi-spec.org/). Reload, reinject bean, redefine proxy class after bean class definition/redefinition.",
+        description = "Weld Jakarta framework(http:
         testedVersions = {"2.2.5-2.2.16, 2.3.x-3.1.x"},
         expectedVersions = {"All between 2.2.5-3.1.x"},
         supportClass = {BeanDeploymentArchiveTransformer.class, ProxyFactoryTransformer.class, AbstractClassBeanTransformer.class, CdiContextsTransformer.class})
@@ -70,15 +49,10 @@ public class WeldJakartaPlugin {
     private static final String VETOED_ANNOTATION = "jakarta.enterprise.inject.Vetoed";
     private static final String DS_EXCLUDED_ANNOTATION = "org.apache.deltaspike.core.api.exclude.Exclude";
 
-    /** True for UnitTests */
+
     static boolean isTestEnvironment = false;
 
-    /**
-     * If a class is modified in IDE, sequence of multiple events is generated -
-     * class file DELETE, CREATE, MODIFY, than Hotswap transformer is invoked.
-     * ClassPathBeanRefreshCommand tries to merge these events into single command.
-     * Wait for this this timeout(milliseconds) after class file event before ClassPathBeanRefreshCommand
-     */
+
     private static final int WAIT_ON_CREATE = 500;
     private static final int WAIT_ON_REDEFINE = 200;
 
@@ -139,12 +113,7 @@ public class WeldJakartaPlugin {
         return ret;
     }
 
-    /**
-     * Register BeanDeploymentArchive's normalizedArchivePath to watcher. In case of new class, the class file is not known
-     * to JVM hence no hotswap is called and therefore it must be handled by watcher.
-     *
-     * @param archivePath the archive path
-     */
+
     public synchronized void registerBeanDeplArchivePath(final String archivePath) {
         URL resource = null;
         try {
@@ -160,7 +129,7 @@ public class WeldJakartaPlugin {
                     @Override
                     public void onEvent(WatchFileEvent event) {
                         if (event.isFile() && event.getURI().toString().endsWith(".class")) {
-                            // check that the class is not loaded by the classloader yet (avoid duplicate reload)
+
                             String className;
                             try {
                                 className = IOUtils.urlToClassName(event.getURI());
@@ -170,10 +139,10 @@ public class WeldJakartaPlugin {
                                 return;
                             }
                             if (!ClassLoaderHelper.isClassLoaded(appClassLoader, className) || isTestEnvironment) {
-                                // refresh weld only for new classes
+
                                 LOGGER.trace("Register reload command: {} ", className);
                                 if (isBdaRegistered(appClassLoader, archivePath)) {
-                                    // TODO : Create proxy factory
+
                                     scheduler.scheduleCommand(new BeanClassRefreshCommand(appClassLoader, archivePath, event), WAIT_ON_CREATE);
                                 }
                             }
@@ -209,13 +178,7 @@ public class WeldJakartaPlugin {
         }
     }
 
-    /**
-     * If bda archive is defined for given class than new BeanClassRefreshCommand is created
-     *
-     * @param classLoader
-     * @param ctClass
-     * @param original
-     */
+
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
     public void classReload(ClassLoader classLoader, CtClass ctClass, Class<?> original) {
         if (AnnotationHelper.hasAnnotation(ctClass, VETOED_ANNOTATION)) {
@@ -265,17 +228,17 @@ public class WeldJakartaPlugin {
 
         String classFilePath = ctClass.getURL().getPath();
         String className = ctClass.getName().replace(".", "/");
-        // archive path ends with '/', therefore we set end position before the '/' (-1)
+
         String archivePath = classFilePath.substring(0, classFilePath.indexOf(className) - 1);
         return (new File(archivePath)).toPath().toString();
     }
 
     public URL resourceNameToURL(String resource) throws Exception {
         try {
-            // Try to format as a URL?
+
             return new URL(resource);
         } catch (MalformedURLException e) {
-            // try to locate a file
+
             if (resource.startsWith("./"))
                 resource = resource.substring(2);
             File file = new File(resource).getCanonicalFile();
@@ -283,14 +246,14 @@ public class WeldJakartaPlugin {
         }
     }
 
-    // Return true if class is CDI synthetic class.
-    // Weld proxies contains $Proxy$ and $$$
-    // DeltaSpike's proxies contains "$$"
+
+
+
     private boolean isSyntheticCdiClass(String className) {
         return className.contains("$Proxy$") || className.contains("$$");
     }
 
-    // Non static inner class is not allowed to be bean class
+
     private boolean isInnerNonPublicStaticClass(CtClass ctClass) {
         try {
             if (ctClass.isInnerClass() && (
@@ -299,7 +262,7 @@ public class WeldJakartaPlugin {
                 return true;
             }
         } catch (NotFoundException e) {
-            // swallow exception
+
         }
         return false;
     }

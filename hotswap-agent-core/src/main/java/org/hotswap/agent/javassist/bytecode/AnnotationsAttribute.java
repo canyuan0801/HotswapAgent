@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.bytecode;
 
@@ -39,143 +25,37 @@ import org.hotswap.agent.javassist.bytecode.annotation.MemberValue;
 import org.hotswap.agent.javassist.bytecode.annotation.ShortMemberValue;
 import org.hotswap.agent.javassist.bytecode.annotation.StringMemberValue;
 
-/**
- * A class representing
- * <code>RuntimeVisibleAnnotations_attribute</code> and
- * <code>RuntimeInvisibleAnnotations_attribute</code>.
- *
- * <p>To obtain an AnnotationAttribute object, invoke
- * <code>getAttribute(AnnotationsAttribute.visibleTag)</code>
- * in <code>ClassFile</code>, <code>MethodInfo</code>,
- * or <code>FieldInfo</code>.  The obtained attribute is a
- * runtime visible annotations attribute.
- * If the parameter is
- * <code>AnnotationAttribute.invisibleTag</code>, then the obtained
- * attribute is a runtime invisible one.
- *
- * <p>For example,
- *
- * <pre>
- * import org.hotswap.agent.javassist.bytecode.annotation.Annotation;
- *    :
- * CtMethod m = ... ;
- * MethodInfo minfo = m.getMethodInfo();
- * AnnotationsAttribute attr = (AnnotationsAttribute)
- *         minfo.getAttribute(AnnotationsAttribute.invisibleTag);
- * Annotation an = attr.getAnnotation("Author");
- * String s = ((StringMemberValue)an.getMemberValue("name")).getValue();
- * System.out.println("@Author(name=" + s + ")");
- * </pre>
- *
- * <p>This code snippet retrieves an annotation of the type <code>Author</code>
- * from the <code>MethodInfo</code> object specified by <code>minfo</code>.
- * Then, it prints the value of <code>name</code> in <code>Author</code>.
- *
- * <p>If the annotation type <code>Author</code> is annotated by a meta annotation:
- *
- * <pre>
- * &#64;Retention(RetentionPolicy.RUNTIME)
- * </pre>
- *
- * <p>Then <code>Author</code> is visible at runtime.  Therefore, the third
- * statement of the code snippet above must be changed into:
- *
- * <pre>
- * AnnotationsAttribute attr = (AnnotationsAttribute)
- *         minfo.getAttribute(AnnotationsAttribute.visibleTag);
- * </pre>
- *
- * <p>The attribute tag must be <code>visibleTag</code> instead of
- * <code>invisibleTag</code>.
- *
- * <p>If the member value of an annotation is not specified, the default value
- * is used as that member value.  If so, <code>getMemberValue()</code> in
- * <code>Annotation</code> returns <code>null</code>
- * since the default value is not included in the
- * <code>AnnotationsAttribute</code>.  It is included in the
- * <code>AnnotationDefaultAttribute</code> of the method declared in the
- * annotation type.
- *
- * <p>If you want to record a new AnnotationAttribute object, execute the
- * following snippet:
- *
- * <pre>
- * ClassFile cf = ... ;
- * ConstPool cp = cf.getConstPool();
- * AnnotationsAttribute attr
- *     = new AnnotationsAttribute(cp, AnnotationsAttribute.visibleTag);
- * Annotation a = new Annotation("Author", cp);
- * a.addMemberValue("name", new StringMemberValue("Chiba", cp));
- * attr.setAnnotation(a);
- * cf.addAttribute(attr);
- * cf.setVersionToJava5();
- * </pre>
- *
- * <p>The last statement is necessary if the class file was produced by
- * <code>javac</code> of JDK 1.4 or earlier.  Otherwise, it is not necessary.
- *
- * @see AnnotationDefaultAttribute
- * @see javassist.bytecode.annotation.Annotation
- */
+
 public class AnnotationsAttribute extends AttributeInfo {
-    /**
-     * The name of the <code>RuntimeVisibleAnnotations</code> attribute.
-     */
+
     public static final String visibleTag = "RuntimeVisibleAnnotations";
 
-    /**
-     * The name of the <code>RuntimeInvisibleAnnotations</code> attribute.
-     */
+
     public static final String invisibleTag = "RuntimeInvisibleAnnotations";
 
-    /**
-     * Constructs a <code>Runtime(In)VisibleAnnotations_attribute</code>.
-     *
-     * @param cp            constant pool
-     * @param attrname      attribute name (<code>visibleTag</code> or
-     *                      <code>invisibleTag</code>).
-     * @param info          the contents of this attribute.  It does not
-     *                      include <code>attribute_name_index</code> or
-     *                      <code>attribute_length</code>.
-     */
+
     public AnnotationsAttribute(ConstPool cp, String attrname, byte[] info) {
         super(cp, attrname, info);
     }
 
-    /**
-     * Constructs an empty
-     * <code>Runtime(In)VisibleAnnotations_attribute</code>.
-     * A new annotation can be later added to the created attribute
-     * by <code>setAnnotations()</code>.
-     *
-     * @param cp            constant pool
-     * @param attrname      attribute name (<code>visibleTag</code> or
-     *                      <code>invisibleTag</code>).
-     * @see #setAnnotations(Annotation[])
-     */
+
     public AnnotationsAttribute(ConstPool cp, String attrname) {
         this(cp, attrname, new byte[] { 0, 0 });
     }
 
-    /**
-     * @param n     the attribute name.
-     */
+
     AnnotationsAttribute(ConstPool cp, int n, DataInputStream in)
         throws IOException
     {
         super(cp, n, in);
     }
 
-    /**
-     * Returns <code>num_annotations</code>.
-     */
+
     public int numAnnotations() {
         return ByteArray.readU16bit(info, 0);
     }
 
-    /**
-     * Copies this attribute and returns a new copy.
-     */
+
     @Override
     public AttributeInfo copy(ConstPool newCp, Map<String,String> classnames) {
         Copier copier = new Copier(info, constPool, newCp, classnames);
@@ -188,15 +68,7 @@ public class AnnotationsAttribute extends AttributeInfo {
         }
     }
 
-    /**
-     * Parses the annotations and returns a data structure representing
-     * the annotation with the specified type.  See also
-     * <code>getAnnotations()</code> as to the returned data structure.
-     *
-     * @param type      the annotation type.
-     * @return null if the specified annotation type is not included.
-     * @see #getAnnotations()
-     */
+
     public Annotation getAnnotation(String type) {
         Annotation[] annotations = getAnnotations();
         for (int i = 0; i < annotations.length; i++) {
@@ -207,12 +79,7 @@ public class AnnotationsAttribute extends AttributeInfo {
         return null;
     }
 
-    /**
-     * Adds an annotation.  If there is an annotation with the same type,
-     * it is removed before the new annotation is added.
-     *
-     * @param annotation        the added annotation.
-     */
+
     public void addAnnotation(Annotation annotation) {
         String type = annotation.getTypeName();
         Annotation[] annotations = getAnnotations();
@@ -230,15 +97,7 @@ public class AnnotationsAttribute extends AttributeInfo {
         setAnnotations(newlist);
     }
 
-    /**
-     * Removes an annotation by type.
-     * After removing an annotation, if {@link #numAnnotations()} returns 0,
-     * this annotations attribute has to be removed.
-     *
-     * @param type        of annotation to remove
-     * @return whether an annotation with the given type has been removed
-     * @since 3.21
-     */
+
     public boolean removeAnnotation(String type) {
         Annotation[] annotations = getAnnotations();
         for (int i = 0; i < annotations.length; i++) {
@@ -256,15 +115,7 @@ public class AnnotationsAttribute extends AttributeInfo {
         return false;
     }
 
-    /**
-     * Parses the annotations and returns a data structure representing
-     * that parsed annotations.  Note that changes of the node values of the
-     * returned tree are not reflected on the annotations represented by
-     * this object unless the tree is copied back to this object by
-     * <code>setAnnotations()</code>.
-     *
-     * @see #setAnnotations(Annotation[])
-     */
+
     public Annotation[] getAnnotations() {
         try {
             return new Parser(info, constPool).parseAnnotations();
@@ -274,13 +125,7 @@ public class AnnotationsAttribute extends AttributeInfo {
         }
     }
 
-    /**
-     * Changes the annotations represented by this object according to
-     * the given array of <code>Annotation</code> objects.
-     *
-     * @param annotations           the data structure representing the
-     *                              new annotations.
-     */
+
     public void setAnnotations(Annotation[] annotations) {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         AnnotationsWriter writer = new AnnotationsWriter(output, constPool);
@@ -293,27 +138,18 @@ public class AnnotationsAttribute extends AttributeInfo {
             writer.close();
         }
         catch (IOException e) {
-            throw new RuntimeException(e);      // should never reach here.
+            throw new RuntimeException(e);
         }
 
         set(output.toByteArray());
     }
 
-    /**
-     * Changes the annotations.  A call to this method is equivalent to:
-     * <pre>setAnnotations(new Annotation[] { annotation })</pre>
-     *
-     * @param annotation    the data structure representing
-     *                      the new annotation.
-     */
+
     public void setAnnotation(Annotation annotation) {
         setAnnotations(new Annotation[] { annotation });
     }
 
-    /**
-     * @param oldname       a JVM class name.
-     * @param newname       a JVM class name.
-     */
+
     @Override
     void renameClass(String oldname, String newname) {
         Map<String,String> map = new HashMap<String,String>();
@@ -334,9 +170,7 @@ public class AnnotationsAttribute extends AttributeInfo {
     @Override
     void getRefClasses(Map<String,String> classnames) { renameClass(classnames); }
 
-    /**
-     * Returns a string representation of this object.
-     */
+
     @Override
     public String toString() {
         Annotation[] a = getAnnotations();
@@ -397,24 +231,18 @@ public class AnnotationsAttribute extends AttributeInfo {
             return pos;
         }
 
-        /**
-         * {@code element_value_paris}
-         */
+
         final int memberValuePair(int pos) throws Exception {
             int nameIndex = ByteArray.readU16bit(info, pos);
             return memberValuePair(pos + 2, nameIndex);
         }
 
-        /**
-         * {@code element_value_paris[]}
-         */
+
         int memberValuePair(int pos, int nameIndex) throws Exception {
             return memberValue(pos);
         }
 
-        /**
-         * {@code element_value}
-         */
+
         final int memberValue(int pos) throws Exception {
             int tag = info[pos] & 0xff;
             if (tag == 'e') {
@@ -434,40 +262,30 @@ public class AnnotationsAttribute extends AttributeInfo {
                 int num = ByteArray.readU16bit(info, pos + 1);
                 return arrayMemberValue(pos + 3, num);
             }
-            else { // primitive types or String.
+            else {
                 int index = ByteArray.readU16bit(info, pos + 1);
                 constValueMember(tag, index);
                 return pos + 3;
             }
         }
 
-        /**
-         * {@code const_value_index}
-         */
+
         void constValueMember(int tag, int index) throws Exception {}
 
-        /**
-         * {@code enum_const_value}
-         */
+
         void enumMemberValue(int pos, int typeNameIndex, int constNameIndex)
             throws Exception {
         }
 
-        /**
-         * {@code class_info_index}
-         */
+
         void classMemberValue(int pos, int index) throws Exception {}
 
-        /**
-         * {@code annotation_value}
-         */
+
         int annotationMemberValue(int pos) throws Exception {
             return annotation(pos);
         }
 
-        /**
-         * {@code array_value}
-         */
+
         int arrayMemberValue(int pos, int num) throws Exception {
             for (int i = 0; i < num; ++i) {
                 pos = memberValue(pos);
@@ -481,15 +299,7 @@ public class AnnotationsAttribute extends AttributeInfo {
         ConstPool cpool;
         Map<String,String> classnames;
 
-        /**
-         * Constructs a renamer.  It renames some class names
-         * into the new names specified by <code>map</code>.
-         *
-         * @param info      the annotations attribute.
-         * @param cp        the constant pool.
-         * @param map       pairs of replaced and substituted class names.
-         *                  It can be null.
-         */
+
         Renamer(byte[] info, ConstPool cp, Map<String,String> map) {
             super(info);
             cpool = cp;
@@ -532,17 +342,7 @@ public class AnnotationsAttribute extends AttributeInfo {
         ConstPool srcPool, destPool;
         Map<String,String> classnames;
 
-        /**
-         * Constructs a copier.  This copier renames some class names
-         * into the new names specified by <code>map</code> when it copies
-         * an annotation attribute.
-         *
-         * @param info      the source attribute.
-         * @param src       the constant pool of the source class.
-         * @param dest      the constant pool of the destination class.
-         * @param map       pairs of replaced and substituted class names.
-         *                  It can be null.
-         */
+
         Copier(byte[] info, ConstPool src, ConstPool dest, Map<String,String> map) {
             this(info, src, dest, map, true); 
         }
@@ -619,29 +419,12 @@ public class AnnotationsAttribute extends AttributeInfo {
             return super.arrayMemberValue(pos, num);
         }
 
-        /**
-         * Copies a constant pool entry into the destination constant pool
-         * and returns the index of the copied entry.
-         *
-         * @param srcIndex      the index of the copied entry into the source
-         *                      constant pool.
-         * @return the index of the copied item into the destination
-         *         constant pool.
-         */
+
         int copy(int srcIndex) {
             return srcPool.copy(srcIndex, destPool, classnames);
         }
 
-        /**
-         * Copies a constant pool entry into the destination constant pool
-         * and returns the index of the copied entry.  That entry must be
-         * a Utf8Info representing a class name in the L<class name>; form.
-         *
-         * @param srcIndex  the index of the copied entry into the source
-         *                  constant pool.
-         * @return          the index of the copied item into the destination
-         *                  constant pool.
-         */
+
         int copyType(int srcIndex) {
             String name = srcPool.getUtf8Info(srcIndex);
             String newName = Descriptor.rename(name, classnames);
@@ -651,18 +434,12 @@ public class AnnotationsAttribute extends AttributeInfo {
 
     static class Parser extends Walker {
         ConstPool pool;
-        Annotation[][] allParams;   // all parameters
-        Annotation[] allAnno;       // all annotations
-        Annotation currentAnno;     // current annotation
-        MemberValue currentMember;  // current member
+        Annotation[][] allParams;
+        Annotation[] allAnno;
+        Annotation currentAnno;
+        MemberValue currentMember;
 
-        /**
-         * Constructs a parser.  This parser constructs a parse tree of
-         * the annotations.
-         *
-         * @param info      the attribute.
-         * @param src       the constant pool.
-         */
+
         Parser(byte[] info, ConstPool cp) {
             super(info);
             pool = cp;

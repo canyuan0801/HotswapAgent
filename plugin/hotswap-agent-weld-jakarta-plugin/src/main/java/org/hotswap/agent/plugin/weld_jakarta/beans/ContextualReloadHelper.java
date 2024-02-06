@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.weld_jakarta.beans;
 
 import java.lang.reflect.Field;
@@ -29,11 +12,7 @@ import jakarta.enterprise.context.spi.Contextual;
 import org.hotswap.agent.logging.AgentLogger;
 import org.jboss.weld.bean.ManagedBean;
 
-/**
- * The Class ContextualReloadHelper.
- *
- * @author alpapad@gmail.com
- */
+
 public class ContextualReloadHelper {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(ContextualReloadHelper.class);
@@ -54,13 +33,7 @@ public class ContextualReloadHelper {
         }
     }
 
-    /**
-     * Tries to add the bean in the context so it is reloaded in the next activation of the context.
-     *
-     * @param ctx
-     * @param managedBean
-     * @return
-     */
+
     public static boolean addToReloadSet(Context ctx,  Contextual<Object> managedBean)  {
         try {
             LOGGER.debug("Adding bean in '{}' : {}", ctx.getClass(), managedBean);
@@ -78,12 +51,7 @@ public class ContextualReloadHelper {
         return false;
     }
 
-    /**
-     * Will remove bean from context forcing a clean new instance to be created (eg calling post-construct)
-     *
-     * @param ctx
-     * @param managedBean
-     */
+
     public static void destroy(WeldHotswapContext ctx, Contextual<?> managedBean ) {
         try {
             LOGGER.debug("Removing Contextual from Context........ {},: {}", managedBean, ctx);
@@ -101,12 +69,7 @@ public class ContextualReloadHelper {
         }
     }
 
-    /**
-     * Will re-inject any managed beans in the target. Will not call any other life-cycle methods
-     *
-     * @param ctx
-     * @param managedBean
-     */
+
     public static void reinitialize(Context ctx, Contextual<Object> contextual) {
         try {
             ManagedBean<Object> managedBean = ManagedBean.class.cast(contextual);

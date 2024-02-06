@@ -21,12 +21,7 @@ import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.PluginManagerInvoker;
 import org.hotswap.agent.util.ReflectionHelper;
 
-/**
- * Reload jackson caches after class change
- *
- * @author liuzhengyang
- * 2021/12/3
- */
+
 @Plugin(name = "JacksonPlugin",
         description = "Reload jackson caches after class change",
         testedVersions = {"2.13.0"},

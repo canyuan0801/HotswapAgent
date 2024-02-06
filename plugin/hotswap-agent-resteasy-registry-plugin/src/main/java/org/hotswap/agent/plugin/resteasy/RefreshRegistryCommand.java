@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.resteasy;
 
 import java.lang.reflect.Field;
@@ -37,18 +20,7 @@ import org.jboss.resteasy.core.registry.RootNode;
 import org.jboss.resteasy.plugins.server.servlet.ServletContainerDispatcher;
 import org.jboss.resteasy.spi.Registry;
 
-/**
- * Resteasy registers methods based the class path. Since the redefined class
- * may be in a different path or the method we need to iterate over known
- * bounded methods, reconstruct the class/method path and remove each method.
- *
- * Since the class/method path declarations may have not changed, we use the
- * registry removeRegistrations method also.
- *
- * The "original" class, does not seem to do the above trick...
- *
- * @author alpapad@gmail.com
- */
+
 public class RefreshRegistryCommand extends MergeableCommand {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(RefreshRegistryCommand.class);
@@ -83,17 +55,17 @@ public class RefreshRegistryCommand extends MergeableCommand {
             if (registry == null) {
                 registry = servletContainerDispatcher.getDispatcher().getRegistry();
             }
-            //Does original actually represent the... original class????
+
             if(original != null) {
                 registry.removeRegistrations(original);
             }
 
             Class<?> c = classLoader.loadClass(className);
 
-            //Remove all matching registrations (between old and new class..)
+
             registry.removeRegistrations(c);
 
-            //Iterate over all known methods for this className
+
             if (registry instanceof ResourceMethodRegistry) {
                 ResourceMethodRegistry rm = ResourceMethodRegistry.class.cast(registry);
                 Map<String, List<ResourceInvoker>> bounded = rm.getBounded();
@@ -111,7 +83,7 @@ public class RefreshRegistryCommand extends MergeableCommand {
                 }
             }
 
-            //Add the new resource
+
             registry.addPerRequestResource(c);
         } catch (Exception e) {
             LOGGER.error("Could not reload rest class {}", e, className);

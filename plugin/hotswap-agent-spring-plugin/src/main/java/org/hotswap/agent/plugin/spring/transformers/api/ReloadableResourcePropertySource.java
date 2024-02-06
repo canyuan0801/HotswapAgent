@@ -23,7 +23,7 @@ public interface ReloadableResourcePropertySource {
             try {
                 properties = PropertiesLoaderUtils.loadProperties(resource());
             } catch (Exception e) {
-                // ignore
+                
             }
         } else {
             return false;

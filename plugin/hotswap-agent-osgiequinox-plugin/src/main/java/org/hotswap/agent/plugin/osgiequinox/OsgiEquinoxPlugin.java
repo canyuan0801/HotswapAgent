@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.osgiequinox;
 
 import java.io.File;
@@ -52,11 +35,7 @@ import org.hotswap.agent.watch.WatchEventListener;
 import org.hotswap.agent.watch.WatchFileEvent;
 import org.hotswap.agent.watch.Watcher;
 
-/**
- * OSGI Equinox hotswap plugin. Watch class changes on extraClasspath and load modified classes into appropriate equinox class loader
- *
- * @author Vladimir Dvorak
- */
+
 @Plugin(name = "OsgiEquinox",
         description = "Supports hotswapping in OSGI/Equinox class loader so it can be used for hotswap support in Eclipse RCP plugin development. ",
         testedVersions = {""},
@@ -77,14 +56,14 @@ public class OsgiEquinoxPlugin {
     @Init
     Watcher watcher;
 
-    // synchronize on this map to wait for previous processing
+
     final Map<Class<?>, byte[]> reloadMap = new HashMap<>();
 
     private AutoHotswapPathEventListener listener;
 
     private Set<ClassLoader> registeredEquinoxClassLoaders = Collections.newSetFromMap(new WeakHashMap<ClassLoader, Boolean>());
 
-    // command to do actual hotswap. Single command to merge possible multiple reload actions.
+
     private Command hotswapCommand;
 
     private String extraClasspath;
@@ -167,13 +146,13 @@ public class OsgiEquinoxPlugin {
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
     public void classReload(CtClass ctClass) {
 
-        // Hotswap is realized by event listener in the RUNTIME mode
+
         if (!isDebugMode)
             return;
 
         try {
             URL url = ctClass.getURL();
-            // Write content of class to extraClasspath, so classLoader.loadClass can load actual class
+
             ctClass.writeFile(extraClasspath);
             loadClassToTargetClassLoaders(ctClass, url.toURI(), false);
         } catch (Exception e) {
@@ -241,10 +220,10 @@ public class OsgiEquinoxPlugin {
 
     private URL resourceNameToURL(String resource) throws Exception {
         try {
-            // Try to format as a URL?
+
             return new URL(resource);
         } catch (MalformedURLException e) {
-            // try to locate a file
+
             if (resource.startsWith("./"))
                 resource = resource.substring(2);
 
@@ -253,7 +232,7 @@ public class OsgiEquinoxPlugin {
         }
     }
 
-    // AutoHotswapPathEventListener
+
     private static class AutoHotswapPathEventListener implements WatchEventListener {
         private OsgiEquinoxPlugin equinoxPlugin;
 

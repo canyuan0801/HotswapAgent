@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.compiler;
 
@@ -51,48 +37,23 @@ public class Javac {
     public static final String resultVarName = "$_";
     public static final String proceedName = "$proceed";
 
-    /**
-     * Constructs a compiler.
-     *
-     * @param thisClass         the class that a compiled method/field
-     *                          belongs to.
-     */
+
     public Javac(CtClass thisClass) {
         this(new Bytecode(thisClass.getClassFile2().getConstPool(), 0, 0),
              thisClass);
     }
 
-    /**
-     * Constructs a compiler.
-     * The produced bytecode is stored in the <code>Bytecode</code> object
-     * specified by <code>b</code>.
-     *
-     * @param thisClass         the class that a compiled method/field
-     *                          belongs to.
-     */
+
     public Javac(Bytecode b, CtClass thisClass) {
         gen = new JvstCodeGen(b, thisClass, thisClass.getClassPool());
         stable = new SymbolTable();
         bytecode = b;
     }
 
-    /**
-     * Returns the produced bytecode.
-     */
+
     public Bytecode getBytecode() { return bytecode; }
 
-    /**
-     * Compiles a method, constructor, or field declaration
-     * to a class.
-     * A field declaration can declare only one field.
-     *
-     * <p>In a method or constructor body, $0, $1, ... and $_
-     * are not available.
-     *
-     * @return          a <code>CtMethod</code>, <code>CtConstructor</code>,
-     *                  or <code>CtField</code> object.
-     * @see #recordProceed(String,String)
-     */
+
     public CtMember compile(String src) throws CompileError {
         Parser p = new Parser(new Lex(src));
         ASTList mem = p.parseMember1(stable);
@@ -187,12 +148,7 @@ public class Javac {
         }
     }
 
-    /**
-     * Compiles a method (or constructor) body.
-     *
-     * @param src	a single statement or a block.
-     *              If null, this method produces a body returning zero or null.
-     */
+
     public Bytecode compileBody(CtBehavior method, String src)
         throws CompileError
     {
@@ -263,15 +219,7 @@ public class Javac {
         b.addOpcode(op);
     }
 
-    /**
-     * Records local variables available at the specified program counter.
-     * If the LocalVariableAttribute is not available, this method does not
-     * record any local variable.  It only returns false.
-     *
-     * @param pc    program counter (&gt;= 0)
-     * @return false if the CodeAttribute does not include a
-     *              LocalVariableAttribute.
-     */
+
     public boolean recordLocalVariables(CodeAttribute ca, int pc)
         throws CompileError
     {
@@ -293,15 +241,7 @@ public class Javac {
         return true;
     }
 
-    /**
-     * Records parameter names if the LocalVariableAttribute is available.
-     * It returns false unless the LocalVariableAttribute is available.
-     *
-     * @param numOfLocalVars    the number of local variables used
-     *                          for storing the parameters.
-     * @return false if the CodeAttribute does not include a
-     *              LocalVariableAttribute.
-     */
+
     public boolean recordParamNames(CodeAttribute ca, int numOfLocalVars)
         throws CompileError
     {
@@ -323,43 +263,14 @@ public class Javac {
     }
 
 
-    /**
-     * Makes variables $0 (this), $1, $2, ..., and $args represent method
-     * parameters.  $args represents an array of all the parameters.
-     * It also makes $$ available as a parameter list of method call.
-     *
-     * <p>This must be called before calling <code>compileStmnt()</code> and
-     * <code>compileExpr()</code>.  The correct value of
-     * <code>isStatic</code> must be recorded before compilation.
-     * <code>maxLocals</code> is updated to include $0,...
-     */
+
     public int recordParams(CtClass[] params, boolean isStatic)
         throws CompileError
     {
         return gen.recordParams(params, isStatic, "$", "$args", "$$", stable);
     }
 
-    /**
-     * Makes variables $0, $1, $2, ..., and $args represent method
-     * parameters.  $args represents an array of all the parameters.
-     * It also makes $$ available as a parameter list of method call.
-     * $0 can represent a local variable other than THIS (variable 0).
-     * $class is also made available.
-     *
-     * <p>This must be called before calling <code>compileStmnt()</code> and
-     * <code>compileExpr()</code>.  The correct value of
-     * <code>isStatic</code> must be recorded before compilation.
-     * <code>maxLocals</code> is updated to include $0,...
-     *
-     * @param use0     true if $0 is used.
-     * @param varNo     the register number of $0 (use0 is true)
-     *                          or $1 (otherwise).
-     * @param target    the type of $0 (it can be null if use0 is false).
-     *                  It is used as the name of the type represented
-     *                  by $class.
-     * @param isStatic  true if the method in which the compiled bytecode
-     *                  is embedded is static.
-     */
+
     public int recordParams(String target, CtClass[] params,
                              boolean use0, int varNo, boolean isStatic)
         throws CompileError
@@ -368,33 +279,12 @@ public class Javac {
                                 use0, varNo, target, stable);
     }
 
-    /**
-     * Sets <code>maxLocals</code> to <code>max</code>.
-     * This method tells the compiler the local variables that have been
-     * allocated for the rest of the code.  When the compiler needs
-     * new local variables, the local variables at the index <code>max</code>,
-     * <code>max + 1</code>, ... are assigned.
-     *
-     * <p>This method is indirectly called by <code>recordParams</code>.
-     */
+
     public void setMaxLocals(int max) {
         gen.setMaxLocals(max);
     }
 
-    /**
-     * Prepares to use cast $r, $w, $_, and $type.
-     * $type is made to represent the specified return type.
-     * It also enables to write a return statement with a return value
-     * for void method.
-     *
-     * <p>If the return type is void, ($r) does nothing.
-     * The type of $_ is java.lang.Object.
-     *
-     * @param type              the return type.
-     * @param useResultVar      true if $_ is used.
-     * @return          -1 or the variable index assigned to $_.
-     * @see #recordType(CtClass)
-     */
+
     public int recordReturnType(CtClass type, boolean useResultVar)
         throws CompileError
     {
@@ -403,37 +293,19 @@ public class Javac {
                         (useResultVar ? resultVarName : null), stable);
     }
 
-    /**
-     * Prepares to use $type.  Note that recordReturnType() overwrites
-     * the value of $type.
-     *
-     * @param t     the type represented by $type.
-     */
+
     public void recordType(CtClass t) {
         gen.recordType(t);
     }
 
-    /**
-     * Makes the given variable available.
-     *
-     * @param type      variable type
-     * @param name      variable name
-     */
+
     public int recordVariable(CtClass type, String name)
         throws CompileError
     {
         return gen.recordVariable(type, name, stable);
     }
 
-    /**
-     * Prepares to use $proceed().
-     * If the return type of $proceed() is void, null is pushed on the
-     * stack.
-     *
-     * @param target    an expression specifying the target object.
-     *                          if null, "this" is the target.
-     * @param method    the method name.
-     */
+
     public void recordProceed(String target, String method)
         throws CompileError
     {
@@ -472,15 +344,7 @@ public class Javac {
         gen.setProceedHandler(h, proceedName);
     }
 
-    /**
-     * Prepares to use $proceed() representing a static method.
-     * If the return type of $proceed() is void, null is pushed on the
-     * stack.
-     *
-     * @param targetClass    the fully-qualified dot-separated name
-     *				of the class declaring the method.
-     * @param method         the method name.
-     */
+
     public void recordStaticProceed(String targetClass, String method)
         throws CompileError
     {
@@ -514,17 +378,7 @@ public class Javac {
         gen.setProceedHandler(h, proceedName);
     }
 
-    /**
-     * Prepares to use $proceed() representing a private/super's method.
-     * If the return type of $proceed() is void, null is pushed on the
-     * stack.  This method is for methods invoked by INVOKESPECIAL.
-     *
-     * @param target    an expression specifying the target object.
-     *                          if null, "this" is the target.
-     * @param classname	    the class name declaring the method.
-     * @param methodname    the method name.
-     * @param descriptor    the method descriptor.
-     */
+
     public void recordSpecialProceed(String target, final String classname,
                                      final String methodname, final String descriptor,
                                      final int methodIndex)
@@ -553,22 +407,12 @@ public class Javac {
         gen.setProceedHandler(h, proceedName);
     }
 
-    /**
-     * Prepares to use $proceed().
-     */
+
     public void recordProceed(ProceedHandler h) {
         gen.setProceedHandler(h, proceedName);
     }
 
-    /**
-     * Compiles a statement (or a block).
-     * <code>recordParams()</code> must be called before invoking
-     * this method.
-     *
-     * <p>Local variables that are not declared
-     * in the compiled source text might not be accessible within that
-     * source text.  Fields and method parameters ($0, $1, ..) are available.
-     */
+
     public void compileStmnt(String src) throws CompileError {
         Parser p = new Parser(new Lex(src));
         SymbolTable stb = new SymbolTable(stable);
@@ -579,23 +423,13 @@ public class Javac {
         }
     }
 
-    /**
-     * Compiles an exression.  <code>recordParams()</code> must be
-     * called before invoking this method.
-     *
-     * <p>Local variables are not accessible
-     * within the compiled source text.  Fields and method parameters
-     * ($0, $1, ..) are available if <code>recordParams()</code>
-     * have been invoked.
-     */
+
     public void compileExpr(String src) throws CompileError {
         ASTree e = parseExpr(src, stable);
         compileExpr(e);
     }
 
-    /**
-     * Parsers an expression.
-     */
+
     public static ASTree parseExpr(String src, SymbolTable st)
         throws CompileError
     {
@@ -603,15 +437,7 @@ public class Javac {
         return p.parseExpression(st);
     }
 
-    /**
-     * Compiles an exression.  <code>recordParams()</code> must be
-     * called before invoking this method.
-     *
-     * <p>Local variables are not accessible
-     * within the compiled source text.  Fields and method parameters
-     * ($0, $1, ..) are available if <code>recordParams()</code>
-     * have been invoked.
-     */
+
     public void compileExpr(ASTree e) throws CompileError {
         if (e != null)
             gen.compileExpr(e);

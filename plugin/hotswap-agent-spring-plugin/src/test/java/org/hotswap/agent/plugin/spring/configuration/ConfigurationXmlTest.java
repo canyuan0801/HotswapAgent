@@ -56,30 +56,30 @@ public class ConfigurationXmlTest {
         byte[] origClassBytes = classPool.getCtClass(Config.class.getName()).toBytecode();
         try {
             int reloadTimes = 1;
-            // Config1.class -> Config.class
+            
             replaceConfig(Config1.class, reloadTimes++);
             assertTrue(context.containsBean("a"));
             assertTrue(context.containsBean("b"));
             assertFalse(context.containsBean("c"));
             assertFalse(context.containsBean("A"));
-//        Thread.sleep(60000);
 
-            // Config2.class -> Config1.class
+
+            
             replaceConfig(Config2.class, reloadTimes++);
             assertTrue(context.containsBean("a"));
             assertTrue(context.containsBean("c"));
             assertFalse(context.containsBean("b"));
             assertFalse(context.containsBean("A"));
-//        Thread.sleep(60000);
 
-            // Config3.class -> Config2.class
+
+            
             replaceConfig(Config3.class, reloadTimes++);
             assertTrue(context.containsBean("A"));
             assertFalse(context.containsBean("a"));
             assertFalse(context.containsBean("b"));
             assertFalse(context.containsBean("c"));
         } finally {
-            // recover Config.class
+            
             Files.copy(new ByteArrayInputStream(origClassBytes), config.getFile().toPath(),
                     StandardCopyOption.REPLACE_EXISTING);
         }

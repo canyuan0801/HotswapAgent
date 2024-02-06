@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.bytecode.annotation;
 
@@ -27,14 +13,7 @@ import org.hotswap.agent.javassist.bytecode.AnnotationDefaultAttribute;
 import org.hotswap.agent.javassist.bytecode.ClassFile;
 import org.hotswap.agent.javassist.bytecode.MethodInfo;
 
-/**
- * Internal-use only.  This is a helper class internally used for implementing
- * <code>toAnnotationType()</code> in <code>Annotation</code>.
- *   
- * @author Shigeru Chiba
- * @author <a href="mailto:bill@jboss.org">Bill Burke</a>
- * @author <a href="mailto:adrian@jboss.org">Adrian Brock</a>
- */
+
 public class AnnotationImpl implements InvocationHandler {
     private static final String JDK_ANNOTATION_CLASS_NAME = "java.lang.annotation.Annotation";
     private static Method JDK_ANNOTATION_TYPE_METHOD = null;
@@ -46,26 +25,17 @@ public class AnnotationImpl implements InvocationHandler {
     private transient int cachedHashCode = Integer.MIN_VALUE;
 
     static {
-        // Try to resolve the JDK annotation type method
+
         try {
             Class<?> clazz = Class.forName(JDK_ANNOTATION_CLASS_NAME);
             JDK_ANNOTATION_TYPE_METHOD = clazz.getMethod("annotationType", (Class[])null);
         }
         catch (Exception ignored) {
-            // Probably not JDK5+
+
         }
     }
 
-    /**
-     * Constructs an annotation object.
-     *
-     * @param cl        class loader for obtaining annotation types.
-     * @param clazz     the annotation type.
-     * @param cp        class pool for containing an annotation
-     *                  type (or null).
-     * @param anon      the annotation.
-     * @return the annotation
-     */
+
     public static Object make(ClassLoader cl, Class<?> clazz, ClassPool cp,
                               Annotation anon)
         throws IllegalArgumentException
@@ -80,21 +50,12 @@ public class AnnotationImpl implements InvocationHandler {
         classLoader = loader;
     }
 
-    /**
-     * Obtains the name of the annotation type.
-     * 
-     * @return the type name
-     */
+
     public String getTypeName() {
         return annotation.getTypeName();
     }
 
-    /**
-     * Get the annotation type
-     * 
-     * @return the annotation class
-     * @throws NoClassDefFoundError when the class could not loaded
-     */
+
     private Class<?> getAnnotationType() {
         if (annotationType == null) {
             String typeName = annotation.getTypeName();
@@ -110,22 +71,12 @@ public class AnnotationImpl implements InvocationHandler {
         return annotationType;
     }
 
-    /**
-     * Obtains the internal data structure representing the annotation.
-     * 
-     * @return the annotation
-     */
+
     public Annotation getAnnotation() {
         return annotation;
     }
 
-    /**
-     * Executes a method invocation on a proxy instance.
-     * The implementations of <code>toString()</code>, <code>equals()</code>,
-     * and <code>hashCode()</code> are directly supplied by the
-     * <code>AnnotationImpl</code>.  The <code>annotationType()</code> method
-     * is also available on the proxy instance.
-     */
+
     @Override
     public Object invoke(Object proxy, Method method, Object[] args)
         throws Throwable
@@ -180,15 +131,13 @@ public class AnnotationImpl implements InvocationHandler {
                                    + name + "()");
     }
 
-    /**
-     * Returns a hash code value for this object.
-     */
+
     @Override
     public int hashCode() {
         if (cachedHashCode == Integer.MIN_VALUE) {
             int hashCode = 0;
 
-            // Load the annotation class
+
             getAnnotationType();
 
             Method[] methods = annotationType.getDeclaredMethods();
@@ -196,7 +145,7 @@ public class AnnotationImpl implements InvocationHandler {
                 String name = methods[i].getName();
                 int valueHashCode = 0;
 
-                // Get the value
+
                 MemberValue mv = annotation.getMemberValue(name);
                 Object value = null;
                 try {
@@ -212,7 +161,7 @@ public class AnnotationImpl implements InvocationHandler {
                     throw new RuntimeException("Error retrieving value " + name + " for annotation " + annotation.getTypeName(), e);
                 }
 
-                // Calculate the hash code
+
                 if (value != null) {
                     if (value.getClass().isArray())
                         valueHashCode = arrayHashCode(value);
@@ -227,18 +176,12 @@ public class AnnotationImpl implements InvocationHandler {
         return cachedHashCode;
     }
 
-    /**
-     * Check that another annotation equals ourselves.
-     * 
-     * @param obj the other annotation
-     * @return the true when equals false otherwise
-     * @throws Exception for any problem
-     */
+
     private boolean checkEquals(Object obj) throws Exception {
         if (obj == null)
             return false;
 
-        // Optimization when the other is one of ourselves
+
         if (obj instanceof Proxy) {
             InvocationHandler ih = Proxy.getInvocationHandler(obj);
             if (ih instanceof AnnotationImpl) {
@@ -255,7 +198,7 @@ public class AnnotationImpl implements InvocationHandler {
         for (int i = 0; i < methods.length; ++ i) {
             String name = methods[i].getName();
 
-            // Get the value
+
             MemberValue mv = annotation.getMemberValue(name);
             Object value = null;
             Object otherValue = null;
@@ -282,13 +225,7 @@ public class AnnotationImpl implements InvocationHandler {
         return true;
     }
 
-    /**
-     * Calculates the hashCode of an array using the same
-     * algorithm as java.util.Arrays.hashCode()
-     * 
-     * @param object the object
-     * @return the hashCode
-     */
+
     private static int arrayHashCode(Object object)
     {
        if (object == null)

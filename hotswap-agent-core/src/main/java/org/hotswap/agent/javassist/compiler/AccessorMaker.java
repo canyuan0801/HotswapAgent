@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.compiler;
 
@@ -33,10 +19,7 @@ import org.hotswap.agent.javassist.bytecode.FieldInfo;
 import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.javassist.bytecode.SyntheticAttribute;
 
-/**
- * AccessorMaker maintains accessors to private members of an enclosing
- * class.  It is necessary for compiling a method in an inner class.
- */
+
 public class AccessorMaker {
     private CtClass clazz;
     private int uniqueNumber;
@@ -56,10 +39,10 @@ public class AccessorMaker {
         String key = "<init>:" + desc;
         String consDesc = (String)accessors.get(key);
         if (consDesc != null)
-            return consDesc;     // already exists.
+            return consDesc;
 
         consDesc = Descriptor.appendParameter(lastParamType, desc);
-        ClassFile cf = clazz.getClassFile();    // turn on the modified flag.
+        ClassFile cf = clazz.getClassFile();
         try {
             ConstPool cp = cf.getConstPool();
             ClassPool pool = clazz.getClassPool();
@@ -77,7 +60,7 @@ public class AccessorMaker {
             int regno = 1;
             for (int i = 0; i < params.length; ++i)
                 regno += code.addLoad(regno, params[i]);
-            code.setMaxLocals(regno + 1);    // the last parameter is added.
+            code.setMaxLocals(regno + 1);
             code.addInvokespecial(clazz, MethodInfo.nameInit, desc);
 
             code.addReturn(null);
@@ -95,19 +78,7 @@ public class AccessorMaker {
         return consDesc;
     }
 
-    /**
-     * Returns the name of the method for accessing a private method.
-     *
-     * @param name      the name of the private method.
-     * @param desc      the descriptor of the private method.
-     * @param accDesc   the descriptor of the accessor method.  The first
-     *                  parameter type is <code>clazz</code>.
-     *                  If the private method is static,
-     *              <code>accDesc</code> must be identical to <code>desc</code>.
-     *
-     * @param orig      the method info of the private method.
-     * @return
-     */
+
     public String getMethodAccessor(String name, String desc, String accDesc,
                                     MethodInfo orig)
         throws CompileError
@@ -115,9 +86,9 @@ public class AccessorMaker {
         String key = name + ":" + desc;
         String accName = (String)accessors.get(key);
         if (accName != null)
-            return accName;     // already exists.
+            return accName;
 
-        ClassFile cf = clazz.getClassFile();    // turn on the modified flag.
+        ClassFile cf = clazz.getClassFile();
         accName = findAccessorName(cf);
         try {
             ConstPool cp = cf.getConstPool();
@@ -157,9 +128,7 @@ public class AccessorMaker {
         return accName;
     }
 
-    /**
-     * Returns the method_info representing the added getter.
-     */
+
     public MethodInfo getFieldGetter(FieldInfo finfo, boolean is_static)
         throws CompileError
     {
@@ -167,9 +136,9 @@ public class AccessorMaker {
         String key = fieldName + ":getter";
         Object res = accessors.get(key);
         if (res != null)
-            return (MethodInfo)res;     // already exists.
+            return (MethodInfo)res;
 
-        ClassFile cf = clazz.getClassFile();    // turn on the modified flag.
+        ClassFile cf = clazz.getClassFile();
         String accName = findAccessorName(cf);
         try {
             ConstPool cp = cf.getConstPool();
@@ -208,9 +177,7 @@ public class AccessorMaker {
         }
     }
 
-    /**
-     * Returns the method_info representing the added setter.
-     */
+
     public MethodInfo getFieldSetter(FieldInfo finfo, boolean is_static)
         throws CompileError
     {
@@ -218,9 +185,9 @@ public class AccessorMaker {
         String key = fieldName + ":setter";
         Object res = accessors.get(key);
         if (res != null)
-            return (MethodInfo)res;     // already exists.
+            return (MethodInfo)res;
 
-        ClassFile cf = clazz.getClassFile();    // turn on the modified flag.
+        ClassFile cf = clazz.getClassFile();
         String accName = findAccessorName(cf);
         try {
             ConstPool cp = cf.getConstPool();

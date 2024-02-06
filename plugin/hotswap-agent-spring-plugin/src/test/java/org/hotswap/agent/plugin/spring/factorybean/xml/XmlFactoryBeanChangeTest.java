@@ -71,13 +71,13 @@ public class XmlFactoryBeanChangeTest {
         Assert.assertEquals(xmlFactBean3, xmlFactParentBean3.getXmlFactBean3());
         Assert.assertEquals(xmlFactBean4, xmlFactParentBean4.getXmlFactBean4());
         Assert.assertEquals(xmlFactBean5, xmlFactParentBean5.getXmlFactBean5());
-        // swap
+        
         HotSwapper.swapClasses(XmlFactBean3.class, BakXmlFactBean3.class.getName());
         HotSwapper.swapClasses(XmlFactBean4.class, BakXmlFactBean4.class.getName());
         HotSwapper.swapClasses(XmlFactoryBean1.class, BakXmlFactFactoryBean1.class.getName());
         HotSwapper.swapClasses(XmlFactoryBean2.class, BakXmlFactFactoryBean2.class.getName());
         Thread.sleep(8000);
-        // check
+        
         XmlFactBean1 xmlFactBeanNew1 = applicationContext.getBean(XmlFactBean1.class);
         XmlFactBean2 xmlFactBeanNew2 = applicationContext.getBean(XmlFactBean2.class);
         XmlFactBean3 xmlFactBeanNew3 = applicationContext.getBean(XmlFactBean3.class);
@@ -119,13 +119,13 @@ public class XmlFactoryBeanChangeTest {
         Assert.assertEquals(xmlFactParentBean5, xmlFactParentBeanNew5);
 
 
-        // swap v2
+        
         HotSwapper.swapClasses(XmlFactBean3.class, V2BakXmlFactBean3.class.getName());
         HotSwapper.swapClasses(XmlFactBean4.class, V2BakXmlFactBean4.class.getName());
         HotSwapper.swapClasses(XmlFactoryBean1.class, V2BakXmlFactFactoryBean1.class.getName());
         HotSwapper.swapClasses(XmlFactoryBean2.class, V2BakXmlFactFactoryBean2.class.getName());
         Thread.sleep(8000);
-        // check
+        
         XmlFactBean1 xmlFactBeanV2_1 = applicationContext.getBean(XmlFactBean1.class);
         XmlFactBean2 xmlFactBeanV2_2 = applicationContext.getBean(XmlFactBean2.class);
         XmlFactBean3 xmlFactBeanV2_3 = applicationContext.getBean(XmlFactBean3.class);

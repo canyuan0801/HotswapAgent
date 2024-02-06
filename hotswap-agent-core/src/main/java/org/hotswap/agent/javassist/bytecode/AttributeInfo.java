@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.bytecode;
 
@@ -24,16 +10,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-// Note: if you define a new subclass of AttributeInfo, then
-//       update AttributeInfo.read(), .copy(), and (maybe) write().
 
-/**
- * <code>attribute_info</code> structure.
- *
- * @see ClassFile#getAttribute(String)
- * @see MethodInfo#getAttribute(String)
- * @see FieldInfo#getAttribute(String)
- */
+
+
+
 public class AttributeInfo {
     protected ConstPool constPool;
     int name;
@@ -49,14 +29,7 @@ public class AttributeInfo {
         this(cp, attrname, (byte[])null);
     }
 
-    /**
-     * Constructs an <code>attribute_info</code> structure.
-     *
-     * @param cp                constant pool table
-     * @param attrname          attribute name
-     * @param attrinfo          <code>info</code> field
-     *                          of <code>attribute_info</code> structure.
-     */
+
     public AttributeInfo(ConstPool cp, String attrname, byte[] attrinfo) {
         this(cp, cp.addUtf8Info(attrname), attrinfo);
     }
@@ -105,7 +78,7 @@ public class AttributeInfo {
                 return new LocalVariableTypeAttribute(cp, name, in);
 
         if (first < 'S')
-            /* Note that the names of Annotations attributes begin with 'R'. */
+
             if (nameStr.equals(MethodParametersAttribute.tag))
                 return new MethodParametersAttribute(cp, name, in);
             else if (nameStr.equals(NestHostAttribute.tag))
@@ -114,7 +87,7 @@ public class AttributeInfo {
                 return new NestMembersAttribute(cp, name, in);
             else if (nameStr.equals(AnnotationsAttribute.visibleTag)
                      || nameStr.equals(AnnotationsAttribute.invisibleTag))
-                // RuntimeVisibleAnnotations or RuntimeInvisibleAnnotations
+
                 return new AnnotationsAttribute(cp, name, in);
             else if (nameStr.equals(ParameterAnnotationsAttribute.visibleTag)
                      || nameStr.equals(ParameterAnnotationsAttribute.invisibleTag))
@@ -138,53 +111,26 @@ public class AttributeInfo {
         return new AttributeInfo(cp, name, in);
     }
 
-    /**
-     * Returns an attribute name.
-     */
+
     public String getName() {
         return constPool.getUtf8Info(name);
     }
 
-    /**
-     * Returns a constant pool table.
-     */
+
     public ConstPool getConstPool() { return constPool; }
 
-    /**
-     * Returns the length of this <code>attribute_info</code>
-     * structure.
-     * The returned value is <code>attribute_length + 6</code>.
-     */
+
     public int length() {
         return info.length + 6;
     }
 
-    /**
-     * Returns the <code>info</code> field
-     * of this <code>attribute_info</code> structure.
-     *
-     * <p>This method is not available if the object is an instance
-     * of <code>CodeAttribute</code>.
-     */
+
     public byte[] get() { return info; }
 
-    /**
-     * Sets the <code>info</code> field
-     * of this <code>attribute_info</code> structure.
-     *
-     * <p>This method is not available if the object is an instance
-     * of <code>CodeAttribute</code>.
-     */
+
     public void set(byte[] newinfo) { info = newinfo; }
 
-    /**
-     * Makes a copy.  Class names are replaced according to the
-     * given <code>Map</code> object.
-     *
-     * @param newCp     the constant pool table used by the new copy.
-     * @param classnames        pairs of replaced and substituted
-     *                          class names.
-     */
+
     public AttributeInfo copy(ConstPool newCp, Map<String,String> classnames)
     {
         return new AttributeInfo(newCp, getName(), Arrays.copyOf(info, info.length));
@@ -215,7 +161,7 @@ public class AttributeInfo {
             if (ai.getName().equals(name))
                 return ai;
 
-        return null;            // no such attribute
+        return null;
     }
 
     static synchronized AttributeInfo remove(List<AttributeInfo> attributes, String name) {
@@ -251,12 +197,7 @@ public class AttributeInfo {
         return newList;
     }
 
-    /* The following two methods are used to implement
-     * ClassFile.renameClass().
-     * Only CodeAttribute, LocalVariableAttribute,
-     * AnnotationsAttribute, and SignatureAttribute
-     * override these methods.
-     */
+
     void renameClass(String oldname, String newname) {}
     void renameClass(Map<String,String> classnames) {}
 

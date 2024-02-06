@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.tools.web;
 
@@ -21,42 +7,12 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
-/**
- * A sample applet viewer.
- *
- * <p>This is a sort of applet viewer that can run any program even if
- * the main class is not a subclass of <code>Applet</code>.
- * This viewwer first calls <code>main()</code> in the main class.
- *
- * <p>To run, you should type:
- *
- * <pre>% java javassist.tools.web.Viewer <i>host port</i> Main arg1, ...</pre>
- *
- * <p>This command calls <code>Main.main()</code> with <code>arg1,...</code>
- * All classes including <code>Main</code> are fetched from
- * a server http://<i>host</i>:<i>port</i>.
- * Only the class file for <code>Viewer</code> must exist
- * on a local file system at the client side; even other
- * <code>javassist.*</code> classes are not needed at the client side.
- * <code>Viewer</code> uses only Java core API classes.
- *
- * <p>Note: since a <code>Viewer</code> object is a class loader,
- * a program loaded by this object can call a method in <code>Viewer</code>.
- * For example, you can write something like this:
- *
- * <pre>
- * Viewer v = (Viewer)this.getClass().getClassLoader();
- * String port = v.getPort();
- * </pre>
- *
- */
+
 public class Viewer extends ClassLoader {
     private String server;
     private int port;
 
-    /**
-     * Starts a program.
-     */
+    
     public static void main(String[] args) throws Throwable {
         if (args.length >= 3) {
             Viewer cl = new Viewer(args[0], Integer.parseInt(args[1]));
@@ -69,33 +25,19 @@ public class Viewer extends ClassLoader {
         "Usage: java javassist.tools.web.Viewer <host> <port> class [args ...]");
     }
 
-    /**
-     * Constructs a viewer.
-     *
-     * @param host              server name
-     * @param p                 port number
-     */
+    
     public Viewer(String host, int p) {
         server = host;
         port = p;
     }
 
-    /**
-     * Returns the server name.
-     */
+    
     public String getServer() { return server; }
 
-    /**
-     * Returns the port number.
-     */
+    
     public int getPort() { return port; }
 
-    /**
-     * Invokes main() in the class specified by <code>classname</code>.
-     *
-     * @param classname         executed class
-     * @param args              the arguments passed to <code>main()</code>.
-     */
+    
     public void run(String classname, String[] args)
         throws Throwable
     {
@@ -109,9 +51,7 @@ public class Viewer extends ClassLoader {
         }
     }
 
-    /**
-     * Requests the class loader to load a class.
-     */
+    
     @Override
     protected synchronized Class<?> loadClass(String name, boolean resolve)
         throws ClassNotFoundException
@@ -129,16 +69,7 @@ public class Viewer extends ClassLoader {
         return c;
     }
 
-    /**
-     * Finds the specified class.  The implementation in this class
-     * fetches the class from the http server.  If the class is
-     * either <code>java.*</code>, <code>javax.*</code>, or
-     * <code>Viewer</code>, then it is loaded by the parent class
-     * loader.
-     *
-     * <p>This method can be overridden by a subclass of
-     * <code>Viewer</code>.
-     */
+    
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         Class<?> c = null;
@@ -158,10 +89,7 @@ public class Viewer extends ClassLoader {
         return c;
     }
 
-    /**
-     * Fetches the class file of the specified class from the http
-     * server.
-     */
+    
     protected byte[] fetchClass(String classname) throws Exception
     {
         byte[] b;

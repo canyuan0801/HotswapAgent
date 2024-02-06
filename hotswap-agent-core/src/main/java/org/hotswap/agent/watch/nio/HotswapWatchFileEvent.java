@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.watch.nio;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
@@ -24,33 +7,14 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 import java.net.URI;
 import java.nio.file.Files;
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 
 import org.hotswap.agent.annotation.FileEvent;
 import org.hotswap.agent.watch.WatchFileEvent;
 
-/**
- * Filesystem event.
- */
+
 public class HotswapWatchFileEvent implements WatchFileEvent {
 
     private final WatchEvent<?> event;
@@ -73,7 +37,7 @@ public class HotswapWatchFileEvent implements WatchFileEvent {
 
     @Override
     public boolean isFile() {
-        // return Files.isRegularFile(path); - did not work in some cases
+
         return !isDirectory();
     }
 
@@ -117,7 +81,7 @@ public class HotswapWatchFileEvent implements WatchFileEvent {
 
 
 
-    // translate constants between NIO event and ageent event
+
     static FileEvent toAgentEvent(WatchEvent.Kind<?> kind) {
         if (kind == ENTRY_CREATE) {
             return FileEvent.CREATE;

@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.annotation.handler;
 
 import java.io.File;
@@ -33,11 +16,7 @@ import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.watch.WatchEventListener;
 import org.hotswap.agent.watch.WatchFileEvent;
 
-/**
- * Watch method handler - handle @OnResourceFileEvent annotation on a method.
- *
- * @author Jiri Bubnik
- */
+
 public class WatchHandler<T extends Annotation> implements PluginHandler<T> {
     private static AgentLogger LOGGER = AgentLogger.getLogger(WatchHandler.class);
 
@@ -72,31 +51,27 @@ public class WatchHandler<T extends Annotation> implements PluginHandler<T> {
         return true;
     }
 
-    /**
-     * Register resource change listener on URI:
-     * - classpath (already should contain extraClasspath)
-     * - plugin configuration - watchResources property
-     */
+
     private void registerResources(final PluginAnnotation<T> pluginAnnotation, final ClassLoader classLoader) throws IOException {
         final T annot = pluginAnnotation.getAnnotation();
         WatchEventDTO watchEventDTO =  WatchEventDTO.parse(annot);
 
         String path = watchEventDTO.getPath();
 
-        // normalize
+
         if (path == null || path.equals(".") || path.equals("/"))
             path = "";
         if (path.endsWith("/"))
             path = path.substring(0, path.length() - 2);
 
 
-        // classpath resources (already should contain extraClasspath)
+
         Enumeration<URL> en = classLoader.getResources(path);
         while (en.hasMoreElements()) {
             try {
                 URI uri = en.nextElement().toURI();
 
-                // check that this is a local accessible file (not vfs inside JAR etc.)
+
                 try {
                     new File(uri);
                 } catch (Exception e) {
@@ -112,7 +87,7 @@ public class WatchHandler<T extends Annotation> implements PluginHandler<T> {
             }
         }
 
-        // add extra directories for watchResources property
+
         if (!watchEventDTO.isClassFileEvent()) {
             for (URL url : pluginManager.getPluginConfiguration(classLoader).getWatchResources()) {
                 try {
@@ -129,12 +104,7 @@ public class WatchHandler<T extends Annotation> implements PluginHandler<T> {
         }
     }
 
-    /**
-     * Using pluginManager.registerResourceListener() add new listener on URI.
-     * <p/>
-     * There might be several same events for a resource change (either from filesystem or when IDE clears and reloads
-     * a class multiple time on rebuild). Use command scheduler to group same events into single invocation.
-     */
+
     private void registerResourceListener(final PluginAnnotation<T> pluginAnnotation, final WatchEventDTO watchEventDTO,
                                           final ClassLoader classLoader, URI uri) throws IOException {
         pluginManager.getWatcher().addEventListener(classLoader, uri, new WatchEventListener() {

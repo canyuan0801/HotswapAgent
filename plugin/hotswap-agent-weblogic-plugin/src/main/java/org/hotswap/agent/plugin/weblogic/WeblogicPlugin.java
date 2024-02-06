@@ -1,4 +1,4 @@
-// ModuleClassLoaderTransformerKt.java
+
 package org.hotswap.agent.plugin.weblogic;
 
 import org.hotswap.agent.annotation.Init;
@@ -65,8 +65,8 @@ public final class WeblogicPlugin {
         CtClass ctHaClassLoader = classPool.get(HotswapAgentClassLoaderExt.class.getName());
         ctClass.addInterface(ctHaClassLoader);
 
-        // Implementation of HotswapAgentClassLoaderExt.setExtraClassPath(...)
-        //@formatter:off
+
+
         ctClass.addMethod(CtNewMethod.make(
                 "public void $$ha$setExtraClassPath(java.net.URL[] extraClassPath) {" + 
                         WeblogicPlugin.class.getName() + ".logMessage(\"setExtraClassPath in=\" + extraClassPath[0].toString());" +
@@ -89,7 +89,7 @@ public final class WeblogicPlugin {
                         "}" +
                     "}", ctClass)
         );
-        //@formatter:on
+
 
         ctClass.addMethod(
                 CtNewMethod.make(

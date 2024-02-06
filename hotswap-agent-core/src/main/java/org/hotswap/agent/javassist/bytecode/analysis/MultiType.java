@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 package org.hotswap.agent.javassist.bytecode.analysis;
 
 import java.util.HashMap;
@@ -20,31 +6,9 @@ import java.util.Map;
 
 import org.hotswap.agent.javassist.CtClass;
 
-/**
- * MultiType represents an unresolved type. Whenever two {@code Type}
- * instances are merged, if they share more than one super type (either an
- * interface or a superclass), then a {@code MultiType} is used to
- * represent the possible super types. The goal of a {@code MultiType}
- * is to reduce the set of possible types down to a single resolved type. This
- * is done by eliminating non-assignable types from the typeset when the
- * {@code MultiType} is passed as an argument to
- * {@link Type#isAssignableFrom(Type)}, as well as removing non-intersecting
- * types during a merge.
- *
- * Note: Currently the {@code MultiType} instance is reused as much
- * as possible so that updates are visible from all frames. In addition, all
- * {@code MultiType} merge paths are also updated. This is somewhat
- * hackish, but it appears to handle most scenarios.
- *
- * @author Jason T. Greene
- */
 
-/* TODO - A better, but more involved, approach would be to track the instruction
- * offset that resulted in the creation of this type, and
- * whenever the typeset changes, to force a merge on that position. This
- * would require creating a new MultiType instance every time the typeset
- * changes, and somehow communicating assignment changes to the Analyzer
- */
+
+
 public class MultiType extends Type {
     private Map<String,CtClass> interfaces;
     private Type resolved;
@@ -62,10 +26,7 @@ public class MultiType extends Type {
         this.potentialClass = potentialClass;
     }
 
-    /**
-     * Gets the class that corresponds with this type. If this information
-     * is not yet known, java.lang.Object will be returned.
-     */
+
     @Override
     public CtClass getCtClass() {
         if (resolved != null)
@@ -74,33 +35,25 @@ public class MultiType extends Type {
         return Type.OBJECT.getCtClass();
     }
 
-    /**
-     * Always returns null since this type is never used for an array.
-     */
+
     @Override
     public Type getComponent() {
         return null;
     }
 
-    /**
-     * Always returns 1, since this type is a reference.
-     */
+
     @Override
     public int getSize() {
         return 1;
     }
 
-    /**
-     * Always reutnrs false since this type is never used for an array
-     */
+
     @Override
     public boolean isArray() {
         return false;
     }
 
-    /**
-     * Returns true if the internal state has changed.
-     */
+
     @Override
     boolean popChanged() {
         boolean changed = this.changed;
@@ -126,14 +79,14 @@ public class MultiType extends Type {
         Map<String,CtClass> map = mergeMultiAndSingle(this, type);
 
         if (map.size() == 1 && potentialClass == null) {
-            // Update previous merge paths to the same resolved type
+
             resolved = Type.get(map.values().iterator().next());
             propogateResolved();
 
             return true;
         }
 
-        // Keep all previous merge paths up to date
+
         if (map.size() >= 1) {
             interfaces = map;
             propogateState();
@@ -168,11 +121,7 @@ public class MultiType extends Type {
         }
     }
 
-    /**
-     * Always returns true, since this type is always a reference.
-     *
-     * @return true
-     */
+
     @Override
     public boolean isReference() {
        return true;
@@ -256,9 +205,9 @@ public class MultiType extends Type {
             merged = mergeMultiAndSingle(this, type);
         }
 
-        // Keep all previous merge paths up to date
+
         if (merged.size() > 1 || (merged.size() == 1 && potentialClass != null)) {
-            // Check for changes
+
             if (merged.size() != interfaces.size())
                 changed = true;
             else if (changed == false)

@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.jvm;
 
 import org.hotswap.agent.javassist.CtClass;
@@ -26,16 +9,12 @@ import org.hotswap.agent.javassist.NotFoundException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-/**
- * Get signature for an anonymous class to compare two versions (before and after reload).
- *
- * @author Jiri Bubnik
- */
+
 public class AnonymousClassInfo {
-    // name of the anonymous class
+
     String className;
 
-    // signatures
+
     String classSignature;
     String methodSignature;
     String fieldsSignature;
@@ -60,7 +39,7 @@ public class AnonymousClassInfo {
 
         StringBuilder fieldsSignature = new StringBuilder();
         for (Field f : c.getDeclaredFields()) {
-            // replace declarig class for constant because of unit tests (class name change)
+
             fieldsSignature.append(f.getType().getName());
             fieldsSignature.append(" ");
             fieldsSignature.append(f.getName());
@@ -125,7 +104,7 @@ public class AnonymousClassInfo {
                     getMethodSignature(enclosingMethodSignature, enclosingMethod);
                 }
             } catch (Exception e) {
-                // OK, enclosing method not defined or out of scope
+
             }
             this.enclosingMethodSignature = enclosingMethodSignature.toString();
 
@@ -165,9 +144,7 @@ public class AnonymousClassInfo {
         return enclosingMethodSignature;
     }
 
-    /**
-     * Exact match including enclosing method.
-     */
+
     public boolean matchExact(AnonymousClassInfo other) {
         return getClassSignature().equals(other.getClassSignature()) &&
                 getMethodSignature().equals(other.getMethodSignature()) &&
@@ -175,19 +152,14 @@ public class AnonymousClassInfo {
                 getEnclosingMethodSignature().equals(other.getEnclosingMethodSignature());
     }
 
-    /**
-     * Exact match of class, interfaces, declared methods and fields.
-     * May be different enclosing method.
-     */
+
     public boolean matchSignatures(AnonymousClassInfo other) {
         return getClassSignature().equals(other.getClassSignature()) &&
                 getMethodSignature().equals(other.getMethodSignature()) &&
                 getFieldsSignature().equals(other.getFieldsSignature());
     }
 
-    /**
-     * The least matching variant - same class signature can be still resolved by hotswap.
-     */
+
     public boolean matchClassSignature(AnonymousClassInfo other) {
         return getClassSignature().equals(other.getClassSignature());
     }

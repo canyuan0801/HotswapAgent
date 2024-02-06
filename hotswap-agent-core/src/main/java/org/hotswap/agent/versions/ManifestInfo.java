@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.versions;
 
 import java.util.Iterator;
@@ -27,29 +10,21 @@ import java.util.jar.Manifest;
 import org.hotswap.agent.util.spring.util.StringUtils;
 
 
-/**
- * The Class ManifestInfo.
- *
- * @author alpapad@gmail.com
- */
+
 public class ManifestInfo {
 
-    /** The mf. */
+    
     private final Manifest mf;
 
-    /** The attr. */
+    
     private final Attributes attr;
 
-    /** The main. */
+    
     private final Attributes main;
 
     private final Map<String, Attributes> entries;
 
-    /**
-     * Instantiates a new manifest info.
-     *
-     * @param mf the mf
-     */
+    
     public ManifestInfo(Manifest mf) {
         this.mf = mf;
         if (mf != null) {
@@ -63,21 +38,12 @@ public class ManifestInfo {
         }
     }
 
-    /**
-     * Checks if is empty.
-     *
-     * @return true, if is empty
-     */
+    
     public boolean isEmpty() {
         return mf == null || ((attr == null || attr.size() == 0) && (main == null || main.size() == 0));
     }
 
-    /**
-     * Gets the value.
-     *
-     * @param name the name
-     * @return the value
-     */
+    
     public String getValue(Name... name) {
         if (name == null || isEmpty()) {
             return null;
@@ -85,13 +51,7 @@ public class ManifestInfo {
         return getAttribute(attr, main, entries, name);
     }
 
-    /**
-     * Gets the value.
-     *
-     * @param path the path
-     * @param name the name
-     * @return the value
-     */
+    
     public String getValue(String path, Name... name) {
         if (name == null || isEmpty()) {
             return null;
@@ -99,14 +59,7 @@ public class ManifestInfo {
         return getAttribute(StringUtils.isEmpty(path) ? attr : mf.getAttributes(path), main, entries, name);
     }
 
-    /**
-     * Gets the attribute.
-     *
-     * @param attr the attr
-     * @param main the main
-     * @param names the names
-     * @return the attribute
-     */
+    
     private static String getAttribute(Attributes attr, Attributes main, Map<String, Attributes> entries, Name... names) {
         if (names == null || names.length == 0) {
             return null;
@@ -151,9 +104,7 @@ public class ManifestInfo {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
+    
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -176,9 +127,7 @@ public class ManifestInfo {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
+    
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -187,9 +136,7 @@ public class ManifestInfo {
         return result;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
+    
     @Override
     public String toString() {
         if (mf != null) {
@@ -199,14 +146,14 @@ public class ManifestInfo {
         }
     }
 
-    // public static String dump(Attributes a) {
-    // if(a == null) {
-    // return "null";
-    // }
-    // StringBuilder sb = new StringBuilder();
-    // for(Map.Entry<Object,Object> e: a.entrySet()){
-    // sb.append("[").append(e.getKey()).append("=").append(e.getValue()).append("],");
-    // }
-    // return sb.toString();
-    // }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2002-2015 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 
 package org.hotswap.agent.util.spring.collections;
 
@@ -24,59 +10,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Simple implementation of {@link MultiValueMap} that wraps a
- * {@link LinkedHashMap}, storing multiple values in a {@link LinkedList}.
- *
- * <p>
- * This Map implementation is generally not thread-safe. It is primarily
- * designed for data structures exposed from request objects, for use in a
- * single thread only.
- *
- * @author Arjen Poutsma
- * @author Juergen Hoeller
- * @since 3.0
- */
+
 public class LinkedMultiValueMap<K, V> implements MultiValueMap<K, V>, Serializable {
 
     private static final long serialVersionUID = 3801124242820219131L;
 
     private final Map<K, List<V>> targetMap;
 
-    /**
-     * Create a new LinkedMultiValueMap that wraps a {@link LinkedHashMap}.
-     */
+
     public LinkedMultiValueMap() {
         this.targetMap = new LinkedHashMap<K, List<V>>();
     }
 
-    /**
-     * Create a new LinkedMultiValueMap that wraps a {@link LinkedHashMap} with
-     * the given initial capacity.
-     * 
-     * @param initialCapacity
-     *            the initial capacity
-     */
+
     public LinkedMultiValueMap(int initialCapacity) {
         this.targetMap = new LinkedHashMap<K, List<V>>(initialCapacity);
     }
 
-    /**
-     * Copy constructor: Create a new LinkedMultiValueMap with the same mappings
-     * as the specified Map. Note that this will be a shallow copy; its
-     * value-holding List entries will get reused and therefore cannot get
-     * modified independently.
-     * 
-     * @param otherMap
-     *            the Map whose mappings are to be placed in this Map
-     * @see #clone()
-     * @see #deepCopy()
-     */
+
     public LinkedMultiValueMap(Map<K, List<V>> otherMap) {
         this.targetMap = new LinkedHashMap<K, List<V>>(otherMap);
     }
 
-    // MultiValueMap implementation
+
 
     @Override
     public void add(K key, V value) {
@@ -117,7 +73,7 @@ public class LinkedMultiValueMap<K, V> implements MultiValueMap<K, V>, Serializa
         return singleValueMap;
     }
 
-    // Map implementation
+
 
     @Override
     public int size() {
@@ -179,28 +135,13 @@ public class LinkedMultiValueMap<K, V> implements MultiValueMap<K, V>, Serializa
         return this.targetMap.entrySet();
     }
 
-    /**
-     * Create a regular copy of this Map.
-     * 
-     * @return a shallow copy of this Map, reusing this Map's value-holding List
-     *         entries
-     * @since 4.2
-     * @see LinkedMultiValueMap#LinkedMultiValueMap(Map)
-     * @see #deepCopy()
-     */
+
     @Override
     public LinkedMultiValueMap<K, V> clone() {
         return new LinkedMultiValueMap<K, V>(this);
     }
 
-    /**
-     * Create a deep copy of this Map.
-     * 
-     * @return a copy of this Map, including a copy of each value-holding List
-     *         entry
-     * @since 4.2
-     * @see #clone()
-     */
+
     public LinkedMultiValueMap<K, V> deepCopy() {
         LinkedMultiValueMap<K, V> copy = new LinkedMultiValueMap<K, V>(this.targetMap.size());
         for (Map.Entry<K, List<V>> entry : this.targetMap.entrySet()) {

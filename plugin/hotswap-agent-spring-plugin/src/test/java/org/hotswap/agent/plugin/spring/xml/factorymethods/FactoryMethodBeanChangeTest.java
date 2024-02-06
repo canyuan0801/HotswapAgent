@@ -91,7 +91,7 @@ public class FactoryMethodBeanChangeTest {
         Assert.assertEquals(factoryMethodBean4, factoryMethodParentBean4.getFactoryMethodBean4());
         Assert.assertEquals(factoryMethodBean5, factoryMethodParentBean5.getFactoryMethodBean5());
         Assert.assertEquals(factoryMethodBean6, factoryMethodParentBean6.getFactoryMethodBean6());
-        // 1. swap properties only
+
         modifyPropertyFile();
         Assert.assertTrue(WaitHelper.waitForCommand(new WaitHelper.Command() {
             @Override
@@ -99,7 +99,7 @@ public class FactoryMethodBeanChangeTest {
                 return BaseTestUtil.finishReloading(applicationContext.getBeanFactory(), 1);
             }
         }, 11000));
-        // check
+
         FactoryMethodBean1 factoryMethodBeanV2_1 = applicationContext.getBean(FactoryMethodBean1.class);
         FactoryMethodBean2 factoryMethodBeanV2_2 = applicationContext.getBean(FactoryMethodBean2.class);
         FactoryMethodBean3 factoryMethodBeanV2_3 = applicationContext.getBean(FactoryMethodBean3.class);
@@ -146,7 +146,7 @@ public class FactoryMethodBeanChangeTest {
         Assert.assertNotEquals(factoryMethodParentBean5, factoryMethodParentBeanV2_5);
         Assert.assertNotEquals(factoryMethodParentBean6, factoryMethodParentBeanV2_6);
 
-        // swap class
+
         HotSwapper.swapClasses(FactoryMethodBean6.class, BakFactoryMethodBean6.class.getName());
         HotSwapper.swapClasses(FactoryMethodFactoryBean12.class, BakFactoryMethodFactoryBean12.class.getName());
         HotSwapper.swapClasses(FactoryMethodFactoryBean34.class, BakFactoryMethodFactoryBean34.class.getName());
@@ -156,7 +156,7 @@ public class FactoryMethodBeanChangeTest {
                 return BaseTestUtil.finishReloading(applicationContext.getBeanFactory(), 2);
             }
         }, 110000));
-        // check
+
         FactoryMethodBean1 factoryMethodBeanV3_1 = applicationContext.getBean(FactoryMethodBean1.class);
         FactoryMethodBean2 factoryMethodBeanV3_2 = applicationContext.getBean(FactoryMethodBean2.class);
         FactoryMethodBean3 factoryMethodBeanV3_3 = applicationContext.getBean(FactoryMethodBean3.class);
@@ -202,7 +202,7 @@ public class FactoryMethodBeanChangeTest {
         Assert.assertNotEquals(factoryMethodParentBeanV3_4, factoryMethodParentBeanV2_4);
         Assert.assertEquals(factoryMethodParentBeanV3_5, factoryMethodParentBeanV2_5);
         Assert.assertNotEquals(factoryMethodParentBeanV3_6, factoryMethodParentBeanV2_6);
-        // recover
+
         HotSwapper.swapClasses(FactoryMethodBean6.class, FactoryMethodBean6.class.getName());
     }
 

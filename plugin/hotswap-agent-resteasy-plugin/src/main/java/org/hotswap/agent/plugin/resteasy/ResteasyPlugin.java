@@ -1,19 +1,4 @@
-/*
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- */
+
 
 package org.hotswap.agent.plugin.resteasy;
 
@@ -42,14 +27,9 @@ import org.hotswap.agent.util.AnnotationHelper;
 import org.hotswap.agent.util.PluginManagerInvoker;
 import org.hotswap.agent.util.ReflectionHelper;
 
-/**
- * Resteasy
- *
- *  @author Vladimir Dvorak - HotswapAgent implementation,
- *  @author Stuart Douglas - original concept in FakeReplace
- */
+
 @Plugin(name = "Resteasy",
-        description = "Jboss RESTeasy framework (http://resteasy.jboss.org/). Reload FilterDispatcher / HttpServletDispatcher configurations "
+        description = "Jboss RESTeasy framework (http:
                 + "if @Path annotated class is changed.",
         testedVersions = {"3.0.14.Final"},
         expectedVersions = {"All between 2.x - 3.x"}

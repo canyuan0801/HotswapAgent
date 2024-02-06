@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.expr;
 
@@ -37,16 +23,12 @@ import org.hotswap.agent.javassist.compiler.JvstTypeChecker;
 import org.hotswap.agent.javassist.compiler.ProceedHandler;
 import org.hotswap.agent.javassist.compiler.ast.ASTList;
 
-/**
- * Object creation (<code>new</code> expression).
- */
+
 public class NewExpr extends Expr {
     String newTypeName;
     int newPos;
 
-    /**
-     * Undocumented constructor.  Do not use; internal-use only.
-     */
+
     protected NewExpr(int pos, CodeIterator i, CtClass declaring,
                       MethodInfo m, String type, int np) {
         super(pos, i, declaring, m);
@@ -54,81 +36,42 @@ public class NewExpr extends Expr {
         newPos = np;
     }
 
-    /*
-     * Not used
-     * 
-    private int getNameAndType(ConstPool cp) {
-        int pos = currentPos;
-        int c = iterator.byteAt(pos);
-        int index = iterator.u16bitAt(pos + 1);
 
-        if (c == INVOKEINTERFACE)
-            return cp.getInterfaceMethodrefNameAndType(index);
-        else
-            return cp.getMethodrefNameAndType(index);
-    } */
 
-    /**
-     * Returns the method or constructor containing the <code>new</code>
-     * expression represented by this object.
-     */
+
     @Override
     public CtBehavior where() { return super.where(); }
 
-    /**
-     * Returns the line number of the source line containing the
-     * <code>new</code> expression.
-     *
-     * @return -1       if this information is not available.
-     */
+
     @Override
     public int getLineNumber() {
         return super.getLineNumber();
     }
 
-    /**
-     * Returns the source file containing the <code>new</code> expression.
-     *
-     * @return null     if this information is not available.
-     */
+
     @Override
     public String getFileName() {
         return super.getFileName();
     }
 
-    /**
-     * Returns the class of the created object.
-     */
+
     private CtClass getCtClass() throws NotFoundException {
         return thisClass.getClassPool().get(newTypeName);
     }
 
-    /**
-     * Returns the class name of the created object.
-     */
+
     public String getClassName() {
         return newTypeName;
     }
 
-    /**
-     * Get the signature of the constructor
-     *
-     * The signature is represented by a character string
-     * called method descriptor, which is defined in the JVM specification.
-     *
-     * @see javassist.CtBehavior#getSignature()
-     * @see javassist.bytecode.Descriptor
-     * @return the signature
-     */
+
     public String getSignature() {
         ConstPool constPool = getConstPool();
-        int methodIndex = iterator.u16bitAt(currentPos + 1);   // constructor
+        int methodIndex = iterator.u16bitAt(currentPos + 1);
         return constPool.getMethodrefType(methodIndex);
     }
 
-    /**
-     * Returns the constructor called for creating the object.
-     */
+
     public CtConstructor getConstructor() throws NotFoundException {
         ConstPool cp = getConstPool();
         int index = iterator.u16bitAt(currentPos + 1);
@@ -136,61 +79,39 @@ public class NewExpr extends Expr {
         return getCtClass().getConstructor(desc);
     }
 
-    /**
-     * Returns the list of exceptions that the expression may throw.
-     * This list includes both the exceptions that the try-catch statements
-     * including the expression can catch and the exceptions that
-     * the throws declaration allows the method to throw.
-     */
+
     @Override
     public CtClass[] mayThrow() {
         return super.mayThrow();
     }
 
-    /*
-     * Returns the parameter types of the constructor.
 
-    public CtClass[] getParameterTypes() throws NotFoundException {
-        ConstPool cp = getConstPool();
-        int index = iterator.u16bitAt(currentPos + 1);
-        String desc = cp.getMethodrefType(index);
-        return Descriptor.getParameterTypes(desc, thisClass.getClassPool());
-    }
-    */
 
     private int canReplace() throws CannotCompileException {
         int op = iterator.byteAt(newPos + 3);
-        if (op == Opcode.DUP)     // Typical single DUP or Javaflow DUP DUP2_X2 POP2
+        if (op == Opcode.DUP)
             return ((iterator.byteAt(newPos + 4) == Opcode.DUP2_X2
                  && iterator.byteAt(newPos + 5) == Opcode.POP2)) ? 6 : 4;
         else if (op == Opcode.DUP_X1
                  && iterator.byteAt(newPos + 4) == Opcode.SWAP)
             return 5;
         else
-            return 3;   // for Eclipse.  The generated code may include no DUP.
-            // throw new CannotCompileException(
-            //            "sorry, cannot edit NEW followed by no DUP");
+            return 3;
+
+
     }
 
-    /**
-     * Replaces the <code>new</code> expression with the bytecode derived from
-     * the given source text.
-     *
-     * <p>$0 is available but the value is null.
-     *
-     * @param statement         a Java statement except try-catch.
-     */
+
     @Override
     public void replace(String statement) throws CannotCompileException {
-        thisClass.getClassFile();   // to call checkModify().
+        thisClass.getClassFile();
 
         final int bytecodeSize = 3;
         int pos = newPos;
 
         int newIndex = iterator.u16bitAt(pos + 1);
 
-        /* delete the preceding NEW and DUP (or DUP_X1, SWAP) instructions.
-         */
+
         int codeSize = canReplace();
         int end = pos + codeSize;
         for (int i = pos; i < end; ++i)
@@ -198,7 +119,7 @@ public class NewExpr extends Expr {
 
         ConstPool constPool = getConstPool();
         pos = currentPos;
-        int methodIndex = iterator.u16bitAt(pos + 1);   // constructor
+        int methodIndex = iterator.u16bitAt(pos + 1);
 
         String signature = constPool.getMethodrefType(methodIndex);
 
@@ -215,8 +136,7 @@ public class NewExpr extends Expr {
             jc.recordProceed(new ProceedForNew(newType, newIndex,
                                                methodIndex));
 
-            /* Is $_ included in the source code?
-             */
+
             checkResultValue(newType, statement);
 
             Bytecode bytecode = jc.getBytecode();
@@ -224,10 +144,10 @@ public class NewExpr extends Expr {
             jc.recordLocalVariables(ca, pos);
 
             bytecode.addConstZero(newType);
-            bytecode.addStore(retVar, newType);     // initialize $_
+            bytecode.addStore(retVar, newType);
 
             jc.compileStmnt(statement);
-            if (codeSize > 3)   // if the original code includes DUP.
+            if (codeSize > 3)
                 bytecode.addAload(retVar);
 
             replace0(pos, bytecode, bytecodeSize);

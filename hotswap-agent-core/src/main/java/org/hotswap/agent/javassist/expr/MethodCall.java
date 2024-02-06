@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.expr;
 
@@ -32,13 +18,9 @@ import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.javassist.compiler.CompileError;
 import org.hotswap.agent.javassist.compiler.Javac;
 
-/**
- * Method invocation (caller-side expression).
- */
+
 public class MethodCall extends Expr {
-    /**
-     * Undocumented constructor.  Do not use; internal-use only.
-     */
+    
     protected MethodCall(int pos, CodeIterator i, CtClass declaring,
                          MethodInfo m) {
         super(pos, i, declaring, m);
@@ -54,46 +36,28 @@ public class MethodCall extends Expr {
         return cp.getMethodrefNameAndType(index);
     }
 
-    /**
-     * Returns the method or constructor containing the method-call
-     * expression represented by this object.
-     */
+    
     @Override
     public CtBehavior where() { return super.where(); }
 
-    /**
-     * Returns the line number of the source line containing the
-     * method call.
-     *
-     * @return -1       if this information is not available.
-     */
+    
     @Override
     public int getLineNumber() {
         return super.getLineNumber();
     }
 
-    /**
-     * Returns the source file containing the method call.
-     *
-     * @return null     if this information is not available.
-     */
+    
     @Override
     public String getFileName() {
         return super.getFileName();
     }
 
-    /**
-     * Returns the class of the target object,
-     * which the method is called on.
-     */
+    
     protected CtClass getCtClass() throws NotFoundException {
         return thisClass.getClassPool().get(getClassName());
     }
 
-    /**
-     * Returns the class name of the target object,
-     * which the method is called on.
-     */
+    
     public String getClassName() {
         String cname;
 
@@ -113,87 +77,45 @@ public class MethodCall extends Expr {
          return cname;
     }
 
-    /**
-     * Returns the name of the called method. 
-     */
+    
     public String getMethodName() {
         ConstPool cp = getConstPool();
         int nt = getNameAndType(cp);
         return cp.getUtf8Info(cp.getNameAndTypeName(nt));
     }
 
-    /**
-     * Returns the called method.
-     */
+    
     public CtMethod getMethod() throws NotFoundException {
         return getCtClass().getMethod(getMethodName(), getSignature());
     }
 
-    /**
-     * Returns the method signature (the parameter types
-     * and the return type).
-     * The method signature is represented by a character string
-     * called method descriptor, which is defined in the JVM specification.
-     *
-     * @see javassist.CtBehavior#getSignature()
-     * @see javassist.bytecode.Descriptor
-     * @since 3.1
-     */
+    
     public String getSignature() {
         ConstPool cp = getConstPool();
         int nt = getNameAndType(cp);
         return cp.getUtf8Info(cp.getNameAndTypeDescriptor(nt));
     }
 
-    /**
-     * Returns the list of exceptions that the expression may throw.
-     * This list includes both the exceptions that the try-catch statements
-     * including the expression can catch and the exceptions that
-     * the throws declaration allows the method to throw.
-     */
+    
     @Override
     public CtClass[] mayThrow() {
         return super.mayThrow();
     }
 
-    /**
-     * Returns true if the called method is of a superclass of the current
-     * class.
-     */
+    
     public boolean isSuper() {
         return iterator.byteAt(currentPos) == INVOKESPECIAL
             && !where().getDeclaringClass().getName().equals(getClassName());
     }
 
-    /*
-     * Returns the parameter types of the called method.
+    
 
-    public CtClass[] getParameterTypes() throws NotFoundException {
-        return Descriptor.getParameterTypes(getMethodDesc(),
-                                            thisClass.getClassPool());
-    }
-    */
+    
 
-    /*
-     * Returns the return type of the called method.
-
-    public CtClass getReturnType() throws NotFoundException {
-        return Descriptor.getReturnType(getMethodDesc(),
-                                        thisClass.getClassPool());
-    }
-    */
-
-    /**
-     * Replaces the method call with the bytecode derived from
-     * the given source text.
-     *
-     * <p>$0 is available even if the called method is static.
-     *
-     * @param statement         a Java statement except try-catch.
-     */
+    
     @Override
     public void replace(String statement) throws CannotCompileException {
-        thisClass.getClassFile();   // to call checkModify().
+        thisClass.getClassFile();   
         ConstPool constPool = getConstPool();
         int pos = currentPos;
         int index = iterator.u16bitAt(pos + 1);
@@ -235,8 +157,7 @@ public class MethodCall extends Expr {
             else
                 jc.recordProceed(Javac.param0Name, methodname);
 
-            /* Is $_ included in the source code?
-             */
+            
             checkResultValue(retType, statement);
 
             Bytecode bytecode = jc.getBytecode();
@@ -245,7 +166,7 @@ public class MethodCall extends Expr {
 
             if (retType != CtClass.voidType) {
                 bytecode.addConstZero(retType);
-                bytecode.addStore(retVar, retType);     // initialize $_
+                bytecode.addStore(retVar, retType);     
             }
 
             jc.compileStmnt(statement);

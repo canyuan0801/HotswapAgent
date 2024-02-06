@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.command;
 
 import org.hotswap.agent.config.PluginManager;
@@ -27,54 +10,32 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Command to run in a target classloader. The command is always invoked via reflection.
- *
- * @author Jiri Bubnik
- */
+
 public class ReflectionCommand extends MergeableCommand {
     private static AgentLogger LOGGER = AgentLogger.getLogger(ReflectionCommand.class);
 
-    /**
-     * Run the method on target object.
-     */
+
     private Object target;
 
-    /**
-     * Run a method in the class - if null, run a method on this object, otherwise create new instance of className.
-     */
+
     private String className;
 
-    /**
-     * Method name to run.
-     */
+
     private String methodName;
 
-    /**
-     * Method actual parameters value. These parameter types must be known to the target classloader.
-     * For norma use (call application classloader from plugin class) this means that you can use only
-     * Java default types.
-     */
+
     private List<Object> params = new ArrayList<>();
 
-    /**
-     * Plugin object to resolve target classloader (if not set directly). May be null.
-     */
+
     private Object plugin;
 
-    /**
-     * Classloader application classloader to run the command in. If null, use agent classloader.
-     */
+
     private ClassLoader targetClassLoader;
 
-    /**
-     * Register a listener after the command is executed to obtain method invocation result.
-     */
+
     private CommandExecutionListener commandExecutionListener;
 
-    /**
-     * Define a command.
-     */
+
     public ReflectionCommand(Object plugin, String className, String methodName, ClassLoader targetClassLoader, Object... params) {
         this.plugin = plugin;
         this.className = className;
@@ -83,18 +44,14 @@ public class ReflectionCommand extends MergeableCommand {
         this.params = Arrays.asList(params);
     }
 
-    /**
-     * Predefine a command. The params and/or target classloader will be set by setter.
-     */
+
     public ReflectionCommand(Object plugin, String className, String methodName) {
         this.plugin = plugin;
         this.className = className;
         this.methodName = methodName;
     }
 
-    /**
-     * Define a command on target object.
-     */
+
     public ReflectionCommand(Object target, String methodName, Object... params) {
         this.target = target;
         this.className = target == null ? "NULL" : target.getClass().getName();
@@ -149,11 +106,9 @@ public class ReflectionCommand extends MergeableCommand {
         this.commandExecutionListener = commandExecutionListener;
     }
 
-    /**
-     * Execute the command.
-     */
+
     public void executeCommand() {
-        // replace context classloader with application classloader
+
         if (getTargetClassLoader() != null)
             Thread.currentThread().setContextClassLoader(getTargetClassLoader());
 
@@ -180,7 +135,7 @@ public class ReflectionCommand extends MergeableCommand {
             LOGGER.error("Error executin method {} in class {}", e, method, className);
         }
 
-        // notify lilstener
+
         CommandExecutionListener listener = getCommandExecutionListener();
         if (listener != null)
             listener.commandExecuted(result);

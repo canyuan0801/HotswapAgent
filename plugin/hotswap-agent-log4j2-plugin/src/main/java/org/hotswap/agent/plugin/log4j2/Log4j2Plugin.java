@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.log4j2;
 
 import org.hotswap.agent.annotation.FileEvent;
@@ -39,11 +22,7 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Log4j2 configuration file reload.
- *
- * @author Lukasz Warzecha
- */
+
 @Plugin(name = "Log4j2", description = "Log4j2 configuration reload.",
         testedVersions = { "2.1", "2.5", "2.7" })
 public class Log4j2Plugin {
@@ -56,17 +35,12 @@ public class Log4j2Plugin {
     @Init
     ClassLoader appClassLoader;
 
-    // ensure uri registered only once
+
     Set<URI> registeredURIs = new HashSet<>();
 
     volatile boolean initialized;
 
-    /**
-     * Callback method from
-     * org.apache.logging.log4j.core.LoggerContext.setConfiguration(Configuration)
-     *
-     * @param config the Log4j2 configuration object
-     */
+
     public void init(final Object config) {
 
         URI configURI = null;
@@ -113,11 +87,7 @@ public class Log4j2Plugin {
         }
     }
 
-    /**
-     * Do the reload using Log4j2 configurator.
-     *
-     * @param uri the configuration file uri
-     */
+
     protected void reload(URI uri) {
 
         try {
@@ -134,7 +104,7 @@ public class Log4j2Plugin {
             Object context = logManagerClass.getDeclaredMethod("getContext", Boolean.TYPE).invoke(logManagerClass,
                     true);
 
-            // resetting configLocation forces reconfiguration
+
             contextClass.getDeclaredMethod("setConfigLocation", URI.class).invoke(context, uri);
 
             LOGGER.reload("Log4j2 configuration reloaded from uri '{}'.", uri);
@@ -147,7 +117,7 @@ public class Log4j2Plugin {
     public static void registerConfigurator(ClassPool classPool, CtClass ctClass) throws NotFoundException,
             CannotCompileException {
 
-        // fallback to the old version (<2.3) of Log4j2
+
         CtMethod m = ctClass.getDeclaredMethod("setConfiguration",
                 new CtClass[] { classPool.get("org.apache.logging.log4j.core.config.Configuration") });
 

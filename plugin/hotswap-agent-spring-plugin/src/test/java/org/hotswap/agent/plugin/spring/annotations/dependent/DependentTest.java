@@ -102,7 +102,7 @@ public class DependentTest {
         System.out.println("depStudent3 changed: " + depStudentChange3);
         System.out.println("depStudent4 changed: " + depStudentChange4);
 
-        // check student
+
         Assert.assertEquals("student1-changed", depStudentChange1.getName());
         Assert.assertEquals("student2-changed", depStudentChange2.getName());
         Assert.assertEquals("student3-changed", depStudentChange3.getName());
@@ -111,7 +111,7 @@ public class DependentTest {
         Assert.assertNotEquals(depStudent2, depStudentChange2);
         Assert.assertNotEquals(depStudent3, depStudentChange3);
         Assert.assertEquals(depStudent4, depStudentChange4);
-        // check teacher
+
         Assert.assertEquals(depStudentChange1, depTeacherChange1.getStudent1());
         Assert.assertEquals(depStudentChange2, depTeacherChange20.getStudent2());
         Assert.assertEquals(depStudentChange2, depTeacherChange21.getStudent2());
@@ -124,7 +124,7 @@ public class DependentTest {
         Assert.assertNotEquals(depTeacher4, depTeacherChange4);
         Assert.assertNotEquals(depTeacherMul, depTeacherMulChange);
 
-        // teacher group
+
         Assert.assertNotEquals(depTeacher1, depTeacherGroupChange1.getDepTeacher1());
         Assert.assertEquals(depTeacherChange20, depTeacherGroupChange2.getDepTeacher2());
         Assert.assertEquals(depTeacherChange3, depTeacherGroupChange3.getDepTeacher3());
@@ -165,7 +165,7 @@ public class DependentTest {
         System.out.println("depStudent3 changed: " + depStudentChangeAgain3);
         System.out.println("depStudent4 changed: " + depStudentChangeAgain4);
 
-        // check student
+
         Assert.assertEquals("student1-changed-again", depStudentChangeAgain1.getName());
         Assert.assertEquals("student2-changed-again", depStudentChangeAgain2.getName());
         Assert.assertEquals("student3-changed-again", depStudentChangeAgain3.getName());
@@ -174,7 +174,7 @@ public class DependentTest {
         Assert.assertNotEquals(depStudentChangeAgain2, depStudentChange2);
         Assert.assertNotEquals(depStudentChangeAgain3, depStudentChange3);
         Assert.assertEquals(depStudentChangeAgain4, depStudentChange4);
-        // check teacher
+
         Assert.assertEquals(depStudentChangeAgain1, depTeacherChangeAgain1.getStudent1());
         Assert.assertEquals(depStudentChangeAgain2, depTeacherChangeAgain20.getStudent2());
         Assert.assertEquals(depStudentChangeAgain2, depTeacherChangeAgain21.getStudent2());
@@ -187,7 +187,7 @@ public class DependentTest {
         Assert.assertNotEquals(depTeacherChangeAgain4, depTeacherChange4);
         Assert.assertNotEquals(depTeacherMulChangeAgain, depTeacherMulChange);
 
-        // teacher group
+
         Assert.assertNotEquals(depTeacher1, depTeacherGroupChangeAgain1.getDepTeacher1());
         Assert.assertEquals(depTeacherChangeAgain20, depTeacherGroupChangeAgain2.getDepTeacher2());
         Assert.assertEquals(depTeacherChangeAgain3, depTeacherGroupChangeAgain3.getDepTeacher3());

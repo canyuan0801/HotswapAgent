@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.weld.transformer;
 
 import org.hotswap.agent.annotation.OnClassLoadEvent;
@@ -30,26 +13,14 @@ import org.hotswap.agent.plugin.cdi.HaCdiCommons;
 import org.hotswap.agent.plugin.weld.beans.ContextualReloadHelper;
 import org.hotswap.agent.plugin.weld.beans.WeldHotswapContext;
 
-/**
- * The Class CdiContextsTransformer.
- *
- * @author alpapad@gmail.com
- * @author Vladimir Dvorak
- */
+
 public class CdiContextsTransformer {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(CdiContextsTransformer.class);
 
     public static final String BOUND_SESSION_BEAN_STORE_REGISTRY = "$$ha$boundSessionBeanStoreRegistry";
 
-    /**
-     * Add context reloading functionality to base contexts classes.
-     *
-     * @param classPool the class pool
-     * @param ctClass   the class
-     * @throws NotFoundException      the not found exception
-     * @throws CannotCompileException the cannot compile exception
-     */
+
     @OnClassLoadEvent(classNameRegexp = "(org.jboss.weld.context.AbstractManagedContext)|" +
                                         "(org.jboss.weld.context.AbstractSharedContext)|" +
                                         "(org.jboss.weld.context.unbound.DependentContextImpl)|" +
@@ -101,14 +72,7 @@ public class CdiContextsTransformer {
         LOGGER.debug("Class '{}' patched with hot-swapping support", ctClass.getName() );
     }
 
-    /**
-     * Add custom tracker field to session context
-     *
-     * @param classPool the class pool
-     * @param ctClass   the class
-     * @throws NotFoundException      the not found exception
-     * @throws CannotCompileException the cannot compile exception
-     */
+
     @OnClassLoadEvent(classNameRegexp = "org.jboss.weld.context.AbstractContext")
     public static void transformHttpSessionContext(ClassPool classPool, CtClass ctClass) throws NotFoundException, CannotCompileException {
         if (HaCdiCommons.isJakarta(classPool)) {

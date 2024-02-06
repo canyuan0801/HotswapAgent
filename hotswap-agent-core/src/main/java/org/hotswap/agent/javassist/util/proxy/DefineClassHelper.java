@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.util.proxy;
 
@@ -26,11 +12,7 @@ import java.util.List;
 import org.hotswap.agent.javassist.CannotCompileException;
 import org.hotswap.agent.javassist.bytecode.ClassFile;
 
-/**
- * Helper class for invoking {@link ClassLoader#defineClass(String,byte[],int,int)}.
- *
- * @since 3.22
- */
+
 public class DefineClassHelper {
 
     private static abstract class Helper {
@@ -47,8 +29,8 @@ public class DefineClassHelper {
             if (neighbor != null)
                 return toClass(neighbor, bcode);
             else {
-                // Lookup#defineClass() is not available.  So fallback to invoking defineClass on
-                // ClassLoader, which causes a warning message.
+
+
                 return super.defineClass(name, bcode, off, len, neighbor, loader, protectionDomain);
             }
         }
@@ -95,13 +77,13 @@ public class DefineClassHelper {
             try {
                 stackWalkerClass = Class.forName("java.lang.StackWalker");
             } catch (ClassNotFoundException e) {
-                // Skip initialization when the class doesn't exist i.e. we are on JDK < 9
+
             }
             if (stackWalkerClass != null) {
                 try {
                     Class<?> optionClass = Class.forName("java.lang.StackWalker$Option");
                     stack = stackWalkerClass.getMethod("getInstance", optionClass)
-                            // The first one is RETAIN_CLASS_REFERENCE
+
                                             .invoke(null, optionClass.getEnumConstants()[0]);
                     getCallerClass = stackWalkerClass.getMethod("getCallerClass");
                 } catch (Throwable e) {
@@ -123,7 +105,7 @@ public class DefineClassHelper {
             try {
                 SecurityActions.TheUnsafe usf = SecurityActions.getSunMiscUnsafeAnonymously();
                 List<Method> defineClassMethod = usf.methods.get("defineClass");
-                // On Java 11+ the defineClass method does not exist anymore
+
                 if (null == defineClassMethod)
                     return null;
                 MethodHandle meth = MethodHandles.lookup().unreflect(defineClassMethod.get(0));
@@ -225,36 +207,15 @@ public class DefineClassHelper {
         }
     }
 
-    // Java 11+ removed sun.misc.Unsafe.defineClass, so we fallback to invoking defineClass on
-    // ClassLoader until we have an implementation that uses MethodHandles.Lookup.defineClass
+
+
     private static final Helper privileged = ClassFile.MAJOR_VERSION > ClassFile.JAVA_10
             ? new Java11()
             : ClassFile.MAJOR_VERSION >= ClassFile.JAVA_9
                 ? new Java9()
                 : ClassFile.MAJOR_VERSION >= ClassFile.JAVA_7 ? new Java7() : new JavaOther();
 
-    /**
-     * Loads a class file by a given class loader.
-     *
-     * <p>This first tries to use {@code java.lang.invoke.MethodHandle} to load a class.
-     * Otherwise, or if {@code neighbor} is null,
-     * this tries to use {@code sun.misc.Unsafe} to load a class.
-     * Then it tries to use a {@code protected} method in {@code java.lang.ClassLoader}
-     * via {@code PrivilegedAction}.  Since the latter approach is not available
-     * any longer by default in Java 9 or later, the JVM argument
-     * {@code --add-opens java.base/java.lang=ALL-UNNAMED} must be given to the JVM.
-     * If this JVM argument cannot be given, {@link #toPublicClass(String,byte[])}
-     * should be used instead.
-     * </p>
-     *
-     * @param className     the name of the loaded class.
-     * @param neighbor      the class contained in the same package as the loaded class.
-     * @param loader        the class loader.  It can be null if {@code neighbor} is not null
-     *                      and the JVM is Java 11 or later.
-     * @param domain        if it is null, a default domain is used.
-     * @param bcode         the bytecode for the loaded class.
-     * @since 3.22
-     */
+
     public static Class<?> toClass(String className, Class<?> neighbor, ClassLoader loader,
                                    ProtectionDomain domain, byte[] bcode)
         throws CannotCompileException
@@ -279,15 +240,7 @@ public class DefineClassHelper {
     }
 
 
-    /**
-     * Loads a class file by {@code java.lang.invoke.MethodHandles.Lookup}.
-     * It is obtained by using {@code neighbor}.
-     *
-     * @param neighbor  a class belonging to the same package that the loaded
-     *                  class belogns to.
-     * @param bcode     the bytecode.
-     * @since 3.24
-     */
+
     public static Class<?> toClass(Class<?> neighbor, byte[] bcode)
         throws CannotCompileException
     {
@@ -302,14 +255,7 @@ public class DefineClassHelper {
         }
     }
 
-    /**
-     * Loads a class file by {@code java.lang.invoke.MethodHandles.Lookup}.
-     * It can be obtained by {@code MethodHandles.lookup()} called from
-     * somewhere in the package that the loaded class belongs to.
-     *
-     * @param bcode     the bytecode.
-     * @since 3.24
-     */
+
     public static Class<?> toClass(Lookup lookup, byte[] bcode)
         throws CannotCompileException
     {
@@ -320,11 +266,7 @@ public class DefineClassHelper {
         }
     }
 
-    /**
-     * Loads a class file by {@code java.lang.invoke.MethodHandles.Lookup}.
-     *
-     * @since 3.22
-     */
+
     static Class<?> toPublicClass(String className, byte[] bcode)
         throws CannotCompileException
     {

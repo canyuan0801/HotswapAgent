@@ -1,51 +1,27 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 package org.hotswap.agent.javassist.bytecode;
 
 import java.io.PrintStream;
 
 import org.hotswap.agent.javassist.CtMethod;
 
-/**
- * Simple utility class for printing the bytecode instructions of a method.
- *
- * @author Jason T. Greene
- */
+
 public class InstructionPrinter implements Opcode {
 
     private final static String opcodes[] = Mnemonic.OPCODE;
     private final PrintStream stream;
 
-    /**
-     * Constructs a <code>InstructionPrinter</code> object.
-     */
+
     public InstructionPrinter(PrintStream stream) {
         this.stream = stream;
     }
 
-    /**
-     * Prints the bytecode instructions of a given method.
-     */
+
     public static void print(CtMethod method, PrintStream stream) {
         (new InstructionPrinter(stream)).print(method);
     }
 
-    /**
-     * Prints the bytecode instructions of a given method.
-     */
+
     public void print(CtMethod method) {
         MethodInfo info = method.getMethodInfo2();
         ConstPool pool = info.getConstPool();
@@ -66,10 +42,7 @@ public class InstructionPrinter implements Opcode {
         }
     }
 
-    /**
-     * Gets a string representation of the bytecode instruction at the specified
-     * position. 
-     */
+
     public static String instructionString(CodeIterator iter, int pos, ConstPool pool) {
         int opcode = iter.byteAt(pos);
 
@@ -237,7 +210,7 @@ public class InstructionPrinter implements Opcode {
     private static String lookupSwitch(CodeIterator iter, int pos) {
         StringBuffer buffer = new StringBuffer("lookupswitch {\n");
         int index = (pos & ~3) + 4;
-        // default
+
         buffer.append("\t\tdefault: ").append(pos + iter.s32bitAt(index)).append("\n");
         int npairs = iter.s32bitAt(index += 4);
         int end = npairs * 8 + (index += 4);
@@ -256,13 +229,13 @@ public class InstructionPrinter implements Opcode {
     private static String tableSwitch(CodeIterator iter, int pos) {
         StringBuffer buffer = new StringBuffer("tableswitch {\n");
         int index = (pos & ~3) + 4;
-        // default
+
         buffer.append("\t\tdefault: ").append(pos + iter.s32bitAt(index)).append("\n");
         int low = iter.s32bitAt(index += 4);
         int high = iter.s32bitAt(index += 4);
         int end = (high - low + 1) * 4 + (index += 4);
 
-        // Offset table
+
         for (int key = low; index < end; index += 4, key++) {
             int target = iter.s32bitAt(index) + pos;
             buffer.append("\t\t").append(key).append(": ").append(target).append("\n");

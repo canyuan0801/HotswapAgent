@@ -53,7 +53,7 @@ public class XmlConstructorBeanChangeTest {
         Assert.assertEquals(xmlConstructorBean3, xmlConstructorParentBean3.getXmlConstructorBean3());
         Assert.assertEquals(xmlConstructorBean4, xmlConstructorParentBean4.getXmlConstructorBean4());
         Assert.assertEquals(xmlConstructorBean5, xmlConstructorParentBean5.getXmlConstructorBean5());
-        //check multiple
+
         Assert.assertNull(xmlConstructorParentBeanMul1.getXmlConstructorBean1());
         Assert.assertEquals(xmlConstructorBean3, xmlConstructorParentBeanMul1.getXmlConstructorBean3());
         Assert.assertNull(xmlConstructorParentBeanMul1.getXmlConstructorBean4());
@@ -62,12 +62,12 @@ public class XmlConstructorBeanChangeTest {
         Assert.assertEquals(xmlConstructorBean2, xmlConstructorParentBeanMul2.getXmlConstructorBean2());
         Assert.assertEquals(xmlConstructorBean3, xmlConstructorParentBeanMul2.getXmlConstructorBean3());
 
-        // swap first time
+
         HotSwapper.swapClasses(XmlConstructorBean3.class, BakConstructorBean3.class.getName());
         HotSwapper.swapClasses(XmlConstructorBean4.class, BakConstructorBean4.class.getName());
         HotSwapper.swapClasses(XmlConstructorFactoryBean2.class, BakConstructorFactoryBean2.class.getName());
         Thread.sleep(8000);
-        // check
+
         XmlConstructorBean1 xmlConstructorBeanNew1 = applicationContext.getBean(XmlConstructorBean1.class);
         XmlConstructorBean2 xmlConstructorBeanNew2 = applicationContext.getBean(XmlConstructorBean2.class);
         XmlConstructorBean3 xmlConstructorBeanNew3 = applicationContext.getBean(XmlConstructorBean3.class);
@@ -95,7 +95,7 @@ public class XmlConstructorBeanChangeTest {
         Assert.assertEquals(xmlConstructorBeanNew3, xmlConstructorParentBeanNew3.getXmlConstructorBean3());
         Assert.assertEquals(xmlConstructorBeanNew4, xmlConstructorParentBeanNew4.getXmlConstructorBean4());
         Assert.assertEquals(xmlConstructorBeanNew5, xmlConstructorParentBeanNew5.getXmlConstructorBean5());
-        //check multiple
+
         Assert.assertNull(xmlConstructorParentBeanMulNew1.getXmlConstructorBean1());
         Assert.assertEquals(xmlConstructorBeanNew3, xmlConstructorParentBeanMulNew1.getXmlConstructorBean3());
         Assert.assertNull(xmlConstructorParentBeanMulNew1.getXmlConstructorBean4());
@@ -117,14 +117,14 @@ public class XmlConstructorBeanChangeTest {
         Assert.assertNotEquals(xmlConstructorParentBeanMul1, xmlConstructorParentBeanMulNew1);
         Assert.assertNotEquals(xmlConstructorParentBeanMul2, xmlConstructorParentBeanMulNew2);
 
-        // swap twice
+
         HotSwapper.swapClasses(XmlConstructorBean3.class, BakConstructorBean3V2.class.getName());
         HotSwapper.swapClasses(XmlConstructorBean4.class, BakConstructorBean4V2.class.getName());
         HotSwapper.swapClasses(XmlConstructorFactoryBean2.class, BakConstructorFactoryBean2V2.class.getName());
         HotSwapper.swapClasses(XmlConstructorParentBeanMul1.class, BakConstructorParentBeanMul1.class.getName());
         HotSwapper.swapClasses(XmlConstructorParentBeanMul2.class, BakConstructorParentBeanMul2.class.getName());
         Thread.sleep(8000);
-        // check
+
         XmlConstructorBean1 xmlConstructorBeanV2_1 = applicationContext.getBean(XmlConstructorBean1.class);
         XmlConstructorBean2 xmlConstructorBeanV2_2 = applicationContext.getBean(XmlConstructorBean2.class);
         XmlConstructorBean3 xmlConstructorBeanV2_3 = applicationContext.getBean(XmlConstructorBean3.class);
@@ -153,7 +153,7 @@ public class XmlConstructorBeanChangeTest {
         Assert.assertEquals(xmlConstructorBeanV2_3, xmlConstructorParentBeanV2_3.getXmlConstructorBean3());
         Assert.assertEquals(xmlConstructorBeanV2_4, xmlConstructorParentBeanV2_4.getXmlConstructorBean4());
         Assert.assertEquals(xmlConstructorBeanV2_5, xmlConstructorParentBeanV2_5.getXmlConstructorBean5());
-        //check multiple
+
         Assert.assertEquals(xmlConstructorBeanV2_1, xmlConstructorParentBeanMulV2_1.getXmlConstructorBean1());
         Assert.assertEquals(xmlConstructorBeanV2_3, xmlConstructorParentBeanMulV2_1.getXmlConstructorBean3());
         Assert.assertEquals(xmlConstructorBeanV2_4, xmlConstructorParentBeanMulV2_1.getXmlConstructorBean4());
@@ -163,13 +163,13 @@ public class XmlConstructorBeanChangeTest {
             xmlConstructorParentBeanMulV2_2.getXmlConstructorBean2();
             Assert.fail("remove the method, but still can invoke it");
         } catch (NoSuchMethodError e) {
-            //ignore
+
         }
         try {
             xmlConstructorParentBeanMulV2_2.getXmlConstructorBean3();
             Assert.fail("remove the method, but still can invoke it");
         } catch (NoSuchMethodError e) {
-            //ignore
+
         }
 
         Assert.assertEquals(xmlConstructorBeanNew1, xmlConstructorBeanV2_1);

@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.command.impl;
 
 import org.hotswap.agent.command.CommandExecutionListener;
@@ -32,9 +15,7 @@ import java.util.concurrent.TimeUnit;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * @author Jiri Bubnik
- */
+
 public class SchedulerImplTest {
     Scheduler scheduler;
     ReflectionCommand command = new ReflectionCommand(new Object(), SchedulerImplTest.class.getName(), "commandMethod", getClass().getClassLoader());
@@ -50,7 +31,7 @@ public class SchedulerImplTest {
         scheduler.stop();
     }
 
-    // method called by command - return classNameRegexp should be checked in callback listener
+
     @SuppressWarnings("UnusedDeclaration")
     public static boolean commandMethod() {
         return true;

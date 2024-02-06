@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 package org.hotswap.agent.javassist.util.proxy;
 
 import java.lang.invoke.MethodHandle;
@@ -37,19 +23,7 @@ class SecurityActions extends SecurityManager
 {
     public static final SecurityActions stack = new SecurityActions();
 
-    /**
-     * Since Java 9 abruptly removed <code>Reflection.getCallerClass()</code>
-     * in favour of <code>StackWalker</code> we are left having to find a
-     * solution for the older versions without upsetting the new compiler.
-     *
-     * The member scoped function <code>getClassContext()</code>
-     * available as a <code>SecurityManager</code> sibling remains
-     * functional across all versions, for now.
-     *
-     * @return represents the declaring class of the method that invoked
-     *         the method that called this or index 2 on the stack trace.
-     * @since 3.23
-     */
+
     public Class<?> getCallerClass() {
         return getClassContext()[2];
     }
@@ -219,18 +193,7 @@ class SecurityActions extends SecurityManager
             throw new RuntimeException(e.getCause());
         }
     }
-    /**
-     * _The_ Notorious sun.misc.Unsafe in all its glory, but anonymous
-     * so as not to attract unwanted attention. Kept in two separate
-     * parts it manages to avoid detection from linker/compiler/general
-     * complainers and those. This functionality will vanish from the
-     * JDK soon but in the meantime it shouldn't be an obstacle.
-     *
-     * All exposed methods are cached in a dictionary with overloaded
-     * methods collected under their corresponding keys. Currently the
-     * implementation assumes there is only one, if you need find a
-     * need there will have to be a compare.
-     * @since 3.23 */
+
     class TheUnsafe
     {
         final Class<?> unsafe;
@@ -267,12 +230,7 @@ class SecurityActions extends SecurityManager
             return null;
         }
     }
-    /**
-     * Java 9 now complains about every privileged action regardless.
-     * Displaying warnings of "illegal usage" and then instructing users
-     * to go hassle the maintainers in order to have it fixed.
-     * Making it hush for now, see all fixed.
-     * @param tu theUnsafe that'll fix it */
+
     static void disableWarning(TheUnsafe tu) {
         try {
             if (ClassFile.MAJOR_VERSION < ClassFile.JAVA_9)
@@ -280,7 +238,7 @@ class SecurityActions extends SecurityManager
             Class<?> cls = Class.forName("jdk.internal.module.IllegalAccessLogger");
             Field logger = cls.getDeclaredField("logger");
             tu.call("putObjectVolatile", cls, tu.call("staticFieldOffset", logger), null);
-        } catch (Exception e) { /*swallow*/ }
+        } catch (Exception e) {  }
     }
 }
 

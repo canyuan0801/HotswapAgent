@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.hibernate;
 
 import static junit.framework.Assert.assertNull;
@@ -36,11 +19,7 @@ import org.hotswap.agent.util.test.WaitHelper;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * Basic test
- *
- * @author Jiri Bubnik
- */
+
 public class HibernatePluginTest {
 
     static EntityManagerFactory entityManagerFactory;
@@ -87,7 +66,7 @@ public class HibernatePluginTest {
 
     private void swapClasses() throws Exception {
 
-        // no annotation on description field
+
         assertTrue(TestEntity.class.getDeclaredField("description").getAnnotations().length == 0);
 
         HibernateRefreshCommands.reloadFlag = true;
@@ -99,7 +78,7 @@ public class HibernatePluginTest {
             }
         }));
 
-        // @Transient annotation (new instance is loaded)
+
         assertTrue(TestEntity.class.getDeclaredField("description").getAnnotation(Transient.class) != null);
     }
 
@@ -113,7 +92,7 @@ public class HibernatePluginTest {
             TestEntity simpleEntity = new TestEntity("Test", "descr");
             entityManager.persist(simpleEntity);
 
-            // flush and clear persistence context
+
             entityManager.flush();
             entityManager.clear();
 

@@ -7,57 +7,32 @@ import java.util.Map;
 
 import org.hotswap.agent.javassist.bytecode.annotation.TypeAnnotationsWriter;
 
-/**
- * A class representing
- * {@code RuntimeVisibleTypeAnnotations} attribute and
- * {@code RuntimeInvisibleTypeAnnotations} attribute.
- *
- * @since 3.19
- */
+
 public class TypeAnnotationsAttribute extends AttributeInfo {
-    /**
-     * The name of the {@code RuntimeVisibleTypeAnnotations} attribute.
-     */
+
     public static final String visibleTag = "RuntimeVisibleTypeAnnotations";
 
-    /**
-     * The name of the {@code RuntimeInvisibleTypeAnnotations} attribute.
-     */
+
     public static final String invisibleTag = "RuntimeInvisibleTypeAnnotations";
 
-    /**
-     * Constructs a <code>Runtime(In)VisibleTypeAnnotations_attribute</code>.
-     *
-     * @param cp            constant pool
-     * @param attrname      attribute name (<code>visibleTag</code> or
-     *                      <code>invisibleTag</code>).
-     * @param info          the contents of this attribute.  It does not
-     *                      include <code>attribute_name_index</code> or
-     *                      <code>attribute_length</code>.
-     */
+
     public TypeAnnotationsAttribute(ConstPool cp, String attrname, byte[] info) {
         super(cp, attrname, info);
     }
 
-    /**
-     * @param n     the attribute name.
-     */
+
     TypeAnnotationsAttribute(ConstPool cp, int n, DataInputStream in)
         throws IOException
     {
         super(cp, n, in);
     }
 
-    /**
-     * Returns <code>num_annotations</code>.
-     */
+
     public int numAnnotations() {
         return ByteArray.readU16bit(info, 0);
     }
 
-    /**
-     * Copies this attribute and returns a new copy.
-     */
+
     @Override
     public AttributeInfo copy(ConstPool newCp, Map<String,String> classnames) {
         Copier copier = new Copier(info, constPool, newCp, classnames);
@@ -70,10 +45,7 @@ public class TypeAnnotationsAttribute extends AttributeInfo {
         }
     }
 
-    /**
-     * @param oldname       a JVM class name.
-     * @param newname       a JVM class name.
-     */
+
     @Override
     void renameClass(String oldname, String newname) {
         Map<String,String> map = new HashMap<String,String>();
@@ -94,12 +66,7 @@ public class TypeAnnotationsAttribute extends AttributeInfo {
     @Override
     void getRefClasses(Map<String,String> classnames) { renameClass(classnames); }
 
-    /**
-     * To visit each elements of the type annotation attribute,
-     * call {@code annotationArray()}.
-     *
-     * @see #annotationArray()
-     */
+
     static class TAWalker extends AnnotationsAttribute.Walker {
         SubWalker subWalker;
 

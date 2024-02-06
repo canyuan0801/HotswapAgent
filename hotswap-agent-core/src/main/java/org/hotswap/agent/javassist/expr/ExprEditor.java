@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.expr;
 
@@ -25,62 +11,12 @@ import org.hotswap.agent.javassist.bytecode.ExceptionTable;
 import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.javassist.bytecode.Opcode;
 
-/**
- * A translator of method bodies.
- *
- * <p>The users can define a subclass of this class to customize how to
- * modify a method body.  The overall architecture is similar to the
- * strategy pattern.
- *
- * <p>If <code>instrument()</code> is called in
- * <code>CtMethod</code>, the method body is scanned from the beginning
- * to the end.
- * Whenever an expression, such as a method call and a <code>new</code>
- * expression (object creation),
- * is found, <code>edit()</code> is called in <code>ExprEdit</code>.
- * <code>edit()</code> can inspect and modify the given expression.
- * The modification is reflected on the original method body.  If
- * <code>edit()</code> does nothing, the original method body is not
- * changed.
- *
- * <p>The following code is an example:
- *
- * <pre>
- * CtMethod cm = ...;
- * cm.instrument(new ExprEditor() {
- *     public void edit(MethodCall m) throws CannotCompileException {
- *         if (m.getClassName().equals("Point")) {
- *             System.out.println(m.getMethodName() + " line: "
- *                                + m.getLineNumber());
- *     }
- * });
- * </pre>
- *
- * <p>This code inspects all method calls appearing in the method represented
- * by <code>cm</code> and it prints the names and the line numbers of the
- * methods declared in class <code>Point</code>.  This code does not modify
- * the body of the method represented by <code>cm</code>.  If the method
- * body must be modified, call <code>replace()</code>
- * in <code>MethodCall</code>.
- *
- * @see javassist.CtClass#instrument(ExprEditor)
- * @see javassist.CtMethod#instrument(ExprEditor)
- * @see javassist.CtConstructor#instrument(ExprEditor)
- * @see MethodCall
- * @see NewExpr
- * @see FieldAccess
- *
- * @see javassist.CodeConverter
- */
+
 public class ExprEditor {
-    /**
-     * Default constructor.  It does nothing.
-     */
+
     public ExprEditor() {}
 
-    /**
-     * Undocumented method.  Do not use; internal-use only.
-     */
+
     public boolean doit(CtClass clazz, MethodInfo minfo)
         throws CannotCompileException
     {
@@ -107,8 +43,8 @@ public class ExprEditor {
             }
         }
 
-        // codeAttr might be modified by other partiess
-        // so I check the current value of max-locals.
+
+
         if (codeAttr.getMaxLocals() < context.maxLocals)
             codeAttr.setMaxLocals(context.maxLocals);
 
@@ -125,9 +61,7 @@ public class ExprEditor {
         return edited;
     }
 
-    /**
-     * Visits each bytecode in the given range. 
-     */
+
     boolean doit(CtClass clazz, MethodInfo minfo, LoopContext context,
                  CodeIterator iterator, int endPos)
         throws CannotCompileException
@@ -138,7 +72,7 @@ public class ExprEditor {
             if (loopBody(iterator, clazz, minfo, context)) {
                 edited = true;
                 int size2 = iterator.getCodeLength();
-                if (size != size2)  // the body was modified.
+                if (size != size2)
                     endPos += size2 - size;
             }
         }
@@ -187,9 +121,9 @@ public class ExprEditor {
             int pos = iterator.next();
             int c = iterator.byteAt(pos);
 
-            if (c < Opcode.GETSTATIC)   // c < 178
-                /* skip */;
-            else if (c < Opcode.NEWARRAY) { // c < 188
+            if (c < Opcode.GETSTATIC)
+                ;
+            else if (c < Opcode.NEWARRAY) {
                 if (c == Opcode.INVOKESTATIC
                     || c == Opcode.INVOKEINTERFACE
                     || c == Opcode.INVOKEVIRTUAL) {
@@ -231,7 +165,7 @@ public class ExprEditor {
                     }
                 }
             }
-            else {  // c >= 188
+            else {
                 if (c == Opcode.NEWARRAY || c == Opcode.ANEWARRAY
                     || c == Opcode.MULTIANEWARRAY) {
                     expr = new NewArray(pos, iterator, clazz, minfo, c);
@@ -258,64 +192,27 @@ public class ExprEditor {
         }
     }
 
-    /**
-     * Edits a <code>new</code> expression (overridable).
-     * The default implementation performs nothing.
-     *
-     * @param e         the <code>new</code> expression creating an object.
-     */
+
     public void edit(NewExpr e) throws CannotCompileException {}
 
-    /**
-     * Edits an expression for array creation (overridable).
-     * The default implementation performs nothing.
-     *
-     * @param a         the <code>new</code> expression for creating an array.
-     * @throws CannotCompileException
-     */
+
     public void edit(NewArray a) throws CannotCompileException {}
 
-    /**
-     * Edits a method call (overridable).
-     *
-     * The default implementation performs nothing.
-     */
+
     public void edit(MethodCall m) throws CannotCompileException {}
 
-    /**
-     * Edits a constructor call (overridable).
-     * The constructor call is either
-     * <code>super()</code> or <code>this()</code>
-     * included in a constructor body.
-     *
-     * The default implementation performs nothing.
-     *
-     * @see #edit(NewExpr)
-     */
+
     public void edit(ConstructorCall c) throws CannotCompileException {}
 
-    /**
-     * Edits a field-access expression (overridable).
-     * Field access means both read and write.
-     * The default implementation performs nothing.
-     */
+
     public void edit(FieldAccess f) throws CannotCompileException {}
 
-    /**
-     * Edits an instanceof expression (overridable).
-     * The default implementation performs nothing.
-     */
+
     public void edit(Instanceof i) throws CannotCompileException {}
 
-    /**
-     * Edits an expression for explicit type casting (overridable).
-     * The default implementation performs nothing.
-     */
+
     public void edit(Cast c) throws CannotCompileException {}
 
-    /**
-     * Edits a catch clause (overridable).
-     * The default implementation performs nothing.
-     */
+
     public void edit(Handler h) throws CannotCompileException {}
 }

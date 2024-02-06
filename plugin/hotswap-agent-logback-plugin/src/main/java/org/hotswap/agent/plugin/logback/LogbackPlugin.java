@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.logback;
 
 import org.hotswap.agent.annotation.FileEvent;
@@ -35,11 +18,7 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Logback configuration file reload.
- *
- * @author Jiri Bubnik
- */
+
 @Plugin(name = "Logback", description = "Logback configuration reload.",
         testedVersions = {"1.0.6"}
 )
@@ -52,22 +31,17 @@ public class LogbackPlugin {
     @Init
     ClassLoader appClassLoader;
 
-    // ensure uri registered only once
+
     Set<URI> registeredURIs = new HashSet<URI>();
 
     boolean initialized;
 
-    /**
-     * Callback method from ch.qos.logback.core.joran.GenericConfigurator.
-     *
-     * @param configurator the configurator object
-     * @param url          configuration file url
-     */
+
     public void initLogback(final Object configurator, final URL url) {
         try {
             final URI uri = url.toURI();
 
-            // skip double registration on reload
+
             if (registeredURIs.contains(uri))
                 return;
 
@@ -89,12 +63,7 @@ public class LogbackPlugin {
         }
     }
 
-    /**
-     * Do the reload using logback configurator.
-     *
-     * @param configurator ch.qos.logback.core.joran.GenericConfigurator instance
-     * @param url          URL with configuration file
-     */
+
     protected void reload(Object configurator, URL url) {
 
         try {
@@ -105,7 +74,7 @@ public class LogbackPlugin {
         }
 
         try {
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+
             synchronized (configurator) {
                 ClassLoader classLoader = configurator.getClass().getClassLoader();
 
@@ -113,11 +82,11 @@ public class LogbackPlugin {
                 Class<?> contextAwareBaseClass = classLoader.loadClass("ch.qos.logback.core.spi.ContextAwareBase");
                 Class<?> contextClass = classLoader.loadClass("ch.qos.logback.classic.LoggerContext");
 
-                // reset current context
+
                 Object context = contextAwareBaseClass.getDeclaredMethod("getContext").invoke(configurator);
                 contextClass.getDeclaredMethod("reset").invoke(context);
 
-                // configure the URL
+
                 configuratorClass.getDeclaredMethod("doConfigure", URL.class).invoke(configurator, url);
 
                 LOGGER.reload("Logback configuration reloaded from url '{}'.", url);
@@ -127,9 +96,7 @@ public class LogbackPlugin {
         }
     }
 
-    /**
-     * Transform configurator class to register logback config URL.
-     */
+
     @OnClassLoadEvent(classNameRegexp = "ch.qos.logback.core.joran.GenericConfigurator")
     public static void registerConfigurator(ClassPool classPool, CtClass ctClass) throws NotFoundException, CannotCompileException {
         CtMethod m = ctClass.getDeclaredMethod("doConfigure", new CtClass[]{classPool.get("java.net.URL")});

@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.config;
 
 import java.util.ArrayList;
@@ -33,54 +16,44 @@ import org.hotswap.agent.util.classloader.ClassLoaderDefineClassPatcher;
 import org.hotswap.agent.util.scanner.ClassPathAnnotationScanner;
 import org.hotswap.agent.util.scanner.ClassPathScanner;
 
-/**
- * Registry to support plugin manager.
- *
- * @author Jiri Bubnik
- */
+
 public class PluginRegistry {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(PluginRegistry.class);
 
-    // plugin class -> Map (ClassLoader -> Plugin instance)
+
     protected Map<Class, Map<ClassLoader, Object>> registeredPlugins = Collections.synchronizedMap(new HashMap<Class, Map<ClassLoader, Object>>());
 
-    /**
-     * Returns map of all registered plugins.
-     *
-     * @return map plugin class -> Map (ClassLoader -> Plugin instance)
-     */
+
     public Map<Class, Map<ClassLoader, Object>> getRegisteredPlugins() {
         return registeredPlugins;
     }
 
-    // plugin manager instance
+
     private PluginManager pluginManager;
 
-    // scanner to search for plugins
+
     private ClassPathAnnotationScanner annotationScanner;
 
     public void setAnnotationScanner(ClassPathAnnotationScanner annotationScanner) {
         this.annotationScanner = annotationScanner;
     }
 
-    // processor to resolve plugin annotations
+
     protected AnnotationProcessor annotationProcessor;
 
     public void setAnnotationProcessor(AnnotationProcessor annotationProcessor) {
         this.annotationProcessor = annotationProcessor;
     }
 
-    // copy plugin classes from application classloader to the agent classloader
+
     private ClassLoaderDefineClassPatcher classLoaderPatcher;
 
     public void setClassLoaderPatcher(ClassLoaderDefineClassPatcher classLoaderPatcher) {
         this.classLoaderPatcher = classLoaderPatcher;
     }
 
-    /**
-     * Create an instanec of plugin registry and initialize scanner and processor.
-     */
+
     public PluginRegistry(PluginManager pluginManager, ClassLoaderDefineClassPatcher classLoaderPatcher) {
         this.pluginManager = pluginManager;
         this.classLoaderPatcher = classLoaderPatcher;
@@ -88,12 +61,7 @@ public class PluginRegistry {
         annotationProcessor = new AnnotationProcessor(pluginManager);
     }
 
-    /**
-     * Scan for plugins by @Plugin annotation on PLUGIN_PATH and process plugin annotations.
-     *
-     * @param classLoader   classloader to resolve plugin package. This will be used by annotation scanner.
-     * @param pluginPackage the package to be searched (e.g. org.agent.hotswap.plugin)
-     */
+
     public void scanPlugins(ClassLoader classLoader, String pluginPackage) {
         String pluginPath = pluginPackage.replace(".", "/");
         ClassLoader agentClassLoader = getClass().getClassLoader();
@@ -102,8 +70,8 @@ public class PluginRegistry {
             List<String> discoveredPlugins = annotationScanner.scanPlugins(classLoader, pluginPath);
             List<String> discoveredPluginNames = new ArrayList<>();
 
-            // Plugin class must be always defined directly in the agent classloader, otherwise it will not be available
-            // to the instrumentation process. Copy the definition using patcher
+
+
             if (discoveredPlugins.size() > 0 && agentClassLoader != classLoader) {
                 classLoaderPatcher.patch(classLoader, pluginPath, agentClassLoader, null);
             }
@@ -123,8 +91,8 @@ public class PluginRegistry {
                     continue;
                 }
 
-                // check for duplicate plugin definition. It may happen if class directory AND the JAR file
-                // are both available.
+
+
                 if (registeredPlugins.containsKey(pluginClass))
                     continue;
 
@@ -147,30 +115,23 @@ public class PluginRegistry {
         }
     }
 
-    /**
-     * Init a plugin (create new plugin instance) in a application classloader.
-     * Each classloader may contain only one instance of a plugin.
-     *
-     * @param pluginClass    class of plugin to instantiate
-     * @param appClassLoader target application classloader
-     * @return the new plugin instance or null if plugin is disabled.
-     */
+
     public Object initializePlugin(String pluginClass, ClassLoader appClassLoader) {
         if (appClassLoader == null)
             throw new IllegalArgumentException("Cannot initialize plugin '" + pluginClass + "', appClassLoader is null.");
 
-        // ensure classloader initialized
+
         pluginManager.initClassLoader(appClassLoader);
 
         Class<Object> clazz = getPluginClass(pluginClass);
 
-        // skip if the plugin is disabled
+
         if (pluginManager.getPluginConfiguration(appClassLoader).isDisabledPlugin(clazz)) {
             LOGGER.debug("Plugin {} disabled in classloader {}.", clazz, appClassLoader );
             return null;
         }
 
-        // already initialized in this or parent classloader
+
         if (doHasPlugin(clazz, appClassLoader, false, true)) {
             LOGGER.debug("Plugin {} already initialized in parent classloader of {}.", clazz, appClassLoader );
             return getPlugin(clazz, appClassLoader);
@@ -197,15 +158,7 @@ public class PluginRegistry {
 
     }
 
-    /**
-     * Returns plugin instance by it's type and classLoader.
-     *
-     * @param pluginClass type of the plugin
-     * @param classLoader classloader of the plugin
-     * @param <T>         type of the plugin to return correct instance.
-     * @return the plugin
-     * @throws IllegalArgumentException if classLoader not initialized or plugin not found
-     */
+
     public <T> T getPlugin(Class<T> pluginClass, ClassLoader classLoader) {
         if (registeredPlugins.isEmpty()) {
             throw new IllegalStateException("No plugin initialized. " +
@@ -220,24 +173,17 @@ public class PluginRegistry {
         synchronized(pluginInstances) {
             for (Map.Entry<ClassLoader, Object> registeredClassLoaderEntry : pluginInstances.entrySet()) {
                 if (isParentClassLoader(registeredClassLoaderEntry.getKey(), classLoader)) {
-                    //noinspection unchecked
+
                     return (T) registeredClassLoaderEntry.getValue();
                 }
             }
         }
 
-        // not found
+
         throw new IllegalArgumentException(String.format("Plugin %s is not initialized in classloader %s.", pluginClass, classLoader));
     }
 
-    /**
-     * Check if plugin is initialized in classLoader.
-     *
-     * @param pluginClass type of the plugin
-     * @param classLoader classloader of the plugin
-     * @param checkParent for parent classloaders as well?
-     * @return true/false
-     */
+
     public boolean hasPlugin(Class<?> pluginClass, ClassLoader classLoader, boolean checkParent) {
         return doHasPlugin(pluginClass, classLoader,checkParent, false);
     }
@@ -263,14 +209,9 @@ public class PluginRegistry {
         return false;
     }
 
-    /**
-     * Search for the plugin in the registry and return associated classloader.
-     *
-     * @param plugin existing plugin
-     * @return the classloader this plugin is associated with
-     */
+
     public ClassLoader getAppClassLoader(Object plugin) {
-        // search with for loop. Maybe performance improvement to create reverse map if this is used heavily
+
         Class<Object> clazz = getPluginClass(plugin.getClass().getName());
         Map<ClassLoader, Object> pluginInstances = registeredPlugins.get(clazz);
         if (pluginInstances != null) {
@@ -285,11 +226,11 @@ public class PluginRegistry {
     }
 
 
-    // resolve class in this classloader - plugin class should be always only in the same classloader
-    // as the plugin manager.
+
+
     protected Class<Object> getPluginClass(String pluginClass) {
         try {
-            // noinspection unchecked
+
             if (getClass().getClassLoader() == null) {
                 return (Class<Object>) Class.forName(pluginClass, true, null);
             }
@@ -299,7 +240,7 @@ public class PluginRegistry {
         }
     }
 
-    // check if parentClassLoader is parent of classLoader
+
     private boolean isParentClassLoader(ClassLoader parentClassLoader, ClassLoader classLoader) {
         if (parentClassLoader.equals(classLoader))
             return true;
@@ -309,12 +250,7 @@ public class PluginRegistry {
             return false;
     }
 
-    /**
-     * Create a new instance of the plugin.
-     *
-     * @param plugin plugin class
-     * @return new instance or null if instantiation fail.
-     */
+
     protected Object instantiate(Class<Object> plugin) {
         try {
             return plugin.newInstance();
@@ -327,10 +263,7 @@ public class PluginRegistry {
         return null;
     }
 
-    /**
-     * Remove all registered plugins for a classloader.
-     * @param classLoader classloader to cleanup
-     */
+
     public void closeClassLoader(ClassLoader classLoader) {
         LOGGER.debug("Closing classloader {}.", classLoader);
         synchronized (registeredPlugins) {

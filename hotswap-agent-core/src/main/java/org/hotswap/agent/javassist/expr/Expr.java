@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.expr;
 
@@ -39,9 +25,7 @@ import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.javassist.bytecode.Opcode;
 import org.hotswap.agent.javassist.compiler.Javac;
 
-/**
- * Expression.
- */
+
 public abstract class Expr implements Opcode {
     int currentPos;
     CodeIterator iterator;
@@ -52,9 +36,7 @@ public abstract class Expr implements Opcode {
 
     static final String javaLangObject = "java.lang.Object";
 
-    /**
-     * Undocumented constructor. Do not use; internal-use only.
-     */
+
     protected Expr(int pos, CodeIterator i, CtClass declaring, MethodInfo m) {
         currentPos = pos;
         iterator = i;
@@ -62,12 +44,7 @@ public abstract class Expr implements Opcode {
         thisMethod = m;
     }
 
-    /**
-     * Returns the class that declares the method enclosing
-     * this expression.
-     *
-     * @since 3.7
-     */
+
     public CtClass getEnclosingClass() { return thisClass; }
 
     protected final ConstPool getConstPool() {
@@ -86,16 +63,12 @@ public abstract class Expr implements Opcode {
         return maxStack;
     }
 
-    /**
-     * Returns true if this method is static.
-     */
+
     protected final boolean withinStatic() {
         return (thisMethod.getAccessFlags() & AccessFlag.STATIC) != 0;
     }
 
-    /**
-     * Returns the constructor or method containing the expression.
-     */
+
     public CtBehavior where() {
         MethodInfo mi = thisMethod;
         CtBehavior[] cb = thisClass.getDeclaredBehaviors();
@@ -107,11 +80,7 @@ public abstract class Expr implements Opcode {
         if (init != null && init.getMethodInfo2() == mi)
             return init;
 
-        /* getDeclaredBehaviors() returns a list of methods/constructors.
-         * Although the list is cached in a CtClass object, it might be
-         * recreated for some reason.  Thus, the member name and the signature
-         * must be also checked.
-         */
+
         for (int i = cb.length - 1; i >= 0; --i) {
             if (thisMethod.getName().equals(cb[i].getMethodInfo2().getName())
                 && thisMethod.getDescriptor()
@@ -123,12 +92,7 @@ public abstract class Expr implements Opcode {
         throw new RuntimeException("fatal: not found");
     }
 
-    /**
-     * Returns the list of exceptions that the expression may throw. This list
-     * includes both the exceptions that the try-catch statements including the
-     * expression can catch and the exceptions that the throws declaration
-     * allows the method to throw.
-     */
+
     public CtClass[] mayThrow() {
         ClassPool pool = thisClass.getClassPool();
         ConstPool cp = thisMethod.getConstPool();
@@ -176,29 +140,17 @@ public abstract class Expr implements Opcode {
         list.add(c);
     }
 
-    /**
-     * Returns the index of the bytecode corresponding to the expression. It is
-     * the index into the byte array containing the Java bytecode that
-     * implements the method.
-     */
+
     public int indexOfBytecode() {
         return currentPos;
     }
 
-    /**
-     * Returns the line number of the source line containing the expression.
-     *
-     * @return -1 if this information is not available.
-     */
+
     public int getLineNumber() {
         return thisMethod.getLineNumber(currentPos);
     }
 
-    /**
-     * Returns the source file containing the expression.
-     * 
-     * @return null if this information is not available.
-     */
+
     public String getFileName() {
         ClassFile cf = thisClass.getClassFile2();
         if (cf == null)
@@ -208,9 +160,7 @@ public abstract class Expr implements Opcode {
 
     static final boolean checkResultValue(CtClass retType, String prog)
             throws CannotCompileException {
-        /*
-         * Is $_ included in the source code?
-         */
+
         boolean hasIt = (prog.indexOf(Javac.resultVarName) >= 0);
         if (!hasIt && retType != CtClass.voidType)
             throw new CannotCompileException(
@@ -220,13 +170,7 @@ public abstract class Expr implements Opcode {
         return hasIt;
     }
 
-    /*
-     * If isStaticCall is true, null is assigned to $0. So $0 must be declared
-     * by calling Javac.recordParams().
-     * 
-     * After executing this method, the current stack depth might be less than
-     * 0.
-     */
+
     static final void storeStack(CtClass[] params, boolean isStaticCall,
             int regno, Bytecode bytecode) {
         storeStack0(0, params.length, params, regno + 1, bytecode);
@@ -251,29 +195,15 @@ public abstract class Expr implements Opcode {
         bytecode.addStore(regno, c);
     }
 
-    // The implementation of replace() should call thisClass.checkModify()
-    // so that isModify() will return true.  Otherwise, thisClass.classfile
-    // might be released during compilation and the compiler might generate
-    // bytecode with a wrong copy of ConstPool.
 
-    /**
-     * Replaces this expression with the bytecode derived from
-     * the given source text.
-     *
-     * @param statement         a Java statement except try-catch.
-     */
+
+
+
+
+
     public abstract void replace(String statement) throws CannotCompileException;
 
-    /**
-     * Replaces this expression with the bytecode derived from
-     * the given source text and <code>ExprEditor</code>.
-     *
-     * @param statement         a Java statement except try-catch.
-     * @param recursive         if not null, the substituted bytecode
-     *                          is recursively processed by the given
-     *                          <code>ExprEditor</code>.
-     * @since 3.1
-     */
+
     public void replace(String statement, ExprEditor recursive)
         throws CannotCompileException
     {

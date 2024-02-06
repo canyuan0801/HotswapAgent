@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.watch.nio;
 
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -50,17 +33,7 @@ import org.hotswap.agent.logging.AgentLogger.Level;
 import org.hotswap.agent.watch.WatchEventListener;
 import org.hotswap.agent.watch.Watcher;
 
-/**
- * NIO2 watcher implementation for systems which support
- * ExtendedWatchEventModifier.FILE_TREE
- * <p/>
- * Java 7 (NIO2) watch a directory (or tree) for changes to files.
- * <p/>
- * By http://docs.oracle.com/javase/tutorial/essential/io/examples/WatchDir.java
- *
- * @author Jiri Bubnik
- * @author alpapad@gmail.com
- */
+
 public abstract class AbstractNIO2Watcher implements Watcher {
     protected AgentLogger LOGGER = AgentLogger.getLogger(this.getClass());
 
@@ -70,7 +43,7 @@ public abstract class AbstractNIO2Watcher implements Watcher {
     protected final Map<WatchKey, Path> keys;
     private final Map<Path, List<WatchEventListener>> listeners = new ConcurrentHashMap<>();
 
-    // keep track about which classloader requested which event
+
     protected Map<WatchEventListener, ClassLoader> classLoaderListeners = new ConcurrentHashMap<>();
 
     private Thread runner;
@@ -94,9 +67,9 @@ public abstract class AbstractNIO2Watcher implements Watcher {
     public synchronized void addEventListener(ClassLoader classLoader, URI pathPrefix, WatchEventListener listener) {
         File path;
         try {
-            // check that it is regular file
-            // toString() is weird and solves HiarchicalUriException for URI
-            // like "file:./src/resources/file.txt".
+
+
+
             path = new File(pathPrefix);
          } catch (IllegalArgumentException e) {
             if (!LOGGER.isLevelEnabled(Level.TRACE)) {
@@ -146,11 +119,7 @@ public abstract class AbstractNIO2Watcher implements Watcher {
         }
     }
 
-    /**
-     * Remove all transformers registered with a classloader
-     *
-     * @param classLoader
-     */
+
     @Override
     public void closeClassLoader(ClassLoader classLoader) {
         for (Iterator<Entry<WatchEventListener, ClassLoader>> entryIterator = classLoaderListeners.entrySet().iterator(); entryIterator.hasNext();) {
@@ -176,7 +145,7 @@ public abstract class AbstractNIO2Watcher implements Watcher {
                 }
             }
         }
-        // cleanup...
+
         if (classLoaderListeners.isEmpty()) {
             listeners.clear();
             for (WatchKey wk : keys.keySet()) {
@@ -193,7 +162,7 @@ public abstract class AbstractNIO2Watcher implements Watcher {
             }
             LOGGER.info("All classloaders closed, released watch service..");
             try {
-                // Reset
+
                 this.watcher = FileSystems.getDefault().newWatchService();
             } catch (IOException e) {
                 LOGGER.error("Ooops", e);
@@ -202,24 +171,17 @@ public abstract class AbstractNIO2Watcher implements Watcher {
         LOGGER.debug("All watch listeners removed for classLoader {}", classLoader);
     }
 
-    /**
-     * Registers the given directory
-     */
+
     public void addDirectory(Path path) throws IOException {
        registerAll(path);
     }
 
     protected abstract void registerAll(final Path dir) throws IOException;
 
-    /**
-     * Process all events for keys queued to the watcher
-     *
-     * @return true if should continue
-     * @throws InterruptedException
-     */
+
     private boolean processEvents() throws InterruptedException {
 
-        // wait for key to be signaled
+
         WatchKey key = watcher.poll(10, TimeUnit.MILLISECONDS);
         if (key == null) {
             return true;
@@ -240,7 +202,7 @@ public abstract class AbstractNIO2Watcher implements Watcher {
                 continue;
             }
 
-            // Context for directory entry event is the file name of entry
+
             WatchEvent<Path> ev = cast(event);
             Path name = ev.context();
             Path child = dir.resolve(name);
@@ -249,8 +211,8 @@ public abstract class AbstractNIO2Watcher implements Watcher {
 
             dispatcher.add(ev, child);
 
-            // if directory is created, and watching recursively, then
-            // register it and its sub-directories
+
+
             if (kind == ENTRY_CREATE) {
                 try {
                     if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
@@ -262,12 +224,12 @@ public abstract class AbstractNIO2Watcher implements Watcher {
             }
         }
 
-        // reset key and remove from set if directory no longer accessible
+
         boolean valid = key.reset();
         if (!valid) {
             LOGGER.warning("Watcher on {} not valid, removing path=", keys.get(key));
             keys.remove(key);
-            // all directories are inaccessible
+
             if (keys.isEmpty()) {
                 return false;
             }
@@ -310,15 +272,7 @@ public abstract class AbstractNIO2Watcher implements Watcher {
         stopped = true;
     }
 
-    /**
-     * Get a Watch event modifier. These are platform specific and hiden in sun api's
-     *
-     * @see <a href="https://github.com/HotswapProjects/HotswapAgent/issues/41">
-     *      Issue#41</a>
-     * @see <a href=
-     *      "http://stackoverflow.com/questions/9588737/is-java-7-watchservice-slow-for-anyone-else">
-     *      Is Java 7 WatchService Slow for Anyone Else?</a>
-     */
+
     static WatchEvent.Modifier getWatchEventModifier(String claz, String field) {
         try {
             Class<?> c = Class.forName(claz);

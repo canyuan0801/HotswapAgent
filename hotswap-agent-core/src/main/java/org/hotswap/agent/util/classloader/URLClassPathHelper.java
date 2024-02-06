@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.util.classloader;
 
 import org.hotswap.agent.javassist.util.proxy.MethodFilter;
@@ -36,9 +19,7 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
-/**
- * Helper methods to enhance URL ClassLoader.
- */
+
 public class URLClassPathHelper {
     private static final AgentLogger LOGGER = AgentLogger.getLogger(URLClassPathHelper.class);
 
@@ -51,7 +32,7 @@ public class URLClassPathHelper {
             urlClassPathClass = classLoader.loadClass("sun.misc.URLClassPath");
         } catch (ClassNotFoundException e) {
             try {
-                // java9
+
                 urlClassPathClass = classLoader.loadClass("jdk.internal.loader.URLClassPath");
             } catch (ClassNotFoundException e1) {
                 LOGGER.error("Unable to loadClass URLClassPath!");
@@ -69,17 +50,10 @@ public class URLClassPathHelper {
         }
     }
 
-    /**
-     * Insert classpath at the beginning of the classloader path.
-     * This implementation will replace ucp field (URLClassPath) with new definition. Any existing Loader
-     * is discarded and recreated.
-     *
-     * @param classLoader    classloader
-     * @param extraClassPath path to prepend
-     */
+
     public static void prependClassPath(ClassLoader classLoader, URL[] extraClassPath) {
         synchronized (classLoader) {
-            // set new URLClassPath to the classloader via reflection
+
             try {
                 Field ucpField = getUcpField(classLoader);
                 if (ucpField == null) {
@@ -111,7 +85,7 @@ public class URLClassPathHelper {
 
     public static void setWatchResourceLoader(ClassLoader classLoader, final ClassLoader watchResourceLoader) {
         synchronized (classLoader) {
-            // set new URLClassPath to the classloader via reflection
+
             try {
                 Field ucpField = getUcpField(classLoader);
                 if (ucpField == null) {
@@ -138,11 +112,11 @@ public class URLClassPathHelper {
 
     private static Object createClassPathInstance(URL[] urls) throws Exception {
         try {
-            // java8
+
             Constructor<?> constr = urlClassPathProxyClass.getConstructor(new Class[]{URL[].class});
             return constr.newInstance(new Object[]{urls});
         } catch (NoSuchMethodException e) {
-            // java9
+
             Constructor<?> constr = urlClassPathProxyClass.getConstructor(new Class[]{URL[].class, AccessControlContext.class});
             return constr.newInstance(new Object[]{urls, null});
         }
@@ -174,17 +148,7 @@ public class URLClassPathHelper {
         return origClassPath;
     }
 
-    /**
-     * This method works for the following classloaders:
-     * <li>
-     *     <ul>JDK 8: sun.misc.Launcher$AppClassLoaders</ul>
-     *     <ul>JDK 9 and above: jdk.internal.loader.ClassLoaders$AppClassLoader</ul>
-     * </li>
-     * In order to make it work on JDK 9 and above, the following JVM argument must be used:
-     * <pre>
-     *     --add-opens java.base/jdk.internal.loader=ALL-UNNAMED
-     * </pre>
-     */
+
     private static Field getUcpField(ClassLoader classLoader) throws NoSuchFieldException {
         if (classLoader instanceof URLClassLoader) {
             return URLClassLoader.class.getDeclaredField("ucp");
@@ -198,19 +162,11 @@ public class URLClassPathHelper {
         return null;
     }
 
-    /**
-     * jdk.internal.loader.ClassLoaders.AppClassLoader and its super class 'jdk.internal.loader.BuiltinClassLoader' have a field named "ucp".
-     * This field is final and private, if it needs to be modified, it needs to be modified in all super classes and the current class.
-     *
-     * @param classLoader
-     * @param ucpField
-     * @param urlClassPath
-     * @throws IllegalAccessException
-     */
+
     private static void setUcpFieldOfAllClassLoader(ClassLoader classLoader, Field ucpField, Object urlClassPath) throws IllegalAccessException {
-        // 1. set the field of current class
+
         ucpField.set(classLoader, urlClassPath);
-        // 2. set the field of all super classes
+
         Class<?> currentClass = classLoader.getClass();
         while ((currentClass = currentClass.getSuperclass()) != null) {
             try {
@@ -250,16 +206,13 @@ public class URLClassPathHelper {
             this.watchResourceLoader = watchResourceLoader;
         }
 
-        /**
-         * Return orig classpath as was set by hotswap agent.
-         * Note: cannot use classLoader.getURLs(), because Tomcat WebappClassLoader does not return modified classPath.
-         */
+
         public URL[] getOrigClassPath() {
             return origClassPath;
         }
 
-        // code here with the implementation of MyCustomInterface
-        // handling the entity and your customField
+
+
         public Object invoke(Object self, Method method, Method proceed, Object[] args) throws Throwable {
             String methodName = method.getName();
             Class<?>[] parameterTypes = method.getParameterTypes();

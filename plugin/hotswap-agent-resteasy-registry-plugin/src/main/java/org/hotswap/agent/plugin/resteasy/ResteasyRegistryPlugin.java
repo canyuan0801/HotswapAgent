@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.resteasy;
 
 import org.hotswap.agent.annotation.FileEvent;
@@ -40,15 +23,10 @@ import org.hotswap.agent.util.PluginManagerInvoker;
 import org.hotswap.agent.util.ReflectionHelper;
 
 
-/**
- * RESTeasy plugin which cleanups and registers class redefinitions in the RESTeasy ResourceMethodRegistry
- *
- * @author alpapad@gmail.com
- *
- */
-@Plugin(name = "ResteasyRegistry", //
-        description = "Jboss RESTeasy Reload ResourceMethodRegistry if @Path annotated class is changed.", //
-        testedVersions = { "3.0.14.Final" }, //
+
+@Plugin(name = "ResteasyRegistry",
+        description = "Jboss RESTeasy Reload ResourceMethodRegistry if @Path annotated class is changed.",
+        testedVersions = { "3.0.14.Final" },
         expectedVersions = { "3.0.14" })
 public class ResteasyRegistryPlugin {
 
@@ -66,16 +44,11 @@ public class ResteasyRegistryPlugin {
 
     Object servletContainerDispatcher;
 
-    /**
-     * Patch ResourceMethodRegistry, make rootNode && root fields public
-     *
-     * @param ctClass
-     * @param classPool
-     */
+
     @OnClassLoadEvent(classNameRegexp = "org.jboss.resteasy.core.ResourceMethodRegistry")
     public static void patchResourceMethodRegistry(CtClass ctClass, ClassPool classPool) {
         try {
-            // Make ResourceMethodRegistry root nodes readable
+
             ctClass.getField("rootNode").setModifiers(AccessFlag.PUBLIC);
             ctClass.getField("root").setModifiers(AccessFlag.PUBLIC);
         } catch (NotFoundException e) {
@@ -83,23 +56,19 @@ public class ResteasyRegistryPlugin {
         }
     }
 
-    /**
-     *
-     * @param ctClass
-     * @param classPool
-     */
+
     @OnClassLoadEvent(classNameRegexp = "org.jboss.resteasy.plugins.server.servlet.FilterDispatcher")
     public static void patchFilterDispatcher(CtClass ctClass, ClassPool classPool) {
         try{
             CtMethod init = ctClass.getDeclaredMethod("init");
-            init.insertAfter(""//
-                    +"java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();" //
-                    +"java.lang.Object $$servletContext = servletConfig.getServletContext();"//
-                    + PluginManagerInvoker.buildInitializePlugin(ResteasyRegistryPlugin.class, "$$cl")//
+            init.insertAfter(""
+                    +"java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();"
+                    +"java.lang.Object $$servletContext = servletConfig.getServletContext();"
+                    + PluginManagerInvoker.buildInitializePlugin(ResteasyRegistryPlugin.class, "$$cl")
                     + PluginManagerInvoker.buildCallPluginMethod("$$cl", ResteasyRegistryPlugin.class,
-                            "registerContext", "$$servletContext", "java.lang.Object")//
+                            "registerContext", "$$servletContext", "java.lang.Object")
                     + PluginManagerInvoker.buildCallPluginMethod("$$cl", ResteasyRegistryPlugin.class,
-                            "registerServletContainerDispatcher", "servletContainerDispatcher", "java.lang.Object")//
+                            "registerServletContainerDispatcher", "servletContainerDispatcher", "java.lang.Object")
             );
         } catch(NotFoundException | CannotCompileException e){
             LOGGER.error("Error patching FilterDispatcher", e);
@@ -111,14 +80,14 @@ public class ResteasyRegistryPlugin {
         try{
             CtMethod init = ctClass.getDeclaredMethod("init");
 
-            init.insertAfter(""//
-                    + "java.lang.Object $$servletContext = servletConfig.getServletContext();" //
-                    + "java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();"//
-                    + PluginManagerInvoker.buildInitializePlugin(ResteasyRegistryPlugin.class, "$$cl") //
+            init.insertAfter(""
+                    + "java.lang.Object $$servletContext = servletConfig.getServletContext();"
+                    + "java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();"
+                    + PluginManagerInvoker.buildInitializePlugin(ResteasyRegistryPlugin.class, "$$cl")
                     + PluginManagerInvoker.buildCallPluginMethod("$$cl", ResteasyRegistryPlugin.class,
-                            "registerContext", "$$servletContext", "java.lang.Object") //
+                            "registerContext", "$$servletContext", "java.lang.Object")
                     + PluginManagerInvoker.buildCallPluginMethod("$$cl", ResteasyRegistryPlugin.class,
-                            "registerServletContainerDispatcher", "servletContainerDispatcher", "java.lang.Object")//
+                            "registerServletContainerDispatcher", "servletContainerDispatcher", "java.lang.Object")
             );
         } catch(NotFoundException | CannotCompileException e){
             LOGGER.error("Error patching HttpServletDispatcher", e);

@@ -1,37 +1,11 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.runtime;
 
-/**
- * A support class for implementing <code>$sig</code> and
- * <code>$type</code>.
- * This support class is required at runtime
- * only if <code>$sig</code> or <code>$type</code> is used.
- */
+
 public class Desc {
 
-    /**
-     * Specifies how a <code>java.lang.Class</code> object is loaded.
-     *
-     * <p>If true, it is loaded by:
-     * <pre>Thread.currentThread().getContextClassLoader().loadClass()</pre>
-     * <p>If false, it is loaded by <code>Class.forName()</code>.
-     * The default value is false.
-     */
+
     public static boolean useContextClassLoader = false;
 
     private static final ThreadLocal<Boolean> USE_CONTEXT_CLASS_LOADER_LOCALLY = new ThreadLocal<Boolean>() {
@@ -57,10 +31,7 @@ public class Desc {
         return Class.forName(name);
     }
 
-    /**
-     * Interprets the given class name.
-     * It is used for implementing <code>$class</code>.
-     */
+
     public static Class<?> getClazz(String name) {
         try {
             return getClassObject(name);
@@ -73,10 +44,7 @@ public class Desc {
         }
     }
 
-    /**
-     * Interprets the given type descriptor representing a method
-     * signature.  It is used for implementing <code>$sig</code>.
-     */
+
     public static Class<?>[] getParams(String desc) {
         if (desc.charAt(0) != '(')
             throw new RuntimeException("$sig: internal error");
@@ -84,10 +52,7 @@ public class Desc {
         return getType(desc, desc.length(), 1, 0);
     }
 
-    /**
-     * Interprets the given type descriptor.
-     * It is used for implementing <code>$type</code>.
-     */
+
     public static Class<?> getType(String desc) {
         Class<?>[] result = getType(desc, desc.length(), 0, 0);
         if (result == null || result.length != 1)
@@ -166,7 +131,7 @@ public class Desc {
             result[num] = getClassObject(cname.replace('/', '.'));
         }
         catch (ClassNotFoundException e) {
-            // "new RuntimeException(e)" is not available in JDK 1.3.
+
             throw new RuntimeException(e.getMessage());
         }
 

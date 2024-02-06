@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.bytecode;
 
@@ -28,9 +14,7 @@ import java.util.Set;
 
 import org.hotswap.agent.javassist.CtClass;
 
-/**
- * Constant pool table.
- */
+
 public final class ConstPool
 {
     LongVector items;
@@ -38,163 +22,101 @@ public final class ConstPool
     int thisClassInfo;
     Map<ConstInfo,ConstInfo> itemsCache;
 
-    /**
-     * <code>CONSTANT_Class</code>
-     */
+
     public static final int CONST_Class = ClassInfo.tag;
 
-    /**
-     * <code>CONSTANT_Fieldref</code>
-     */
+
     public static final int CONST_Fieldref = FieldrefInfo.tag;
 
-    /**
-     * <code>CONSTANT_Methodref</code>
-     */
+
     public static final int CONST_Methodref = MethodrefInfo.tag;
 
-    /**
-     * <code>CONSTANT_InterfaceMethodref</code>
-     */
+
     public static final int CONST_InterfaceMethodref
                                         = InterfaceMethodrefInfo.tag;
 
-    /**
-     * <code>CONSTANT_String</code>
-     */
+
     public static final int CONST_String = StringInfo.tag;
 
-    /**
-     * <code>CONSTANT_Integer</code>
-     */
+
     public static final int CONST_Integer = IntegerInfo.tag;
 
-    /**
-     * <code>CONSTANT_Float</code>
-     */
+
     public static final int CONST_Float = FloatInfo.tag;
 
-    /**
-     * <code>CONSTANT_Long</code>
-     */
+
     public static final int CONST_Long = LongInfo.tag;
 
-    /**
-     * <code>CONSTANT_Double</code>
-     */
+
     public static final int CONST_Double = DoubleInfo.tag;
 
-    /**
-     * <code>CONSTANT_NameAndType</code>
-     */
+
     public static final int CONST_NameAndType = NameAndTypeInfo.tag;
 
-    /**
-     * <code>CONSTANT_Utf8</code>
-     */
+
     public static final int CONST_Utf8 = Utf8Info.tag;
 
-    /**
-     * <code>CONSTANT_MethodHandle</code>
-     */
+
     public static final int CONST_MethodHandle = MethodHandleInfo.tag;
 
-    /**
-     * <code>CONSTANT_MethodHandle</code>
-     */
+
     public static final int CONST_MethodType = MethodTypeInfo.tag;
 
-    /**
-     * <code>CONSTANT_MethodHandle</code>
-     */
+
     public static final int CONST_InvokeDynamic = InvokeDynamicInfo.tag;
 
-    /**
-     * <code>CONSTANT_Module</code>
-     */
+
     public static final int CONST_Module = ModuleInfo.tag;
 
-    /**
-     * <code>CONSTANT_Package</code>
-     */
+
     public static final int CONST_Package = PackageInfo.tag;
 
-    /**
-     * Represents the class using this constant pool table.
-     */
+
     public static final CtClass THIS = null;
 
-    /**
-     * <code>reference_kind</code> of <code>CONSTANT_MethodHandle_info</code>.
-     */
+
     public static final int REF_getField = 1;
 
-    /**
-     * <code>reference_kind</code> of <code>CONSTANT_MethodHandle_info</code>.
-     */
+
     public static final int REF_getStatic = 2;
 
-    /**
-     * <code>reference_kind</code> of <code>CONSTANT_MethodHandle_info</code>.
-     */
+
     public static final int REF_putField = 3;
 
-    /**
-     * <code>reference_kind</code> of <code>CONSTANT_MethodHandle_info</code>.
-     */
+
     public static final int REF_putStatic = 4;
 
-    /**
-     * <code>reference_kind</code> of <code>CONSTANT_MethodHandle_info</code>.
-     */
+
     public static final int REF_invokeVirtual = 5;
 
-    /**
-     * <code>reference_kind</code> of <code>CONSTANT_MethodHandle_info</code>.
-     */
+
     public static final int REF_invokeStatic = 6;
 
-    /**
-     * <code>reference_kind</code> of <code>CONSTANT_MethodHandle_info</code>.
-     */
+
     public static final int REF_invokeSpecial = 7;
 
-    /**
-     * <code>reference_kind</code> of <code>CONSTANT_MethodHandle_info</code>.
-     */
+
     public static final int REF_newInvokeSpecial = 8;
 
-    /**
-     * <code>reference_kind</code> of <code>CONSTANT_MethodHandle_info</code>.
-     */
+
     public static final int REF_invokeInterface = 9;
 
-    /**
-     * Constructs a constant pool table.
-     *
-     * @param thisclass         the name of the class using this constant
-     *                          pool table
-     */
+
     public ConstPool(String thisclass)
     {
         items = new LongVector();
         itemsCache = null;
         numOfItems = 0;
-        addItem0(null);          // index 0 is reserved by the JVM.
+        addItem0(null);
         thisClassInfo = addClassInfo(thisclass);
     }
 
-    /**
-     * Constructs a constant pool table from the given byte stream.
-     *
-     * @param in        byte stream.
-     */
+
     public ConstPool(DataInputStream in) throws IOException
     {
         itemsCache = null;
         thisClassInfo = 0;
-        /* read() initializes items and numOfItems, and do addItem(null).
-         */
+
         read(in);
     }
 
@@ -203,26 +125,19 @@ public final class ConstPool
         itemsCache = null;
     }
 
-    /**
-     * Returns the number of entries in this table.
-     */
+
     public int getSize()
     {
         return numOfItems;
     }
 
-    /**
-     * Returns the name of the class using this constant pool table.
-     */
+
     public String getClassName()
     {
         return getClassInfo(thisClassInfo);
     }
 
-    /**
-     * Returns the index of <code>CONSTANT_Class_info</code> structure
-     * specifying the class using this constant pool table.
-     */
+
     public int getThisClassInfo()
     {
         return thisClassInfo;
@@ -238,29 +153,13 @@ public final class ConstPool
         return items.elementAt(n);
     }
 
-    /**
-     * Returns the <code>tag</code> field of the constant pool table
-     * entry at the given index.
-     *
-     * @return either <code>CONST_Class</code>, <code>CONST_Fieldref</code>,
-     *         <code>CONST_Methodref</code>, or ...  
-     */
+
     public int getTag(int index)
     {
         return getItem(index).getTag();
     }
 
-    /**
-     * Reads <code>CONSTANT_Class_info</code> structure
-     * at the given index.
-     *
-     * @return  a fully-qualified class or interface name specified
-     *          by <code>name_index</code>.  If the type is an array
-     *          type, this method returns an encoded name like
-     *          <code>[Ljava.lang.Object;</code> (note that the separators
-     *          are not slashes but dots).
-     * @see javassist.ClassPool#getCtClass(String)
-     */
+
     public String getClassInfo(int index)
     {
         ClassInfo c = (ClassInfo)getItem(index);
@@ -269,15 +168,7 @@ public final class ConstPool
         return Descriptor.toJavaName(getUtf8Info(c.name));
     }
 
-    /**
-     * Reads <code>CONSTANT_Class_info</code> structure
-     * at the given index.
-     *
-     * @return  the descriptor of the type specified
-     *          by <code>name_index</code>.
-     * @see javassist.ClassPool#getCtClass(String)
-     * @since 3.15
-     */
+
     public String getClassInfoByDescriptor(int index)
     {
         ClassInfo c = (ClassInfo)getItem(index);
@@ -289,76 +180,42 @@ public final class ConstPool
         return Descriptor.of(className);
     }
 
-    /**
-     * Reads the <code>name_index</code> field of the
-     * <code>CONSTANT_NameAndType_info</code> structure
-     * at the given index.
-     */
+
     public int getNameAndTypeName(int index)
     {
         NameAndTypeInfo ntinfo = (NameAndTypeInfo)getItem(index);
         return ntinfo.memberName;
     }
 
-    /**
-     * Reads the <code>descriptor_index</code> field of the
-     * <code>CONSTANT_NameAndType_info</code> structure
-     * at the given index.
-     */
+
     public int getNameAndTypeDescriptor(int index)
     {
         NameAndTypeInfo ntinfo = (NameAndTypeInfo)getItem(index);
         return ntinfo.typeDescriptor;
     }
 
-    /**
-     * Reads the <code>class_index</code> field of the
-     * <code>CONSTANT_Fieldref_info</code>,
-     * <code>CONSTANT_Methodref_info</code>,
-     * or <code>CONSTANT_Interfaceref_info</code>,
-     * structure at the given index.
-     *
-     * @since 3.6
-     */
+
     public int getMemberClass(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
         return minfo.classIndex;
     }
 
-    /**
-     * Reads the <code>name_and_type_index</code> field of the
-     * <code>CONSTANT_Fieldref_info</code>,
-     * <code>CONSTANT_Methodref_info</code>,
-     * or <code>CONSTANT_Interfaceref_info</code>,
-     * structure at the given index.
-     *
-     * @since 3.6
-     */
+
     public int getMemberNameAndType(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
         return minfo.nameAndTypeIndex;
     }
 
-    /**
-     * Reads the <code>class_index</code> field of the
-     * <code>CONSTANT_Fieldref_info</code> structure
-     * at the given index.
-     */
+
     public int getFieldrefClass(int index)
     {
         FieldrefInfo finfo = (FieldrefInfo)getItem(index);
         return finfo.classIndex;
     }
 
-    /**
-     * Reads the <code>class_index</code> field of the
-     * <code>CONSTANT_Fieldref_info</code> structure
-     * at the given index.
-     *
-     * @return the name of the class at that <code>class_index</code>.
-     */
+
     public String getFieldrefClassName(int index)
     {
         FieldrefInfo f = (FieldrefInfo)getItem(index);
@@ -367,25 +224,14 @@ public final class ConstPool
         return getClassInfo(f.classIndex);
     }
 
-    /**
-     * Reads the <code>name_and_type_index</code> field of the
-     * <code>CONSTANT_Fieldref_info</code> structure
-     * at the given index.
-     */
+
     public int getFieldrefNameAndType(int index)
     {
         FieldrefInfo finfo = (FieldrefInfo)getItem(index);
         return finfo.nameAndTypeIndex;
     }
 
-    /**
-     * Reads the <code>name_index</code> field of the
-     * <code>CONSTANT_NameAndType_info</code> structure
-     * indirectly specified by the given index.
-     *
-     * @param index     an index to a <code>CONSTANT_Fieldref_info</code>.
-     * @return  the name of the field.
-     */
+
     public String getFieldrefName(int index)
     {
         FieldrefInfo f = (FieldrefInfo)getItem(index);
@@ -397,14 +243,7 @@ public final class ConstPool
         return getUtf8Info(n.memberName);
     }
 
-    /**
-     * Reads the <code>descriptor_index</code> field of the
-     * <code>CONSTANT_NameAndType_info</code> structure
-     * indirectly specified by the given index.
-     *
-     * @param index     an index to a <code>CONSTANT_Fieldref_info</code>.
-     * @return  the type descriptor of the field.
-     */
+
     public String getFieldrefType(int index)
     {
         FieldrefInfo f = (FieldrefInfo)getItem(index);
@@ -416,24 +255,14 @@ public final class ConstPool
         return getUtf8Info(n.typeDescriptor);
     }
 
-    /**
-     * Reads the <code>class_index</code> field of the
-     * <code>CONSTANT_Methodref_info</code> structure
-     * at the given index.
-     */
+
     public int getMethodrefClass(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
         return minfo.classIndex;
     }
 
-    /**
-     * Reads the <code>class_index</code> field of the
-     * <code>CONSTANT_Methodref_info</code> structure
-     * at the given index.
-     *
-     * @return the name of the class at that <code>class_index</code>.
-     */
+
     public String getMethodrefClassName(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
@@ -442,25 +271,14 @@ public final class ConstPool
         return getClassInfo(minfo.classIndex);
     }
 
-    /**
-     * Reads the <code>name_and_type_index</code> field of the
-     * <code>CONSTANT_Methodref_info</code> structure
-     * at the given index.
-     */
+
     public int getMethodrefNameAndType(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
         return minfo.nameAndTypeIndex;
     }
 
-    /**
-     * Reads the <code>name_index</code> field of the
-     * <code>CONSTANT_NameAndType_info</code> structure
-     * indirectly specified by the given index.
-     *
-     * @param index     an index to a <code>CONSTANT_Methodref_info</code>.
-     * @return  the name of the method.
-     */
+
     public String getMethodrefName(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
@@ -473,14 +291,7 @@ public final class ConstPool
         return getUtf8Info(n.memberName);
     }
 
-    /**
-     * Reads the <code>descriptor_index</code> field of the
-     * <code>CONSTANT_NameAndType_info</code> structure
-     * indirectly specified by the given index.
-     *
-     * @param index     an index to a <code>CONSTANT_Methodref_info</code>.
-     * @return  the descriptor of the method.
-     */
+
     public String getMethodrefType(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
@@ -493,50 +304,28 @@ public final class ConstPool
         return getUtf8Info(n.typeDescriptor);
     }
 
-    /**
-     * Reads the <code>class_index</code> field of the
-     * <code>CONSTANT_InterfaceMethodref_info</code> structure
-     * at the given index.
-     */
+
     public int getInterfaceMethodrefClass(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
         return minfo.classIndex;
     }
 
-    /**
-     * Reads the <code>class_index</code> field of the
-     * <code>CONSTANT_InterfaceMethodref_info</code> structure
-     * at the given index.
-     *
-     * @return the name of the class at that <code>class_index</code>.
-     */
+
     public String getInterfaceMethodrefClassName(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
         return getClassInfo(minfo.classIndex);
     }
 
-    /**
-     * Reads the <code>name_and_type_index</code> field of the
-     * <code>CONSTANT_InterfaceMethodref_info</code> structure
-     * at the given index.
-     */
+
     public int getInterfaceMethodrefNameAndType(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
         return minfo.nameAndTypeIndex;
     }
 
-    /**
-     * Reads the <code>name_index</code> field of the
-     * <code>CONSTANT_NameAndType_info</code> structure
-     * indirectly specified by the given index.
-     *
-     * @param index     an index to
-     *                  a <code>CONSTANT_InterfaceMethodref_info</code>.
-     * @return  the name of the method.
-     */
+
     public String getInterfaceMethodrefName(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
@@ -549,15 +338,7 @@ public final class ConstPool
         return getUtf8Info(n.memberName);
     }
 
-    /**
-     * Reads the <code>descriptor_index</code> field of the
-     * <code>CONSTANT_NameAndType_info</code> structure
-     * indirectly specified by the given index.
-     *
-     * @param index     an index to
-     *                  a <code>CONSTANT_InterfaceMethodref_info</code>.
-     * @return  the descriptor of the method.
-     */
+
     public String getInterfaceMethodrefType(int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
@@ -569,15 +350,7 @@ public final class ConstPool
             return null;
         return getUtf8Info(n.typeDescriptor);
     }
-    /**
-     * Reads <code>CONSTANT_Integer_info</code>, <code>_Float_info</code>,
-     * <code>_Long_info</code>, <code>_Double_info</code>, or
-     * <code>_String_info</code> structure.
-     * These are used with the LDC instruction.
-     *
-     * @return a <code>String</code> value or a wrapped primitive-type
-     * value.
-     */
+
     public Object getLdcValue(int index)
     {
         ConstInfo constInfo = this.getItem(index);
@@ -596,161 +369,84 @@ public final class ConstPool
         return value;
     }
 
-    /**
-     * Reads <code>CONSTANT_Integer_info</code> structure
-     * at the given index.
-     *
-     * @return the value specified by this entry.
-     */
+
     public int getIntegerInfo(int index)
     {
         IntegerInfo i = (IntegerInfo)getItem(index);
         return i.value;
     }
 
-    /**
-     * Reads <code>CONSTANT_Float_info</code> structure
-     * at the given index.
-     *
-     * @return the value specified by this entry.
-     */
+
     public float getFloatInfo(int index)
     {
         FloatInfo i = (FloatInfo)getItem(index);
         return i.value;
     }
 
-    /**
-     * Reads <code>CONSTANT_Long_info</code> structure
-     * at the given index.
-     *
-     * @return the value specified by this entry.
-     */
+
     public long getLongInfo(int index)
     {
         LongInfo i = (LongInfo)getItem(index);
         return i.value;
     }
 
-    /**
-     * Reads <code>CONSTANT_Double_info</code> structure
-     * at the given index.
-     *
-     * @return the value specified by this entry.
-     */
+
     public double getDoubleInfo(int index)
     {
         DoubleInfo i = (DoubleInfo)getItem(index);
         return i.value;
     }
 
-    /**
-     * Reads <code>CONSTANT_String_info</code> structure
-     * at the given index.
-     *
-     * @return the string specified by <code>string_index</code>.
-     */
+
     public String getStringInfo(int index)
     {
         StringInfo si = (StringInfo)getItem(index);
         return getUtf8Info(si.string);
     }
 
-    /**
-     * Reads <code>CONSTANT_utf8_info</code> structure
-     * at the given index.
-     *
-     * @return the string specified by this entry.
-     */
+
     public String getUtf8Info(int index)
     {
         Utf8Info utf = (Utf8Info)getItem(index);
         return utf.string;
     }
 
-    /**
-     * Reads the <code>reference_kind</code> field of the
-     * <code>CONSTANT_MethodHandle_info</code> structure
-     * at the given index.
-     *
-     * @see #REF_getField
-     * @see #REF_getStatic
-     * @see #REF_invokeInterface
-     * @see #REF_invokeSpecial
-     * @see #REF_invokeStatic
-     * @see #REF_invokeVirtual
-     * @see #REF_newInvokeSpecial
-     * @see #REF_putField
-     * @see #REF_putStatic
-     * @since 3.17
-     */
+
     public int getMethodHandleKind(int index)
     {
         MethodHandleInfo mhinfo = (MethodHandleInfo)getItem(index);
         return mhinfo.refKind;
     }
 
-    /**
-     * Reads the <code>reference_index</code> field of the
-     * <code>CONSTANT_MethodHandle_info</code> structure
-     * at the given index.
-     *
-     * @since 3.17
-     */
+
     public int getMethodHandleIndex(int index)
     {
         MethodHandleInfo mhinfo = (MethodHandleInfo)getItem(index);
         return mhinfo.refIndex;
     }
 
-    /**
-     * Reads the <code>descriptor_index</code> field of the
-     * <code>CONSTANT_MethodType_info</code> structure
-     * at the given index.
-     *
-     * @since 3.17
-     */
+
     public int getMethodTypeInfo(int index)
     {
         MethodTypeInfo mtinfo = (MethodTypeInfo)getItem(index);
         return mtinfo.descriptor;
     }
 
-    /**
-     * Reads the <code>bootstrap_method_attr_index</code> field of the
-     * <code>CONSTANT_InvokeDynamic_info</code> structure
-     * at the given index.
-     *
-     * @since 3.17
-     */
+
     public int getInvokeDynamicBootstrap(int index)
     {
         InvokeDynamicInfo iv = (InvokeDynamicInfo)getItem(index);
         return iv.bootstrap;
     }
 
-    /**
-     * Reads the <code>name_and_type_index</code> field of the
-     * <code>CONSTANT_InvokeDynamic_info</code> structure
-     * at the given index.
-     *
-     * @since 3.17
-     */
+
     public int getInvokeDynamicNameAndType(int index)
     {
         InvokeDynamicInfo iv = (InvokeDynamicInfo)getItem(index);
         return iv.nameAndType;
     }
 
-    /**
-     * Reads the <code>descriptor_index</code> field of the
-     * <code>CONSTANT_NameAndType_info</code> structure
-     * indirectly specified by the given index.
-     *
-     * @param index     an index to a <code>CONSTANT_InvokeDynamic_info</code>.
-     * @return  the descriptor of the method.
-     * @since 3.17
-     */
+
     public String getInvokeDynamicType(int index)
     {
         InvokeDynamicInfo iv = (InvokeDynamicInfo)getItem(index);
@@ -762,64 +458,27 @@ public final class ConstPool
         return getUtf8Info(n.typeDescriptor);
     }
 
-    /**
-     * Reads the <code>name_index</code> field of the
-     * <code>CONSTANT_Module_info</code> structure at the given index.
-     *
-     * @return the module name at <code>name_index</code>.
-     * @since 3.22
-     */
+
     public String getModuleInfo(int index)
     {
         ModuleInfo mi = (ModuleInfo)getItem(index);
         return getUtf8Info(mi.name);
     }
 
-    /**
-     * Reads the <code>name_index</code> field of the
-     * <code>CONSTANT_Package_info</code> structure at the given index.
-     *
-     * @return the package name at <code>name_index</code>.  It is a slash-
-     * separated name such as com/oracle/net.
-     * @since 3.22
-     */
+
     public String getPackageInfo(int index)
     {
         PackageInfo mi = (PackageInfo)getItem(index);
         return getUtf8Info(mi.name);
     }
 
-    /**
-     * Determines whether <code>CONSTANT_Methodref_info</code>
-     * structure at the given index represents the constructor
-     * of the given class.
-     *
-     * @return          the <code>descriptor_index</code> specifying
-     *                  the type descriptor of the that constructor.
-     *                  If it is not that constructor,
-     *                  <code>isConstructor()</code> returns 0.
-     */
+
     public int isConstructor(String classname, int index)
     {
         return isMember(classname, MethodInfo.nameInit, index);
     }
 
-    /**
-     * Determines whether <code>CONSTANT_Methodref_info</code>,
-     * <code>CONSTANT_Fieldref_info</code>, or
-     * <code>CONSTANT_InterfaceMethodref_info</code> structure
-     * at the given index represents the member with the specified
-     * name and declaring class.
-     *
-     * @param classname         the class declaring the member
-     * @param membername        the member name
-     * @param index             the index into the constant pool table
-     *
-     * @return          the <code>descriptor_index</code> specifying
-     *                  the type descriptor of that member.
-     *                  If it is not that member,
-     *                  <code>isMember()</code> returns 0.
-     */
+
     public int isMember(String classname, String membername, int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
@@ -830,26 +489,10 @@ public final class ConstPool
                 return ntinfo.typeDescriptor;
         }
 
-        return 0;       // false
+        return 0;
     }
 
-    /**
-     * Determines whether <code>CONSTANT_Methodref_info</code>,
-     * <code>CONSTANT_Fieldref_info</code>, or
-     * <code>CONSTANT_InterfaceMethodref_info</code> structure
-     * at the given index has the name and the descriptor
-     * given as the arguments.
-     *
-     * @param membername        the member name
-     * @param desc              the descriptor of the member.
-     * @param index             the index into the constant pool table
-     *
-     * @return          the name of the target class specified by
-     *                  the <code>..._info</code> structure
-     *                  at <code>index</code>.
-     *                  Otherwise, null if that structure does not 
-     *                  match the given member name and descriptor.
-     */
+
     public String eqMember(String membername, String desc, int index)
     {
         MemberrefInfo minfo = (MemberrefInfo)getItem(index);
@@ -858,7 +501,7 @@ public final class ConstPool
         if (getUtf8Info(ntinfo.memberName).equals(membername)
             && getUtf8Info(ntinfo.typeDescriptor).equals(desc))
             return getClassInfo(minfo.classIndex);
-        return null;       // false
+        return null;
     }
 
     private int addItem0(ConstInfo info)
@@ -880,17 +523,7 @@ public final class ConstPool
         return numOfItems++;
     }
 
-    /**
-     * Copies the n-th item in this ConstPool object into the destination
-     * ConstPool object.
-     * The class names that the item refers to are renamed according
-     * to the given map.
-     *
-     * @param n                 the <i>n</i>-th item
-     * @param dest              destination constant pool table
-     * @param classnames        the map or null.
-     * @return the index of the copied item into the destination ClassPool.
-     */
+
     public int copy(int n, ConstPool dest, Map<String,String> classnames)
     {
         if (n == 0)
@@ -904,14 +537,7 @@ public final class ConstPool
         return addItem0(new ConstInfoPadding(numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Class_info</code> structure.
-     *
-     * <p>This also adds a <code>CONSTANT_Utf8_info</code> structure
-     * for storing the class name.
-     *
-     * @return          the index of the added entry.
-     */
+
     public int addClassInfo(CtClass c)
     {
         if (c == THIS)
@@ -919,135 +545,63 @@ public final class ConstPool
         else if (!c.isArray())
             return addClassInfo(c.getName());
         else {
-            // an array type is recorded in the hashtable with
-            // the key "[L<classname>;" instead of "<classname>".
-            //
-            // note: toJvmName(toJvmName(c)) is equal to toJvmName(c).
+
+
+
+
 
             return addClassInfo(Descriptor.toJvmName(c));
         }
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Class_info</code> structure.
-     *
-     * <p>This also adds a <code>CONSTANT_Utf8_info</code> structure
-     * for storing the class name.
-     *
-     * @param qname     a fully-qualified class name
-     *                  (or the JVM-internal representation of that name).
-     * @return          the index of the added entry.
-     */
+
     public int addClassInfo(String qname)
     {
         int utf8 = addUtf8Info(Descriptor.toJvmName(qname));
         return addItem(new ClassInfo(utf8, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_NameAndType_info</code> structure.
-     *
-     * <p>This also adds <code>CONSTANT_Utf8_info</code> structures.
-     *
-     * @param name      <code>name_index</code>
-     * @param type      <code>descriptor_index</code>
-     * @return          the index of the added entry.
-     */
+
     public int addNameAndTypeInfo(String name, String type)
     {
         return addNameAndTypeInfo(addUtf8Info(name), addUtf8Info(type));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_NameAndType_info</code> structure.
-     *
-     * @param name      <code>name_index</code>
-     * @param type      <code>descriptor_index</code>
-     * @return          the index of the added entry.
-     */
+
     public int addNameAndTypeInfo(int name, int type)
     {
         return addItem(new NameAndTypeInfo(name, type, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Fieldref_info</code> structure.
-     *
-     * <p>This also adds a new <code>CONSTANT_NameAndType_info</code>
-     * structure.
-     *
-     * @param classInfo         <code>class_index</code>
-     * @param name              <code>name_index</code>
-     *                          of <code>CONSTANT_NameAndType_info</code>.
-     * @param type              <code>descriptor_index</code>
-     *                          of <code>CONSTANT_NameAndType_info</code>.
-     * @return          the index of the added entry.
-     */
+
     public int addFieldrefInfo(int classInfo, String name, String type)
     {
         int nt = addNameAndTypeInfo(name, type);
         return addFieldrefInfo(classInfo, nt);
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Fieldref_info</code> structure.
-     *
-     * @param classInfo         <code>class_index</code>
-     * @param nameAndTypeInfo   <code>name_and_type_index</code>.
-     * @return          the index of the added entry.
-     */
+
     public int addFieldrefInfo(int classInfo, int nameAndTypeInfo) 
     {
         return addItem(new FieldrefInfo(classInfo, nameAndTypeInfo,
                                         numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Methodref_info</code> structure.
-     *
-     * <p>This also adds a new <code>CONSTANT_NameAndType_info</code>
-     * structure.
-     *
-     * @param classInfo         <code>class_index</code>
-     * @param name              <code>name_index</code>
-     *                          of <code>CONSTANT_NameAndType_info</code>.
-     * @param type              <code>descriptor_index</code>
-     *                          of <code>CONSTANT_NameAndType_info</code>.
-     * @return          the index of the added entry.
-     */
+
     public int addMethodrefInfo(int classInfo, String name, String type)
     {
         int nt = addNameAndTypeInfo(name, type);
         return addMethodrefInfo(classInfo, nt);
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Methodref_info</code> structure.
-     *
-     * @param classInfo         <code>class_index</code>
-     * @param nameAndTypeInfo   <code>name_and_type_index</code>.
-     * @return          the index of the added entry.
-     */
+
     public int addMethodrefInfo(int classInfo, int nameAndTypeInfo)
     {
          return addItem(new MethodrefInfo(classInfo,
                  nameAndTypeInfo, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_InterfaceMethodref_info</code>
-     * structure.
-     *
-     * <p>This also adds a new <code>CONSTANT_NameAndType_info</code>
-     * structure.
-     *
-     * @param classInfo         <code>class_index</code>
-     * @param name              <code>name_index</code>
-     *                          of <code>CONSTANT_NameAndType_info</code>.
-     * @param type              <code>descriptor_index</code>
-     *                          of <code>CONSTANT_NameAndType_info</code>.
-     * @return          the index of the added entry.
-     */
+
     public int addInterfaceMethodrefInfo(int classInfo,
                                          String name,
                                          String type)
@@ -1056,14 +610,7 @@ public final class ConstPool
         return addInterfaceMethodrefInfo(classInfo, nt);
     }
 
-    /**
-     * Adds a new <code>CONSTANT_InterfaceMethodref_info</code>
-     * structure.
-     *
-     * @param classInfo         <code>class_index</code>
-     * @param nameAndTypeInfo   <code>name_and_type_index</code>.
-     * @return          the index of the added entry.
-     */
+
     public int addInterfaceMethodrefInfo(int classInfo,
                                          int nameAndTypeInfo)
     {
@@ -1072,156 +619,82 @@ public final class ConstPool
                                                   numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_String_info</code>
-     * structure.
-     *
-     * <p>This also adds a new <code>CONSTANT_Utf8_info</code>
-     * structure.
-     *
-     * @return          the index of the added entry.
-     */
+
     public int addStringInfo(String str)
     {
         int utf = addUtf8Info(str);
         return addItem(new StringInfo(utf, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Integer_info</code>
-     * structure.
-     *
-     * @return          the index of the added entry.
-     */
+
     public int addIntegerInfo(int i)
     {
         return addItem(new IntegerInfo(i, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Float_info</code>
-     * structure.
-     *
-     * @return          the index of the added entry.
-     */
+
     public int addFloatInfo(float f)
     {
         return addItem(new FloatInfo(f, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Long_info</code>
-     * structure.
-     *
-     * @return          the index of the added entry.
-     */
+
     public int addLongInfo(long l)
     {
         int i = addItem(new LongInfo(l, numOfItems));
-        if (i == numOfItems - 1)    // if not existing
+        if (i == numOfItems - 1)
             addConstInfoPadding();
 
         return i;
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Double_info</code>
-     * structure.
-     *
-     * @return          the index of the added entry.
-     */
+
     public int addDoubleInfo(double d)
     {
         int i = addItem(new DoubleInfo(d, numOfItems));
-        if (i == numOfItems - 1)    // if not existing
+        if (i == numOfItems - 1)
             addConstInfoPadding();
 
         return i;
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Utf8_info</code>
-     * structure.
-     *
-     * @return          the index of the added entry.
-     */
+
     public int addUtf8Info(String utf8)
     {
         return addItem(new Utf8Info(utf8, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_MethodHandle_info</code>
-     * structure.
-     *
-     * @param kind      <code>reference_kind</code>
-     *                  such as {@link #REF_invokeStatic <code>REF_invokeStatic</code>}.
-     * @param index     <code>reference_index</code>.
-     * @return          the index of the added entry.
-     *
-     * @since 3.17
-     */
+
     public int addMethodHandleInfo(int kind, int index)
     {
         return addItem(new MethodHandleInfo(kind, index, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_MethodType_info</code>
-     * structure.
-     *
-     * @param desc      <code>descriptor_index</code>.
-     * @return          the index of the added entry.
-     *
-     * @since 3.17
-     */
+
     public int addMethodTypeInfo(int desc)
     {
         return addItem(new MethodTypeInfo(desc, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_InvokeDynamic_info</code>
-     * structure.
-     *
-     * @param bootstrap     <code>bootstrap_method_attr_index</code>.
-     * @param nameAndType   <code>name_and_type_index</code>.
-     * @return          the index of the added entry.
-     *
-     * @since 3.17
-     */
+
     public int addInvokeDynamicInfo(int bootstrap, int nameAndType)
     {
         return addItem(new InvokeDynamicInfo(bootstrap, nameAndType, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Module_info</code>
-     * @param nameIndex         the index of the Utf8 entry.
-     * @return          the index of the added entry.
-     * @since 3.22
-     */
+
     public int addModuleInfo(int nameIndex)
     {
         return addItem(new ModuleInfo(nameIndex, numOfItems));
     }
 
-    /**
-     * Adds a new <code>CONSTANT_Package_info</code>
-     * @param nameIndex         the index of the Utf8 entry.
-     * @return          the index of the added entry.
-     * @since 3.22
-     */
+
     public int addPackageInfo(int nameIndex)
     {
         return addItem(new PackageInfo(nameIndex, numOfItems));
     }
 
-    /**
-     * Get all the class names.
-     *
-     * @return a set of class names (<code>String</code> objects).
-     */
+
     public Set<String> getClassNames()
     {
         Set<String> result = new HashSet<String>();
@@ -1235,12 +708,7 @@ public final class ConstPool
         return result;
     }
 
-    /**
-     * Replaces all occurrences of a class name.
-     *
-     * @param oldName           the replaced name (JVM-internal representation).
-     * @param newName           the substituted name (JVM-internal representation).
-     */
+
     public void renameClass(String oldName, String newName)
     {
         LongVector v = items;
@@ -1251,12 +719,7 @@ public final class ConstPool
         }
     }
 
-    /**
-     * Replaces all occurrences of class names.
-     *
-     * @param classnames        specifies pairs of replaced and substituted
-     *                          name.
-     */
+
     public void renameClass(Map<String,String> classnames)
     {
         LongVector v = items;
@@ -1273,9 +736,9 @@ public final class ConstPool
 
         items = new LongVector(n);
         numOfItems = 0;
-        addItem0(null);          // index 0 is reserved by the JVM.
+        addItem0(null);
 
-        while (--n > 0) {       // index 0 is reserved by JVM
+        while (--n > 0) {
             int tag = readOne(in);
             if ((tag == LongInfo.tag) || (tag == DoubleInfo.tag)) {
                 addConstInfoPadding();
@@ -1303,52 +766,52 @@ public final class ConstPool
         ConstInfo info;
         int tag = in.readUnsignedByte();
         switch (tag) {
-        case Utf8Info.tag :                     // 1
+        case Utf8Info.tag :
             info = new Utf8Info(in, numOfItems);
             break;
-        case IntegerInfo.tag :                  // 3
+        case IntegerInfo.tag :
             info = new IntegerInfo(in, numOfItems);
             break;
-        case FloatInfo.tag :                    // 4
+        case FloatInfo.tag :
             info = new FloatInfo(in, numOfItems);
             break;
-        case LongInfo.tag :                     // 5
+        case LongInfo.tag :
             info = new LongInfo(in, numOfItems);
             break;
-        case DoubleInfo.tag :                   // 6
+        case DoubleInfo.tag :
             info = new DoubleInfo(in, numOfItems);
             break;
-        case ClassInfo.tag :                    // 7
+        case ClassInfo.tag :
             info = new ClassInfo(in, numOfItems);
             break;
-        case StringInfo.tag :                   // 8
+        case StringInfo.tag :
             info = new StringInfo(in, numOfItems);
             break;
-        case FieldrefInfo.tag :                 // 9
+        case FieldrefInfo.tag :
             info = new FieldrefInfo(in, numOfItems);
             break;
-        case MethodrefInfo.tag :                // 10
+        case MethodrefInfo.tag :
             info = new MethodrefInfo(in, numOfItems);
             break;
-        case InterfaceMethodrefInfo.tag :       // 11
+        case InterfaceMethodrefInfo.tag :
             info = new InterfaceMethodrefInfo(in, numOfItems);
             break;
-        case NameAndTypeInfo.tag :              // 12
+        case NameAndTypeInfo.tag :
             info = new NameAndTypeInfo(in, numOfItems);
             break;
-        case MethodHandleInfo.tag :             // 15
+        case MethodHandleInfo.tag :
             info = new MethodHandleInfo(in, numOfItems);
             break;
-        case MethodTypeInfo.tag :               // 16
+        case MethodTypeInfo.tag :
             info = new MethodTypeInfo(in, numOfItems);
             break;
-        case InvokeDynamicInfo.tag :            // 18
+        case InvokeDynamicInfo.tag :
             info = new InvokeDynamicInfo(in, numOfItems);
             break;
-        case ModuleInfo.tag :                   // 19
+        case ModuleInfo.tag :
             info = new ModuleInfo(in, numOfItems);
             break;
-        case PackageInfo.tag :                  // 20
+        case PackageInfo.tag :
             info = new PackageInfo(in, numOfItems);
             break;
         default :
@@ -1360,9 +823,7 @@ public final class ConstPool
         return tag;
     }
 
-    /**
-     * Writes the contents of the constant pool table.
-     */
+
     public void write(DataOutputStream out) throws IOException
     {
         out.writeShort(numOfItems);
@@ -1372,17 +833,13 @@ public final class ConstPool
             v.elementAt(i).write(out);
     }
 
-    /**
-     * Prints the contents of the constant pool table.
-     */
+
     public void print()
     {
         print(new PrintWriter(System.out, true));
     }
 
-    /**
-     * Prints the contents of the constant pool table.
-     */
+
     public void print(PrintWriter out)
     {
         int size = numOfItems;
@@ -1409,7 +866,7 @@ abstract class ConstInfo
             Map<ConstInfo,ConstInfo> cache) {}
     public abstract int copy(ConstPool src, ConstPool dest,
             Map<String, String> classnames);
-        // ** classnames is a mapping between JVM names.
+
 
     public abstract void write(DataOutputStream out) throws IOException;
     public abstract void print(PrintWriter out);
@@ -1423,8 +880,7 @@ abstract class ConstInfo
     }
 }
 
-/* padding following DoubleInfo or LongInfo.
- */
+
 class ConstInfoPadding extends ConstInfo
 {
     public ConstInfoPadding(int i) { super(i); }

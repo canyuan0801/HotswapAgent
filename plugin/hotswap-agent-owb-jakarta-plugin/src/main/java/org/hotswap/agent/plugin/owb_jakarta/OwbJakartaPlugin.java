@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.owb_jakarta;
 
 import java.io.File;
@@ -54,13 +37,9 @@ import org.hotswap.agent.watch.WatchEventListener;
 import org.hotswap.agent.watch.WatchFileEvent;
 import org.hotswap.agent.watch.Watcher;
 
-/**
- * OwbPlugin (OpenWebBeans)
- *
- * @author Vladimir Dvorak
- */
+
 @Plugin(name = "OwbJakarta",
-        description = "OpenWebBeans Jakarta framework(http://openwebbeans.apache.org/). Reload, reinject bean, redefine proxy class after bean class definition/redefinition.",
+        description = "OpenWebBeans Jakarta framework(http:
         testedVersions = {"2.0.27"},
         expectedVersions = {"All between 2.0.27"},
         supportClass = { BeansDeployerTransformer.class, CdiContextsTransformer.class, ProxyFactoryTransformer.class, AbstractProducerTransformer.class })
@@ -71,17 +50,12 @@ public class OwbJakartaPlugin {
     private static final String VETOED_ANNOTATION = "jakarta.enterprise.inject.Vetoed";
     private static final String DS_EXCLUDED_ANNOTATION = "org.apache.deltaspike.core.api.exclude.Exclude";
 
-    // True for UnitTests
+
     static boolean isTestEnvironment = false;
-    // Store archive path for unit tests
+
     static String archivePath = null;
 
-    /**
-     * If a class is modified in IDE, sequence of multiple events is generated -
-     * class file DELETE, CREATE, MODIFY, than Hotswap transformer is invoked.
-     * ClassPath_ BeanRefreshCommand tries to merge these events into single command.
-     * Wait for this this timeout(milliseconds) after class file event before ClassPathBeanRefreshCommand
-     */
+
     private static final int WAIT_ON_CREATE = 500;
     private static final int WAIT_ON_REDEFINE = 200;
 
@@ -103,9 +77,7 @@ public class OwbJakartaPlugin {
 
     private Map<URL, URL> registeredArchives = new HashMap<>();
 
-    /**
-     * Plugin initialization, called from archive registration,
-     */
+
     public void init() {
         if (!initialized) {
             LOGGER.info("OpenWebBeans plugin initialized.");
@@ -126,15 +98,10 @@ public class OwbJakartaPlugin {
         return ret;
     }
 
-    /**
-     * Register BeanArchive's paths to watcher. In case of new class the class file is not known
-     * to JVM hence no hotswap is called and therefore it must be handled by watcher.
-     *
-     * @param bdaLocations the Set of URLs of archive locations
-     */
+
     public void registerBeansXmls(Set bdaLocations) {
 
-        // for all application resources watch for changes
+
         for (final URL beanArchiveUrl : (Set<URL>) bdaLocations) {
 
             String beansXmlPath = beanArchiveUrl.getPath();
@@ -161,7 +128,7 @@ public class OwbJakartaPlugin {
             }
 
             LOGGER.info("OWB: Registerering '{}' for changes....", archivePath);
-            OwbJakartaPlugin.archivePath = archivePath; // store path for unit tests (single archive expected)
+            OwbJakartaPlugin.archivePath = archivePath;
 
             try {
                 URL archivePathUrl = resourceNameToURL(archivePath);
@@ -178,7 +145,7 @@ public class OwbJakartaPlugin {
                     @Override
                     public void onEvent(WatchFileEvent event) {
                         if (event.isFile() && event.getURI().toString().endsWith(".class")) {
-                            // check that the class is not loaded by the classloader yet (avoid duplicate reload)
+
                             String className;
                             try {
                                 className = IOUtils.urlToClassName(event.getURI());
@@ -188,7 +155,7 @@ public class OwbJakartaPlugin {
                                 return;
                             }
                             if (!ClassLoaderHelper.isClassLoaded(appClassLoader, className) || isTestEnvironment) {
-                                // refresh weld only for new classes
+
                                 LOGGER.trace("register reload command: {} ", className);
                                 scheduler.scheduleCommand(new BeanClassRefreshCommand(appClassLoader, archivePath, beanArchiveUrl, event), WAIT_ON_CREATE);
                             }
@@ -204,13 +171,7 @@ public class OwbJakartaPlugin {
         }
     }
 
-    /**
-     * Called on class redefinition. Class may be bean class
-     *
-     * @param classLoader the class loader in which class is redefined (Archive class loader)
-     * @param ctClass the ct class
-     * @param original the original
-     */
+
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
     public void classReload(ClassLoader classLoader, CtClass ctClass, Class<?> original) {
         if (classLoader != appClassLoader) {
@@ -262,14 +223,14 @@ public class OwbJakartaPlugin {
         }
     }
 
-    // Return true if class is OWB synthetic class.
-    // Owb proxies contains $$
-    // DeltaSpike's proxies contains "$$"
+
+
+
     private boolean isSyntheticCdiClass(String className) {
         return className.contains("$$") || className.contains("$HibernateProxy$");
     }
 
-    // Non static inner class is not allowed to be bean class
+
     private boolean isInnerNonPublicStaticClass(CtClass ctClass) {
         try {
             CtClass declaringClass = ctClass.getDeclaringClass();
@@ -279,17 +240,17 @@ public class OwbJakartaPlugin {
                 return true;
             }
         } catch (NotFoundException e) {
-            // swallow exception
+
         }
         return false;
     }
 
     public URL resourceNameToURL(String resource) throws Exception {
         try {
-            // Try to format as a URL?
+
             return new URL(resource);
         } catch (MalformedURLException e) {
-            // try to locate a file
+
             if (resource.startsWith("./"))
                 resource = resource.substring(2);
             File file = new File(resource).getCanonicalFile();

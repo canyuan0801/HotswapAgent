@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.spring;
 
 import org.hotswap.agent.plugin.spring.reload.SpringChangedAgent;
@@ -38,13 +21,7 @@ import java.nio.file.StandardCopyOption;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Hotswap class files of spring beans.
- * <p>
- * See maven setup for javaagent and autohotswap settings.
- *
- * @author Jiri Bubnik
- */
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = {"classpath:applicationContext.xml"})
 public class SpringPlugin2Test {
@@ -56,13 +33,7 @@ public class SpringPlugin2Test {
     private static Resource xmlContextWithRepo = new ClassPathResource("xmlContextWithRepository.xml");
     private static Resource xmlContextWithChangedRepo = new ClassPathResource("xmlContextWithChangedRepository.xml");
 
-    /*
-     * -------Xml test, has to be put in there so xmlContext is load after component
-     * scan context----------- (because we don't support multiple component-scan
-     * context in single app, or ClassPathBeanDefinitionScannerAgent will not be
-     * able to get the right registry to use (it will only use the first one it
-     * encountered, Spring tends to reuse ClassPathScanner))
-     */
+
     @Before
     public void before() throws IOException {
         BaseTestUtil.configMaxReloadTimes();
@@ -72,12 +43,12 @@ public class SpringPlugin2Test {
         }
         swappingRule.setBeanFactory(xmlApplicationContext.getBeanFactory());
         System.out.println("SpringPlugin2Test.before." + xmlApplicationContext.getBeanFactory());
-//        SpringChangedAgent.getInstance((DefaultListableBeanFactory) xmlApplicationContext.getBeanFactory());
+
     }
 
     @After
     public void after() throws IOException {
-//        SpringChangedAgent.destroyBeanFactory((DefaultListableBeanFactory) xmlApplicationContext.getBeanFactory());
+
     }
 
     private void writeRepositoryToXml() throws IOException {

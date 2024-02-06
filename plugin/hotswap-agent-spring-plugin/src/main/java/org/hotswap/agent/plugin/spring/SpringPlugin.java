@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.spring;
 
 import java.io.IOException;
@@ -62,11 +45,7 @@ import org.hotswap.agent.util.PluginManagerInvoker;
 import org.hotswap.agent.util.ReflectionHelper;
 import org.hotswap.agent.watch.Watcher;
 
-/**
- * Spring plugin.
- *
- * @author Jiri Bubnik
- */
+
 @Plugin(name = "Spring", description = "Reload Spring configuration after class definition/change.",
         testedVersions = {"All between 3.0.1 - 5.2.2"}, expectedVersions = {"3x", "4x", "5x"},
         supportClass = {ClassPathBeanDefinitionScannerTransformer.class,
@@ -142,7 +121,7 @@ public class SpringPlugin {
     @OnResourceFileEvent(path = "/", filter = ".*.yaml", events = {FileEvent.MODIFY})
     public void registerYamlListeners(URL url) {
         scheduler.scheduleCommand(new YamlChangedCommand(appClassLoader, url, scheduler));
-        // schedule reload after 1000 milliseconds
+
         LOGGER.trace("Scheduling Spring reload for yaml '{}'", url);
         scheduler.scheduleCommand(new SpringChangedReloadCommand(appClassLoader), SpringReloadConfig.reloadDelayMillis);
     }
@@ -154,9 +133,7 @@ public class SpringPlugin {
         scheduler.scheduleCommand(new SpringChangedReloadCommand(appClassLoader), SpringReloadConfig.reloadDelayMillis);
     }
 
-    /**
-     * register base package prefix from configuration file
-     */
+
     public void registerBasePackageFromConfiguration() {
         if (basePackagePrefixes != null) {
             for (String basePackagePrefix : basePackagePrefixes) {
@@ -166,20 +143,13 @@ public class SpringPlugin {
     }
 
     private void registerBasePackage(final String basePackage) {
-        // v.d.: Force load/Initialize ClassPathBeanRefreshCommand classe in JVM. This is hack, in whatever reason sometimes new ClassPathBeanRefreshCommand()
-        //       stays locked inside agent's transform() call. It looks like some bug in JVMTI or JVMTI-debugger() locks handling.
+
+
         hotswapTransformer.registerTransformer(appClassLoader, getClassNameRegExp(basePackage),
                 new SpringBeanClassFileTransformer(appClassLoader, scheduler, basePackage));
     }
 
-    /**
-     * Register both hotswap transformer AND watcher - in case of new file the file is not known
-     * to JVM and hence no hotswap is called. The file may even exist, but until is loaded by Spring
-     * it will not be known by the JVM. File events are processed only if the class is not known to the
-     * classloader yet.
-     *
-     * @param basePackage only files in a basePackage
-     */
+
     public void registerComponentScanBasePackage(final String basePackage) {
         LOGGER.info("Registering basePackage {}", basePackage);
 
@@ -193,7 +163,7 @@ public class SpringPlugin {
             return;
         }
 
-        // for all application resources watch for changes
+
         while (resourceUrls.hasMoreElements()) {
             URL basePackageURL = resourceUrls.nextElement();
 
@@ -232,17 +202,12 @@ public class SpringPlugin {
         return appClassLoader.getResources(resourceName);
     }
 
-    /**
-     * Plugin initialization is after Spring has finished its startup and freezeConfiguration is called.
-     * <p>
-     * This will override freeze method to init plugin - plugin will be initialized and the configuration
-     * remains unfrozen, so bean (re)definition may be done by the plugin.
-     */
+
     @OnClassLoadEvent(classNameRegexp = "org.springframework.beans.factory.support.DefaultListableBeanFactory")
     public static void register(ClassLoader appClassLoader, CtClass clazz, ClassPool classPool) throws NotFoundException, CannotCompileException {
         StringBuilder src = new StringBuilder("{");
         src.append("setCacheBeanMetadata(false);");
-        // init a spring plugin with every appclassloader
+
         src.append(PluginManagerInvoker.buildInitializePlugin(SpringPlugin.class));
         src.append(PluginManagerInvoker.buildCallPluginMethod(SpringPlugin.class, "init",
                 "org.springframework.core.SpringVersion.getVersion()", String.class.getName()));
@@ -253,24 +218,24 @@ public class SpringPlugin {
             constructor.insertAfter("org.hotswap.agent.plugin.spring.reload.SpringChangedAgent.getInstance(this);");
         }
 
-        // freezeConfiguration cannot be disabled because of performance degradation
-        // instead call freezeConfiguration after each bean (re)definition and clear all caches.
 
-        // WARNING - allowRawInjectionDespiteWrapping is not safe, however without this
-        //   spring was not able to resolve circular references correctly.
-        //   However, the code in AbstractAutowireCapableBeanFactory.doCreateBean() in debugger always
-        //   showed that exposedObject == earlySingletonReference and hence everything is Ok.
-        // 				if (exposedObject == bean) {
-        //                  exposedObject = earlySingletonReference;
-        //   The waring is because I am not sure what is going on here.
+
+
+
+
+
+
+
+
+
 
         CtMethod method = clazz.getDeclaredMethod("freezeConfiguration");
         method.insertBefore(
                 "org.hotswap.agent.plugin.spring.core.ResetSpringStaticCaches.resetBeanNamesByType(this); " +
                         "setAllowRawInjectionDespiteWrapping(true); ");
 
-        // Patch registerBeanDefinition so that XmlBeanDefinitionScannerAgent has chance to keep track of all beans
-        // defined from the XML configuration.
+
+
         CtMethod registerBeanDefinitionMethod = clazz.getDeclaredMethod("registerBeanDefinition");
         registerBeanDefinitionMethod.insertBefore(BeanDefinitionProcessor.class.getName() + ".registerBeanDefinition(this, $1, $2);");
 

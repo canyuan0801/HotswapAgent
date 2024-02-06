@@ -1,52 +1,11 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.bytecode;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * An iterator for editing a code attribute.
- *
- * <p>To directly read or edit a bytecode sequence, call {@link #byteAt(int)}, {@link #s16bitAt(int)},
- * {@link #writeByte(int, int)}, {@link #write16bit(int, int)}, and other methods.
- * For example, if <code>method</code> refers to a <code>CtMethod</code> object,
- * the following code substitutes the <code>NOP</code> instruction for the first
- * instruction of the method:  
- *
- * <pre>
- * CodeAttribute ca = method.getMethodInfo().getCodeAttribute();
- * CodeIterator ci = ca.iterator();
- * ci.writeByte(Opcode.NOP, 0);</pre>
- *
- * <p>To visit every instruction, call {@link #next()} on a <code>CodeIterator</code>.
- * It returns the index of the first byte of the next instruction.
- *
- * <p>If there are multiple <code>CodeIterator</code>s referring to the
- * same <code>Code_attribute</code>, then inserting a gap by one
- * <code>CodeIterator</code> will break the other
- * <code>CodeIterator</code>.
- *
- * <p>This iterator does not provide <code>remove()</code>.
- * If a piece of code in a <code>Code_attribute</code> is unnecessary,
- * it should be overwritten with <code>NOP</code>.
- *
- * @see CodeAttribute#iterator()
- */
+
 public class CodeIterator implements Opcode {
     protected CodeAttribute codeAttr;
     protected byte[] bytecode;
@@ -60,232 +19,109 @@ public class CodeIterator implements Opcode {
         begin();
     }
 
-    /**
-     * Moves to the first instruction.
-     */
+
     public void begin() {
         currentPos = mark = 0;
         endPos = getCodeLength();
     }
 
-    /**
-     * Moves to the given index.
-     *
-     * <p>The index of the next instruction is set to the given index.
-     * The successive call to <code>next()</code>
-     * returns the index that has been given to <code>move()</code>.
-     *
-     * <p>Note that the index is into the byte array returned by
-     * <code>get().getCode()</code>.
-     *
-     * @see CodeAttribute#getCode()
-     */
+
     public void move(int index) {
         currentPos = index;
     }
 
-    /**
-     * Sets a mark to the bytecode at the given index.
-     * The mark can be used to track the position of that bytecode
-     * when code blocks are inserted.
-     * If a code block is inclusively inserted at the position of the
-     * bytecode, the mark is set to the inserted code block.
-     *
-     * @see #getMark()
-     * @since 3.11
-     */
+
     public void setMark(int index) {
         mark = index;
     }
 
-    /**
-     * Gets the index of the position of the mark set by
-     * <code>setMark</code>.
-     *
-     * @return the index of the position.
-     * @see #setMark(int)
-     * @since 3.11
-     */
+
     public int getMark() { return mark; }
 
-    /**
-     * Returns a Code attribute read with this iterator.
-     */
+
     public CodeAttribute get() {
         return codeAttr;
     }
 
-    /**
-     * Returns <code>code_length</code> of <code>Code_attribute</code>.
-     */
+
     public int getCodeLength() {
         return bytecode.length;
     }
 
-    /**
-     * Returns the unsigned 8bit value at the given index.
-     */
+
     public int byteAt(int index) { return bytecode[index] & 0xff; }
 
-    /**
-     * Returns the signed 8bit value at the given index.
-     */
+
     public int signedByteAt(int index) { return bytecode[index]; }
 
-    /**
-     * Writes an 8bit value at the given index.
-     */
+
     public void writeByte(int value, int index) {
         bytecode[index] = (byte)value;
     }
 
-    /**
-     * Returns the unsigned 16bit value at the given index.
-     */
+
     public int u16bitAt(int index) {
         return ByteArray.readU16bit(bytecode, index);
     }
 
-    /**
-     * Returns the signed 16bit value at the given index.
-     */
+
     public int s16bitAt(int index) {
         return ByteArray.readS16bit(bytecode, index);
     }
 
-    /**
-     * Writes a 16 bit integer at the index.
-     */
+
     public void write16bit(int value, int index) {
         ByteArray.write16bit(value, bytecode, index);
     }
 
-    /**
-     * Returns the signed 32bit value at the given index.
-     */
+
     public int s32bitAt(int index) {
         return ByteArray.read32bit(bytecode, index);
     }
 
-    /**
-     * Writes a 32bit integer at the index.
-     */
+
     public void write32bit(int value, int index) {
         ByteArray.write32bit(value, bytecode, index);
     }
 
-    /**
-     * Writes a byte array at the index.
-     *
-     * @param code	may be a zero-length array.
-     */
+
     public void write(byte[] code, int index) {
         int len = code.length;
         for (int j = 0; j < len; ++j)
             bytecode[index++] = code[j];
     }
 
-    /**
-     * Returns true if there is more instructions.
-     */
+
     public boolean hasNext() { return currentPos < endPos; }
 
-    /**
-     * Returns the index of the next instruction
-     * (not the operand following the current opcode).
-     *
-     * <p>Note that the index is into the byte array returned by
-     * <code>get().getCode()</code>.
-     *
-     * @see CodeAttribute#getCode()
-     * @see CodeIterator#byteAt(int)
-     */
+
     public int next() throws BadBytecode {
         int pos = currentPos;
         currentPos = nextOpcode(bytecode, pos);
         return pos;
     }
 
-    /**
-     * Obtains the value that the next call
-     * to <code>next()</code> will return.
-     *
-     * <p>This method is side-effects free.
-     * Successive calls to <code>lookAhead()</code> return the
-     * same value until <code>next()</code> is called.
-     */
+
     public int lookAhead() {
         return currentPos;
     }
 
-    /**
-     * Moves to the instruction for
-     * either <code>super()</code> or <code>this()</code>.
-     *
-     * <p>This method skips all the instructions for computing arguments
-     * to <code>super()</code> or <code>this()</code>, which should be
-     * placed at the beginning of a constructor body.
-     *
-     * <p>This method returns the index of INVOKESPECIAL instruction
-     * executing <code>super()</code> or <code>this()</code>.
-     * A successive call to <code>next()</code> returns the
-     * index of the next instruction following that INVOKESPECIAL.
-     *
-     * <p>This method works only for a constructor.
-     *
-     * @return  the index of the INVOKESPECIAL instruction, or -1
-     *          if a constructor invocation is not found.
-     */
+
     public int skipConstructor() throws BadBytecode {
         return skipSuperConstructor0(-1);
     }
 
-    /**
-     * Moves to the instruction for <code>super()</code>.
-     *
-     * <p>This method skips all the instructions for computing arguments to
-     * <code>super()</code>, which should be
-     * placed at the beginning of a constructor body.
-     *
-     * <p>This method returns the index of INVOKESPECIAL instruction
-     * executing <code>super()</code>.
-     * A successive call to <code>next()</code> returns the
-     * index of the next instruction following that INVOKESPECIAL.
-     *
-     * <p>This method works only for a constructor.
-     *
-     * @return  the index of the INVOKESPECIAL instruction, or -1
-     *          if a super constructor invocation is not found
-     *          but <code>this()</code> is found.
-     */
+
     public int skipSuperConstructor() throws BadBytecode {
         return skipSuperConstructor0(0);
     }
 
-    /**
-     * Moves to the instruction for <code>this()</code>.
-     *
-     * <p>This method skips all the instructions for computing arguments to
-     * <code>this()</code>, which should be
-     * placed at the beginning of a constructor body.
-     *
-     * <p>This method returns the index of INVOKESPECIAL instruction
-     * executing <code>this()</code>.
-     * A successive call to <code>next()</code> returns the
-     * index of the next instruction following that INVOKESPECIAL.
-     *
-     * <p>This method works only for a constructor.
-     *
-     * @return  the index of the INVOKESPECIAL instruction, or -1
-     *          if a explicit constructor invocation is not found
-     *          but <code>super()</code> is found.
-     */
+
     public int skipThisConstructor() throws BadBytecode {
         return skipSuperConstructor0(1);
     }
 
-    /* skipSuper        1: this(), 0: super(), -1: both.
-     */
+
     private int skipSuperConstructor0(int skipThis) throws BadBytecode {
         begin();
         ConstPool cp = codeAttr.getConstPool();
@@ -316,156 +152,41 @@ public class CodeIterator implements Opcode {
         return -1;
     }
 
-    /**
-     * Inserts the given bytecode sequence
-     * before the next instruction that would be returned by
-     * <code>next()</code> (not before the instruction returned
-     * by the last call to <code>next()</code>).
-     * Branch offsets and the exception table are also updated.
-     *
-     * <p>If the next instruction is at the beginning of a block statement,
-     * then the bytecode is inserted within that block.
-     *
-     * <p>An extra gap may be inserted at the end of the inserted
-     * bytecode sequence for adjusting alignment if the code attribute
-     * includes <code>LOOKUPSWITCH</code> or <code>TABLESWITCH</code>.
-     *
-     * @param code      inserted bytecode sequence.
-     * @return          the index indicating the first byte of the
-     *                  inserted byte sequence.
-     */
+
     public int insert(byte[] code)
         throws BadBytecode
     {
         return insert0(currentPos, code, false);
     }
 
-    /**
-     * Inserts the given bytecode sequence
-     * before the instruction at the given index <code>pos</code>.
-     * Branch offsets and the exception table are also updated.
-     *
-     * <p>If the instruction at the given index is at the beginning
-     * of a block statement,
-     * then the bytecode is inserted within that block.
-     *
-     * <p>An extra gap may be inserted at the end of the inserted
-     * bytecode sequence for adjusting alignment if the code attribute
-     * includes <code>LOOKUPSWITCH</code> or <code>TABLESWITCH</code>.
-     *
-     * <p>The index at which the byte sequence is actually inserted
-     * might be different from pos since some other bytes might be
-     * inserted at other positions (e.g. to change <code>GOTO</code>
-     * to <code>GOTO_W</code>).
-     *
-     * @param pos       the index at which a byte sequence is inserted.
-     * @param code      inserted bytecode sequence.
-     */
+
     public void insert(int pos, byte[] code) throws BadBytecode {
         insert0(pos, code, false);
     }
 
-    /**
-     * Inserts the given bytecode sequence
-     * before the instruction at the given index <code>pos</code>.
-     * Branch offsets and the exception table are also updated.
-     *
-     * <p>If the instruction at the given index is at the beginning
-     * of a block statement,
-     * then the bytecode is inserted within that block.
-     *
-     * <p>An extra gap may be inserted at the end of the inserted
-     * bytecode sequence for adjusting alignment if the code attribute
-     * includes <code>LOOKUPSWITCH</code> or <code>TABLESWITCH</code>.
-     *
-     * @param pos       the index at which a byte sequence is inserted.
-     * @param code      inserted bytecode sequence.
-     * @return          the index indicating the first byte of the
-     *                  inserted byte sequence, which might be
-     *                  different from pos.
-     * @since 3.11
-     */
+
     public int insertAt(int pos, byte[] code) throws BadBytecode {
         return insert0(pos, code, false);
     }
 
-    /**
-     * Inserts the given bytecode sequence exclusively
-     * before the next instruction that would be returned by
-     * <code>next()</code> (not before the instruction returned
-     * by tha last call to <code>next()</code>).
-     * Branch offsets and the exception table are also updated.
-     *
-     * <p>If the next instruction is at the beginning of a block statement,
-     * then the bytecode is excluded from that block.
-     *
-     * <p>An extra gap may be inserted at the end of the inserted
-     * bytecode sequence for adjusting alignment if the code attribute
-     * includes <code>LOOKUPSWITCH</code> or <code>TABLESWITCH</code>.
-     *
-     * @param code      inserted bytecode sequence.
-     * @return          the index indicating the first byte of the
-     *                  inserted byte sequence.
-     */
+
     public int insertEx(byte[] code)
         throws BadBytecode
     {
         return insert0(currentPos, code, true);
     }
 
-    /**
-     * Inserts the given bytecode sequence exclusively
-     * before the instruction at the given index <code>pos</code>.
-     * Branch offsets and the exception table are also updated.
-     *
-     * <p>If the instruction at the given index is at the beginning
-     * of a block statement,
-     * then the bytecode is excluded from that block.
-     *
-     * <p>An extra gap may be inserted at the end of the inserted
-     * bytecode sequence for adjusting alignment if the code attribute
-     * includes <code>LOOKUPSWITCH</code> or <code>TABLESWITCH</code>.
-     *
-     * <p>The index at which the byte sequence is actually inserted
-     * might be different from pos since some other bytes might be
-     * inserted at other positions (e.g. to change <code>GOTO</code>
-     * to <code>GOTO_W</code>). 
-     *
-     * @param pos       the index at which a byte sequence is inserted.
-     * @param code      inserted bytecode sequence.
-     */
+
     public void insertEx(int pos, byte[] code) throws BadBytecode {
         insert0(pos, code, true);
     }
 
-    /**
-     * Inserts the given bytecode sequence exclusively
-     * before the instruction at the given index <code>pos</code>.
-     * Branch offsets and the exception table are also updated.
-     *
-     * <p>If the instruction at the given index is at the beginning
-     * of a block statement,
-     * then the bytecode is excluded from that block.
-     *
-     * <p>An extra gap may be inserted at the end of the inserted
-     * bytecode sequence for adjusting alignment if the code attribute
-     * includes <code>LOOKUPSWITCH</code> or <code>TABLESWITCH</code>.
-     *
-     * @param pos       the index at which a byte sequence is inserted.
-     * @param code      inserted bytecode sequence.
-     * @return          the index indicating the first byte of the
-     *                  inserted byte sequence, which might be
-     *                  different from pos.
-     * @since 3.11
-     */
+
     public int insertExAt(int pos, byte[] code) throws BadBytecode {
         return insert0(pos, code, true);
     }
 
-    /**
-     * @return          the index indicating the first byte of the
-     *                  inserted byte sequence.
-     */
+
     private int insert0(int pos, byte[] code, boolean exclusive)
         throws BadBytecode
     {
@@ -473,7 +194,7 @@ public class CodeIterator implements Opcode {
         if (len <= 0)
             return pos;
 
-        // currentPos will change.
+
         pos = insertGapAt(pos, len, exclusive).position;
 
         int p = pos;
@@ -483,140 +204,40 @@ public class CodeIterator implements Opcode {
         return pos;
     }
 
-    /**
-     * Inserts a gap
-     * before the next instruction that would be returned by
-     * <code>next()</code> (not before the instruction returned
-     * by the last call to <code>next()</code>).
-     * Branch offsets and the exception table are also updated.
-     * The inserted gap is filled with NOP.  The gap length may be
-     * extended to a multiple of 4.
-     *
-     * <p>If the next instruction is at the beginning of a block statement,
-     * then the gap is inserted within that block.
-     *
-     * @param length            gap length
-     * @return  the index indicating the first byte of the inserted gap.
-     */
+
     public int insertGap(int length) throws BadBytecode {
         return insertGapAt(currentPos, length, false).position;
     }
 
-    /**
-     * Inserts a gap in front of the instruction at the given
-     * index <code>pos</code>.
-     * Branch offsets and the exception table are also updated.
-     * The inserted gap is filled with NOP.  The gap length may be
-     * extended to a multiple of 4.
-     *
-     * <p>If the instruction at the given index is at the beginning
-     * of a block statement,
-     * then the gap is inserted within that block.
-     *
-     * @param pos               the index at which a gap is inserted.
-     * @param length            gap length.
-     * @return the length of the inserted gap.
-     *          It might be bigger than <code>length</code>.
-     */
+
     public int insertGap(int pos, int length) throws BadBytecode {
         return insertGapAt(pos, length, false).length;
     }
 
-    /**
-     * Inserts an exclusive gap
-     * before the next instruction that would be returned by
-     * <code>next()</code> (not before the instruction returned
-     * by the last call to <code>next()</code>).
-     * Branch offsets and the exception table are also updated.
-     * The inserted gap is filled with NOP.  The gap length may be
-     * extended to a multiple of 4.
-     *
-     * <p>If the next instruction is at the beginning of a block statement,
-     * then the gap is excluded from that block.
-     *
-     * @param length            gap length
-     * @return  the index indicating the first byte of the inserted gap.
-     */
+
     public int insertExGap(int length) throws BadBytecode {
         return insertGapAt(currentPos, length, true).position;
     }
 
-    /**
-     * Inserts an exclusive gap in front of the instruction at the given
-     * index <code>pos</code>.
-     * Branch offsets and the exception table are also updated.
-     * The inserted gap is filled with NOP.  The gap length may be
-     * extended to a multiple of 4.
-     *
-     * <p>If the instruction at the given index is at the beginning
-     * of a block statement,
-     * then the gap is excluded from that block.
-     *
-     * @param pos               the index at which a gap is inserted.
-     * @param length            gap length.
-     * @return the length of the inserted gap.
-     *          It might be bigger than <code>length</code>.
-     */
+
     public int insertExGap(int pos, int length) throws BadBytecode {
         return insertGapAt(pos, length, true).length;
     }
 
-    /**
-     * An inserted gap.
-     *
-     * @since 3.11
-     */
+
     public static class Gap {
-        /**
-         * The position of the gap.
-         */
+
         public int position;
 
-        /**
-         * The length of the gap.
-         */
+
         public int length;
     }
 
-    /**
-     * Inserts an inclusive or exclusive gap in front of the instruction
-     * at the given index <code>pos</code>.
-     * Branch offsets and the exception table in the method body
-     * are also updated.  The inserted gap is filled with NOP.
-     * The gap length may be extended to a multiple of 4.
-     *
-     * <p>Suppose that the instruction at the given index is at the
-     * beginning of a block statement.  If the gap is inclusive,
-     * then it is included within that block.  If the gap is exclusive,
-     * then it is excluded from that block.
-     *
-     * <p>The index at which the gap is actually inserted
-     * might be different from pos since some other bytes might be
-     * inserted at other positions (e.g. to change <code>GOTO</code>
-     * to <code>GOTO_W</code>).  The index is available from the <code>Gap</code>
-     * object returned by this method.
-     *
-     * <p>Suppose that the gap is inserted at the position of
-     * the next instruction that would be returned by
-     * <code>next()</code> (not the last instruction returned
-     * by the last call to <code>next()</code>).  The next
-     * instruction returned by <code>next()</code> after the gap is
-     * inserted is still the same instruction.  It is not <code>NOP</code>
-     * at the first byte of the inserted gap.
-     *
-     * @param pos               the index at which a gap is inserted.
-     * @param length            gap length.
-     * @param exclusive         true if exclusive, otherwise false.
-     * @return the position and the length of the inserted gap.
-     * @since 3.11
-     */
+
     public Gap insertGapAt(int pos, int length, boolean exclusive)
         throws BadBytecode
     {
-        /**
-         * cursorPos indicates the next bytecode whichever exclusive is
-         * true or false.
-         */
+
         Gap gap = new Gap();
         if (length <= 0) {
             gap.position = pos;
@@ -627,17 +248,17 @@ public class CodeIterator implements Opcode {
         byte[] c;
         int length2;
         if (bytecode.length + length > Short.MAX_VALUE) {
-            // currentPos might change after calling insertGapCore0w().
+
             c = insertGapCore0w(bytecode, pos, length, exclusive,
                                 get().getExceptionTable(), codeAttr, gap);
             pos = gap.position;
-            length2 = length; // == gap.length
+            length2 = length;
         }
         else {
             int cur = currentPos;
             c = insertGapCore0(bytecode, pos, length, exclusive,
                                       get().getExceptionTable(), codeAttr);
-            // insertGapCore0() never changes pos.
+
             length2 = c.length - bytecode.length;
             gap.position = pos;
             gap.length = length2;
@@ -655,35 +276,17 @@ public class CodeIterator implements Opcode {
         return gap;
     }
 
-    /**
-     * Is called when a gap is inserted.  The default implementation is empty.
-     * A subclass can override this method so that cursors will be updated.
-     *
-     * @param pos           the position where a gap is inserted.
-     * @param length        the length of the gap.
-     */
+
     protected void updateCursors(int pos, int length) {
-        // empty
+
     }
 
-    /**
-     * Copies and inserts the entries in the given exception table
-     * at the beginning of the exception table in the code attribute
-     * edited by this object.
-     *
-     * @param offset    the value added to the code positions included
-     *                          in the entries.
-     */
+
     public void insert(ExceptionTable et, int offset) {
         codeAttr.getExceptionTable().add(0, et, offset);
     }
 
-    /**
-     * Appends the given bytecode sequence at the end.
-     *
-     * @param code      the bytecode appended.
-     * @return  the position of the first byte of the appended bytecode.
-     */
+
     public int append(byte[] code) {
         int size = getCodeLength();
         int len = code.length;
@@ -698,11 +301,7 @@ public class CodeIterator implements Opcode {
         return size;
     }
 
-    /**
-     * Appends a gap at the end of the bytecode sequence.
-     *
-     * @param gapLength            gap length
-     */
+
     public void appendGap(int gapLength) {
         byte[] code = bytecode;
         int codeLength = code.length;
@@ -720,21 +319,13 @@ public class CodeIterator implements Opcode {
         endPos = getCodeLength();
     }
 
-    /**
-     * Copies and appends the entries in the given exception table
-     * at the end of the exception table in the code attribute
-     * edited by this object.
-     *
-     * @param offset    the value added to the code positions included
-     *                          in the entries.
-     */
+
     public void append(ExceptionTable et, int offset) {
         ExceptionTable table = codeAttr.getExceptionTable();
         table.add(table.size(), et, offset);
     }
 
-    /* opcodeLegth is used for implementing nextOpcode().
-     */
+
     private static final int opcodeLength[] = {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 3,
         3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -748,11 +339,9 @@ public class CodeIterator implements Opcode {
         3, 3, 3, 3, 3, 5, 5, 3, 2, 3, 1, 1, 3, 3, 1, 1, 0, 4, 3, 3,
         5, 5
     };
-    // 0 .. LOOKUPSWITCH, TABLESWITCH, WIDE
 
-    /**
-     * Calculates the index of the next opcode.
-     */
+
+
     static int nextOpcode(byte[] code, int index)
         throws BadBytecode
     {
@@ -769,10 +358,10 @@ public class CodeIterator implements Opcode {
             if (len > 0)
                 return index + len;
             else if (opcode == WIDE)
-                if (code[index + 1] == (byte)IINC)      // WIDE IINC
+                if (code[index + 1] == (byte)IINC)
                     return index + 6;
                 else
-                    return index + 4;           // WIDE ...
+                    return index + 4;
             int index2 = (index & ~3) + 8;
             if (opcode == LOOKUPSWITCH) {
                 int npairs = ByteArray.read32bit(code, index2);
@@ -787,32 +376,18 @@ public class CodeIterator implements Opcode {
         catch (IndexOutOfBoundsException e) {
         }
 
-        // opcode is UNUSED or an IndexOutOfBoundsException was thrown.
+
         throw new BadBytecode(opcode);
     }
 
-    // methods for implementing insertGap().
+
 
     static class AlignmentException extends Exception {
 
-        /** default serialVersionUID */
+
         private static final long serialVersionUID = 1L;}
 
-    /**
-     * insertGapCore0() inserts a gap (some NOPs).
-     * It cannot handle a long code sequence more than 32K.  All branch offsets must be
-     * signed 16bits. 
-     *
-     * If "where" is the beginning of a block statement and exclusive is false,
-     * then the inserted gap is also included in the block statement.
-     * "where" must indicate the first byte of an opcode.
-     * The inserted gap is filled with NOP.  gapLength may be extended to
-     * a multiple of 4.
-     *
-     * This method was also called from CodeAttribute.LdcEntry.doit().
-     *
-     * @param where       It must indicate the first byte of an opcode.
-     */
+
     static byte[] insertGapCore0(byte[] code, int where, int gapLength,
                                  boolean exclusive, ExceptionTable etable, CodeAttribute ca)
         throws BadBytecode
@@ -886,10 +461,10 @@ public class CodeIterator implements Opcode {
 
             nextPos = nextOpcode(code, i);
             int inst = code[i] & 0xff;
-            // if<cond>, if_icmp<cond>, if_acmp<cond>, goto, jsr
+
             if ((153 <= inst && inst <= 168)
                 || inst == IFNULL || inst == IFNONNULL) {
-                /* 2bytes *signed* offset */
+
                 int offset = (code[i + 1] << 8) | (code[i + 2] & 0xff);
                 offset = newOffset(i, offset, where, gapLength, exclusive);
                 newcode[j] = code[i];
@@ -897,7 +472,7 @@ public class CodeIterator implements Opcode {
                 j += 3;
             }
             else if (inst == GOTO_W || inst == JSR_W) {
-                /* 4bytes offset */
+
                 int offset = ByteArray.read32bit(code, i + 1);
                 offset = newOffset(i, offset, where, gapLength, exclusive);
                 newcode[j++] = code[i];
@@ -908,13 +483,13 @@ public class CodeIterator implements Opcode {
                 if (i != j && (gapLength & 3) != 0)
                     throw new AlignmentException();
 
-                int i2 = (i & ~3) + 4;  // 0-3 byte padding
-                // IBM JVM 1.4.2 cannot run the following code:
-                // int i0 = i;
-                // while (i0 < i2)
-                //    newcode[j++] = code[i0++];
-                // So extracting this code into an external method.
-                // see JIRA JASSIST-74.
+                int i2 = (i & ~3) + 4;
+
+
+
+
+
+
                 j = copyGapBytes(newcode, j, code, i, i2);
 
                 int defaultbyte = newOffset(i, ByteArray.read32bit(code, i2),
@@ -939,14 +514,14 @@ public class CodeIterator implements Opcode {
                 if (i != j && (gapLength & 3) != 0)
                     throw new AlignmentException();
 
-                int i2 = (i & ~3) + 4;  // 0-3 byte padding
+                int i2 = (i & ~3) + 4;
 
-                // IBM JVM 1.4.2 cannot run the following code:
-                // int i0 = i;
-                // while (i0 < i2)
-                //    newcode[j++] = code[i0++];
-                // So extracting this code into an external method.
-                // see JIRA JASSIST-74.
+
+
+
+
+
+
                 j = copyGapBytes(newcode, j, code, i, i2);
 
                 int defaultbyte = newOffset(i, ByteArray.read32bit(code, i2),
@@ -998,8 +573,8 @@ public class CodeIterator implements Opcode {
                 offset += gapLength;
         }
         else if (i == where) {
-            // This code is different from the code in Branch#shiftOffset().
-            // see JASSIST-124.
+
+
             if (target < where)
                 offset -= gapLength;
         }
@@ -1023,7 +598,7 @@ public class CodeIterator implements Opcode {
             cursor = cur;
             mark = m;
             mark0 = m0;
-            etable = et;    // non null
+            etable = et;
             line = (LineNumberAttribute)ca.getAttribute(LineNumberAttribute.tag);
             vars = (LocalVariableAttribute)ca.getAttribute(LocalVariableAttribute.tag);
             types = (LocalVariableAttribute)ca.getAttribute(LocalVariableAttribute.typeTag);
@@ -1067,9 +642,7 @@ public class CodeIterator implements Opcode {
         }
     }
 
-    /*
-     * This method is called from CodeAttribute.LdcEntry.doit().
-     */
+
     static byte[] changeLdcToLdcW(byte[] code, ExceptionTable etable,
                                   CodeAttribute ca, CodeAttribute.LdcEntry ldcs)
         throws BadBytecode
@@ -1098,19 +671,7 @@ public class CodeIterator implements Opcode {
         jumps.add(ldcw);
     }
 
-    /*
-     * insertGapCore0w() can handle a long code sequence more than 32K. 
-     * It guarantees that the length of the inserted gap (NOPs) is equal to
-     * gapLength.  No other NOPs except some NOPs following TABLESWITCH or
-     * LOOKUPSWITCH will not be inserted. 
-     * 
-     * Note: currentPos might be moved.
-     *
-     * @param where       It must indicate the first byte of an opcode.
-     * @param newWhere    It contains the updated index of the position where a gap
-     *                    is inserted and the length of the gap.
-     *                    It must not be null.
-     */
+
     private byte[] insertGapCore0w(byte[] code, int where, int gapLength, boolean exclusive,
                                    ExceptionTable etable, CodeAttribute ca, Gap newWhere)
         throws BadBytecode
@@ -1184,10 +745,10 @@ public class CodeIterator implements Opcode {
         for (int i = 0; i < endPos; i = nextPos) {
             nextPos = nextOpcode(code, i);
             int inst = code[i] & 0xff;
-            // if<cond>, if_icmp<cond>, if_acmp<cond>, goto, jsr
+
             if ((153 <= inst && inst <= 168)
                     || inst == IFNULL || inst == IFNONNULL) {
-                /* 2bytes *signed* offset */
+
                 int offset = (code[i + 1] << 8) | (code[i + 2] & 0xff);
                 Branch b;
                 if (inst == GOTO || inst == JSR)
@@ -1198,12 +759,12 @@ public class CodeIterator implements Opcode {
                 jumps.add(b);
             }
             else if (inst == GOTO_W || inst == JSR_W) {
-                /* 4bytes offset */
+
                 int offset = ByteArray.read32bit(code, i + 1);
                 jumps.add(new Jump32(i, offset));
             }
             else if (inst == TABLESWITCH) {
-                int i2 = (i & ~3) + 4;  // 0-3 byte padding
+                int i2 = (i & ~3) + 4;
                 int defaultbyte = ByteArray.read32bit(code, i2);
                 int lowbyte = ByteArray.read32bit(code, i2 + 4);
                 int highbyte = ByteArray.read32bit(code, i2 + 8);
@@ -1218,7 +779,7 @@ public class CodeIterator implements Opcode {
                 jumps.add(new Table(i, defaultbyte, lowbyte, highbyte, offsets, ptrs));
             }
             else if (inst == LOOKUPSWITCH) {
-                int i2 = (i & ~3) + 4;  // 0-3 byte padding
+                int i2 = (i & ~3) + 4;
                 int defaultbyte = ByteArray.read32bit(code, i2);
                 int npairs = ByteArray.read32bit(code, i2 + 4);
                 int i0 = i2 + 8;
@@ -1257,7 +818,7 @@ public class CodeIterator implements Opcode {
         }
         else {
             b = null;
-            bpos = len;  // src will be never equal to bpos
+            bpos = len;
         }
 
         while (src < len) {
@@ -1303,8 +864,8 @@ public class CodeIterator implements Opcode {
                     offset += gapLength;
             }
             else if (i == where) {
-                // This code is different from the code in CodeIterator#newOffset().
-                // see JASSIST-124.
+
+
                 if (target < where && exclusive)
                     offset -= gapLength;
                 else if (where < target && !exclusive)
@@ -1319,14 +880,13 @@ public class CodeIterator implements Opcode {
 
         boolean expanded() { return false; }
         int gapChanged() { return 0; }
-        int deltaSize() { return 0; }   // newSize - oldSize
+        int deltaSize() { return 0; }
 
-        // This returns the original instruction size.
+
         abstract int write(int srcPos, byte[] code, int destPos, byte[] newcode) throws BadBytecode;
     }
 
-    /* used by changeLdcToLdcW() and CodeAttribute.LdcEntry.
-     */
+
     static class LdcW extends Branch {
         int index;
         boolean state;
@@ -1404,7 +964,7 @@ public class CodeIterator implements Opcode {
         }
     }
 
-    // GOTO or JSR
+
     static class Jump16 extends Branch16 {
         Jump16(int p, int off) {
             super(p, off);
@@ -1422,7 +982,7 @@ public class CodeIterator implements Opcode {
         }
     }
 
-    // if<cond>, if_icmp<cond>, or if_acmp<cond>
+
     static class If16 extends Branch16 {
         If16(int p, int off) {
             super(p, off);
@@ -1437,7 +997,7 @@ public class CodeIterator implements Opcode {
         void write32(int src, byte[] code, int dest, byte[] newcode) {
             newcode[dest] = (byte)opcode(code[src] & 0xff);
             newcode[dest + 1] = 0;
-            newcode[dest + 2] = 8;  // branch_offset = 8
+            newcode[dest + 2] = 8;
             newcode[dest + 3] = (byte)GOTO_W;
             ByteArray.write32bit(offset - 3, newcode, dest + 4);
         }
@@ -1540,15 +1100,7 @@ public class CodeIterator implements Opcode {
         abstract int write2(int dest, byte[] newcode);
         abstract int tableSize();
 
-        /* If the new bytecode size is shorter than the original, some NOPs
-         * are appended after this branch instruction (tableswitch or
-         * lookupswitch) to fill the gap.
-         * This method changes a branch offset to point to the first NOP
-         * if the offset originally points to the bytecode next to this
-         * branch instruction.  Otherwise, the bytecode would contain
-         * dead code.  It complicates the generation of StackMap and
-         * StackMapTable.
-         */
+
         void adjustOffsets(int size, int nops) throws BadBytecode {
             pointers.shiftForSwitch(pos + size, nops);
             if (defaultByte == size)

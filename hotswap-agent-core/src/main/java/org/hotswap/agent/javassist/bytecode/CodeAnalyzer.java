@@ -1,24 +1,8 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.bytecode;
 
-/**
- * Utility for computing <code>max_stack</code>.
- */
+
 class CodeAnalyzer implements Opcode {
     private ConstPool constPool;
     private CodeAttribute codeAttr;
@@ -31,11 +15,7 @@ class CodeAnalyzer implements Opcode {
     public int computeMaxStack()
         throws BadBytecode
     {
-        /* d = stack[i]
-         * d == 0: not visited
-         * d > 0: the depth is d - 1 after executing the bytecode at i.
-         * d < 0: not visited. the initial depth (before execution) is 1 - d.
-         */
+
         CodeIterator ci = codeAttr.iterator();
         int length = ci.getCodeLength();
         int[] stack = new int[length];
@@ -56,7 +36,7 @@ class CodeAnalyzer implements Opcode {
             if (stack[i] > maxStack)
                 maxStack = stack[i];
 
-        return maxStack - 1;    // the base is 1.
+        return maxStack - 1;
     }
 
     private void initStack(int[] stack, CodeAttribute ca) {
@@ -65,7 +45,7 @@ class CodeAnalyzer implements Opcode {
         if (et != null) {
             int size = et.size();
             for (int i = 0; i < size; ++i)
-                stack[et.handlerPc(i)] = -2;    // an exception is on stack
+                stack[et.handlerPc(i)] = -2;
         }
     }
 
@@ -88,7 +68,7 @@ class CodeAnalyzer implements Opcode {
             if (processBranch(op, ci, index, codeLength, stack, stackDepth, jsrDepth))
                 break;
 
-            if (isEnd(op))     // return, ireturn, athrow, ...
+            if (isEnd(op))
                 break;
 
             if (op == JSR || op == JSR_W)
@@ -124,13 +104,7 @@ class CodeAnalyzer implements Opcode {
                     target = index + ci.s32bitAt(index + 1);
 
                 checkTarget(index, target, codeLength, stack, stackDepth);
-                /*
-                 * It is unknown which RET comes back to this JSR.
-                 * So we assume that if the stack depth at one JSR instruction
-                 * is N, then it is also N at other JSRs and N - 1 at all RET
-                 * instructions.  Note that STACK_GROW[JSR] is 1 since it pushes
-                 * a return address on the operand stack.
-                 */
+
                 if (jsrDepth[0] < 0) {
                     jsrDepth[0] = stackDepth;
                     return false;
@@ -180,11 +154,11 @@ class CodeAnalyzer implements Opcode {
                     }
                 }
 
-                return true;    // always branch.
+                return true;
             }
         }
 
-        return false;   // may not branch.
+        return false;
     }
 
     private void checkTarget(int opIndex, int target, int codeLength,
@@ -206,9 +180,7 @@ class CodeAnalyzer implements Opcode {
         return (IRETURN <= opcode && opcode <= RETURN) || opcode == ATHROW; 
     }
 
-    /**
-     * Visits an instruction.
-     */
+
     private int visitInst(int op, CodeIterator ci, int index, int stack)
         throws BadBytecode
     {
@@ -242,17 +214,17 @@ class CodeAnalyzer implements Opcode {
             break;
         case INVOKEDYNAMIC :
             desc = constPool.getInvokeDynamicType(ci.u16bitAt(index + 1));
-            stack += Descriptor.dataSize(desc);     // assume CosntPool#REF_invokeStatic
+            stack += Descriptor.dataSize(desc);
             break;
         case ATHROW :
-            stack = 1;      // the stack becomes empty (1 means no values).
+            stack = 1;
             break;
         case MULTIANEWARRAY :
             stack += 1 - ci.byteAt(index + 3);
             break;
         case WIDE :
             op = ci.byteAt(index + 1);
-            // don't break here.
+
         default :
             stack += STACK_GROW[op];
         }

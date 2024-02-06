@@ -59,9 +59,9 @@ public class DeltaspikeRepositoryTest extends HAAbstractUnitTest {
             public boolean result() throws Exception {
                 return RepositoryRefreshAgent.reloadFlag;
             }
-        }, (DeltaSpikePlugin.WAIT_ON_REDEFINE * 3) )); // Repository is regenerated within 2*DeltaSpikePlugin.WAIT_ON_REDEFINE
+        }, (DeltaSpikePlugin.WAIT_ON_REDEFINE * 3) ));
 
-        // TODO do not know why sleep is needed, maybe a separate thread in owb refresh?
+
         Thread.sleep(100);
     }
 

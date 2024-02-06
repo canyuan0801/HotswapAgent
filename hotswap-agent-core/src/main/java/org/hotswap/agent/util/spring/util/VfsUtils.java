@@ -1,18 +1,4 @@
-/*
- * Copyright 2002-2014 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 
 package org.hotswap.agent.util.spring.util;
 
@@ -27,24 +13,9 @@ import java.net.URL;
 
 import org.hotswap.agent.logging.AgentLogger;
 
-/**
- * Utility for detecting and accessing JBoss VFS in the classpath.
- *
- * <p>
- * As of Spring 4.0, this class supports VFS 3.x on JBoss AS 6+ (package
- * {@code org.jboss.vfs}) and is in particular compatible with JBoss AS 7 and
- * WildFly 8.
- *
- * <p>
- * Thanks go to Marius Bogoevici for the initial patch. <b>Note:</b> This is an
- * internal class and should not be used outside the framework.
- *
- * @author Costin Leau
- * @author Juergen Hoeller
- * @since 3.0.3
- */
+
 public abstract class VfsUtils {
-    /** The logger. */
+    
     private static final AgentLogger LOGGER = AgentLogger.getLogger(VfsUtils.class);
     
     private static final String VFS3_PKG = "org.jboss.vfs.";
@@ -72,7 +43,7 @@ public abstract class VfsUtils {
     private static volatile boolean initialized = false;
 
     static {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();//
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
         if (loader == null) {
             loader = VfsUtils.class.getClassLoader();
         }
@@ -105,7 +76,7 @@ public abstract class VfsUtils {
     }
 
     private static void init() {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();//
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
         if (loader == null) {
             loader = VfsUtils.class.getClassLoader();
         }
@@ -250,7 +221,7 @@ public abstract class VfsUtils {
         return invokeVfsMethod(VFS_METHOD_GET_ROOT_URI, null, url);
     }
 
-    // protected methods used by the support sub-package
+    
     public static <T> T getRoot(URL url) throws IOException {
         if (!initialized) {
             init();

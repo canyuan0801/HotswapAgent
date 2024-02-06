@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.elresolver;
 
 import java.lang.reflect.Modifier;
@@ -43,11 +26,7 @@ import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.PluginManagerInvoker;
 
-/**
- * Clear javax.el.BeanELResolver cache after any class redefinition.
- *
- * @author Vladimir Dvorak
- */
+
 @Plugin(name = "ELResolver",
         group = "groupELResolver",
         fallback = true,
@@ -56,28 +35,28 @@ import org.hotswap.agent.util.PluginManagerInvoker;
         expectedVersions = {"2.2"})
 @Versions(
         maven = {
-            //Jboss el 2
+
             @Maven(value = "[1.0,)", artifactId = "jboss-el-api_2.2_spec", groupId = "org.jboss.spec.javax.el"),
-            //Juel
+
             @Maven(value = "[2.0,)", artifactId = "juel", groupId = "de.odysseus.juel"),
-            //Jboss el 3.0
+
             @Maven(value="[3.0,)", artifactId = "javax.el-api", groupId = "javax.el")
         },
         manifest = {
-            // Seam jboss
+
             @Manifest(value="[1.0,)", versionName="JBoss-EL-Version", names ={@Name(key="JBoss-EL-Version", value=".*")}),
-            // Tomcat bundled EL (6-9)
+
             @Manifest(value="[2.0,)",versionName = Name.SpecificationVersion, names={
                     @Name(key=Name.ImplementationTitle,value="javax.el"),
                     @Name(key=Name.ImplementationVendor, value="Apache.*Software.*Foundation")
             }),
-            //Jetty 7,8
+
             @Manifest(value="[2.0,)", versionName={Name.BundleVersion}, names={@Name(key=Name.BundleSymbolicName,value="javax.el")}),
-            //Jetty 9
+
             @Manifest(value="[8.0,)", versionName={Name.BundleVersion}, names={
                     @Name(key=Name.BundleSymbolicName,value="org.mortbay.jasper.apache-el"),
                     @Name(key="Bundle-Vendor",value="Webtide")}),
-            // GlassFish
+
             @Manifest(value="[3.0,)", versionName={Name.BundleVersion}, names={
                     @Name(key=Name.BundleSymbolicName,value="com.sun.el.javax.el"),
                     @Name(key="Bundle-Vendor",value="GlassFish Community")})
@@ -105,11 +84,7 @@ public class ELResolverPlugin {
         LOGGER.info("ELResolver plugin initialized.");
     }
 
-    /**
-     * Hook on BeanELResolver class and for each instance:
-     * - ensure plugin is initialized
-     * - register instances using registerBeanELResolver() method
-     */
+
     @OnClassLoadEvent(classNameRegexp = "javax.el.BeanELResolver")
     public static void beanELResolverRegisterVariable(CtClass ctClass) throws CannotCompileException {
 
@@ -162,8 +137,8 @@ public class ELResolverPlugin {
 
     private static boolean checkJuelEL(CtClass ctClass) {
         try {
-            // JUEL, (JSF BeanELResolver[s])
-            // check if we have purgeBeanClasses method
+
+
             CtMethod purgeMeth = ctClass.getDeclaredMethod("purgeBeanClasses");
             ctClass.addMethod(CtNewMethod.make(
                     "public void " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader) {" +
@@ -171,7 +146,7 @@ public class ELResolverPlugin {
                     "}", ctClass));
             return true;
         } catch (NotFoundException | CannotCompileException e) {
-            // purgeBeanClasses method not found -do nothing
+
         }
         return false;
 
@@ -180,9 +155,9 @@ public class ELResolverPlugin {
     private static boolean checkApacheEL(CtClass ctClass)
     {
         try {
-            // ApacheEL has field cache
+
             CtField field = ctClass.getField("cache");
-            // Apache BeanELResolver (has cache property)
+
             ctClass.addField(new CtField(CtClass.booleanType, "$$ha$purgeRequested", ctClass), CtField.Initializer.constant(false));
 
             ctClass.addMethod(CtNewMethod.make(
@@ -205,7 +180,7 @@ public class ELResolverPlugin {
 
     private static boolean checkJBoss_3_0_EL(CtClass ctClass) {
 
-        // JBoss EL Resolver - is recognized by "javax.el.BeanELResolver.properties" property
+
         try {
             CtField field = ctClass.getField("properties");
             if ((field.getModifiers() & Modifier.STATIC) != 0) {
@@ -214,16 +189,12 @@ public class ELResolverPlugin {
             }
             return true;
         } catch (NotFoundException e1) {
-            // do nothing
+
         }
         return false;
     }
 
-    /*
-     * JBossEL has weak reference cache. Values are stored in ThreadGroupContext cache, that must be flushed from appropriate thread.
-     * Therefore we must create request for cleanup cache in PURGE_CLASS_CACHE_METHOD and own cleanup is executed indirectly when
-     * application calls getBeanProperty(...).
-     */
+
     private static void patchJBossEl(CtClass ctClass) {
         try {
             ctClass.addField(new CtField(CtClass.booleanType, "$$ha$purgeRequested", ctClass), CtField.Initializer.constant(false));

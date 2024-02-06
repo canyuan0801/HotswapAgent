@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.owb.command;
 
 import java.io.IOException;
@@ -70,27 +53,12 @@ import org.hotswap.agent.util.ReflectionHelper;
 import org.hotswap.agent.util.signature.ClassSignatureComparerHelper;
 import org.hotswap.agent.util.signature.ClassSignatureElement;
 
-/**
- * Handle definition and redefinition of bean classes in BeanManager. If the bean class already exists than, according reloading policy,
- * either bean instance re-injection or bean context reloading is processed.
- *
- * @author Vladimir Dvorak
- */
+
 public class BeanClassRefreshAgent {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(BeanClassRefreshAgent.class);
 
-    /**
-     * Reload bean in existing bean manager. Called by a reflection command from BeanRefreshCommand transformer.
-     *
-     * @param appClassLoader the application class loader
-     * @param beanClassName the bean class name
-     * @param oldFullSignatures the old full signatures
-     * @param oldSignatures the map of class name to old signature
-     * @param strReloadStrategy the bean reload strategy
-     * @param beanArchiveUrl the bean archive url
-     * @throws IOException error working with classDefinition
-     */
+
     public static synchronized void reloadBean(ClassLoader appClassLoader, String beanClassName, Map<String, String> oldFullSignatures,
             Map<String, String> oldSignatures, String strReloadStrategy, URL beanArchiveUrl) throws IOException {
         try {
@@ -119,7 +87,7 @@ public class BeanClassRefreshAgent {
         try {
             Thread.currentThread().setContextClassLoader(appClassLoader);
 
-            // check if it is Object descendant
+
             if (Object.class.isAssignableFrom(beanClass)) {
 
                 BeanManagerImpl beanManager = null;
@@ -148,7 +116,7 @@ public class BeanClassRefreshAgent {
                                 continue;
                             }
 
-                            // just now only managed beans
+
                             if (bean instanceof InjectionTargetBean) {
                                 createAnnotatedTypeForExistingBeanClass(beanManager, (InjectionTargetBean) bean);
                                 if (isReinjectingContext(bean) || HaCdiCommons.isInExtraScope(bean)) {
@@ -162,7 +130,7 @@ public class BeanClassRefreshAgent {
                             }
                         }
                     } else {
-                        // Define new bean
+
                         doDefineNewBean(beanManager, beanClass, beanArchiveUrl);
                     }
                 } else {
@@ -198,10 +166,10 @@ public class BeanClassRefreshAgent {
 
         if (reloadStrategy == BeanReloadStrategy.CLASS_CHANGE ||
                 (reloadStrategy != BeanReloadStrategy.NEVER && signatureByStrategy != null && !signatureByStrategy.equals(oldSignature))) {
-            // Reload bean in contexts - invalidates existing instances
+
             doReloadBeanInBeanContexts(beanManager, bean);
         } else {
-            // keep beans in contexts, reinitialize bean injection points
+
             doReinjectBean(beanManager, bean);
         }
     }
@@ -225,14 +193,14 @@ public class BeanClassRefreshAgent {
         WebBeansContext wbc = beanManager.getWebBeansContext();
 
         AnnotatedElementFactory annotatedElementFactory = wbc.getAnnotatedElementFactory();
-        // Clear AnnotatedElementFactory caches
+
         annotatedElementFactory.clear();
 
         Object forwardingMethIterceptors = null;
 
         if (bean.getProducer() instanceof AbstractProducer) {
-            // methodInterceptors must be the same instance. It is stored in field owbIntDecHandler of existing
-            // InterceptedProxy's instances
+
+
             try {
                 forwardingMethIterceptors = ReflectionHelper.get(bean.getProducer(), "methodInterceptors");
             } catch (IllegalArgumentException e) {
@@ -244,7 +212,7 @@ public class BeanClassRefreshAgent {
 
         ReflectionHelper.set(bean, InjectionTargetBean.class, "annotatedType", annotatedType);
 
-        // Updated members that were set by bean attributes
+
         BeanAttributesImpl attributes = BeanAttributesBuilder.forContext(wbc).newBeanAttibutes(annotatedType).build();
         ReflectionHelper.set(bean, BeanAttributesImpl.class, "types", attributes.getTypes());
         ReflectionHelper.set(bean, BeanAttributesImpl.class, "qualifiers", attributes.getQualifiers());
@@ -352,7 +320,7 @@ public class BeanClassRefreshAgent {
         if (ContextualReloadHelper.addToReloadSet(context, bean)) {
             LOGGER.debug("Bean {}, added to reload set in context '{}'", bean, context.getClass());
         } else {
-            // fallback: try to reinitialize injection points instead...
+
             doReinjectBeanInstance(beanManager, bean, context);
         }
     }
@@ -363,10 +331,10 @@ public class BeanClassRefreshAgent {
         WebBeansContext wbc = beanManager.getWebBeansContext();
 
         AnnotatedElementFactory annotatedElementFactory = wbc.getAnnotatedElementFactory();
-        // Clear AnnotatedElementFactory caches (is it necessary for definition ?)
+
         annotatedElementFactory.clear();
 
-        // Injection resolver cache must be cleared before / after definition
+
         beanManager.getInjectionResolver().clearCaches();
 
         BeanArchiveInformation beanArchiveInfo =
@@ -391,13 +359,13 @@ public class BeanClassRefreshAgent {
         BeansDeployer beansDeployer = new BeansDeployer(wbc);
 
         try {
-            // OWB 1.7
+
             ReflectionHelper.invoke(beansDeployer, BeansDeployer.class, "defineManagedBean",
                     new Class[] { javax.enterprise.inject.spi.AnnotatedType.class, BeanAttributes.class, java.util.Map.class },
                     annotatedType, attributes, annotatedTypes);
         } catch (Exception e) {
             try {
-                // OWB 2.0
+
                 ExtendedBeanAttributes extendedBeanAttributes =
                         ExtendedBeanAttributes.class.getConstructor(BeanAttributes.class, boolean.class, boolean.class)
                         .newInstance(attributes, false, false);

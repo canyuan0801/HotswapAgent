@@ -1,32 +1,11 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.versions;
 
 import java.util.Locale;
 
 import junit.framework.TestCase;
 
-/**
- * Test ComparableVersion.
- *
- * @author <a href="mailto:hboutemy@apache.org">Hervé Boutemy</a>
- */
+
 public class ComparableVersionTest extends TestCase {
     private ComparableVersion newComparable(String version) {
         ComparableVersion ret = new ComparableVersion(version);
@@ -94,7 +73,7 @@ public class ComparableVersionTest extends TestCase {
         checkVersionsEqual("1", "1-0");
         checkVersionsEqual("1", "1.0-0");
         checkVersionsEqual("1.0", "1.0-0");
-        // no separator between number and character
+
         checkVersionsEqual("1a", "1-a");
         checkVersionsEqual("1a", "1.0-a");
         checkVersionsEqual("1a", "1.0.0-a");
@@ -106,17 +85,17 @@ public class ComparableVersionTest extends TestCase {
         checkVersionsEqual("1.0x", "1-x");
         checkVersionsEqual("1.0.0x", "1-x");
 
-        // aliases
+
         checkVersionsEqual("1ga", "1");
         checkVersionsEqual("1final", "1");
         checkVersionsEqual("1cr", "1rc");
 
-        // special "aliases" a, b and m for alpha, beta and milestone
+
         checkVersionsEqual("1a1", "1-alpha-1");
         checkVersionsEqual("1b2", "1-beta-2");
         checkVersionsEqual("1m3", "1-milestone-3");
 
-        // case insensitive
+
         checkVersionsEqual("1X", "1x");
         checkVersionsEqual("1A", "1a");
         checkVersionsEqual("1B", "1b");
@@ -163,26 +142,16 @@ public class ComparableVersionTest extends TestCase {
         checkVersionsOrder("2.0.1-xyz", "2.0.1-123");
     }
 
-    /**
-     * Test
-     * <a href="https://issues.apache.org/jira/browse/MNG-5568">MNG-5568</a>
-     * edge case which was showing transitive inconsistency: since A > B and B >
-     * C then we should have A > C otherwise sorting a list of
-     * ComparableVersions() will in some cases throw runtime exception; see
-     * Netbeans issues
-     * <a href="https://netbeans.org/bugzilla/show_bug.cgi?id=240845">240845</a>
-     * and
-     * <a href="https://netbeans.org/bugzilla/show_bug.cgi?id=226100">226100</a>
-     */
+
     public void testMng5568() {
         String a = "6.1.0";
         String b = "6.1.0rc3";
-        String c = "6.1H.5-beta"; // this is the unusual version string, with
-                                  // 'H' in the middle
+        String c = "6.1H.5-beta";
 
-        checkVersionsOrder(b, a); // classical
-        checkVersionsOrder(b, c); // now b < c, but before MNG-5568, we had b >
-                                  // c
+
+        checkVersionsOrder(b, a);
+        checkVersionsOrder(b, c);
+
         checkVersionsOrder(a, c);
     }
 

@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.util.proxy;
 
@@ -25,11 +11,7 @@ import org.hotswap.agent.javassist.CannotCompileException;
 import org.hotswap.agent.javassist.CtClass;
 import org.hotswap.agent.javassist.bytecode.ClassFile;
 
-/**
- * Helper class for invoking {@link ClassLoader#defineClass(String,byte[],int,int)}.
- *
- * @since 3.22
- */
+
 public class DefinePackageHelper
 {
     private static abstract class Helper {
@@ -40,7 +22,7 @@ public class DefinePackageHelper
     }
 
     private static class Java9 extends Helper {
-        // definePackage has been discontinued for JAVA 9
+
         @Override
         Package definePackage(ClassLoader loader, String name, String specTitle,
                     String specVersion, String specVendor, String implTitle, String implVersion,
@@ -140,27 +122,7 @@ public class DefinePackageHelper
           ? new Java9() : ClassFile.MAJOR_VERSION >= ClassFile.JAVA_7
                           ? new Java7() : new JavaOther();
 
-    /**
-     * Defines a new package.  If the package is already defined, this method
-     * performs nothing.
-     *
-     * <p>You do not necessarily need to
-     * call this method.  If this method is called, then  
-     * <code>getPackage()</code> on the <code>Class</code> object returned 
-     * by <code>toClass()</code> will return a non-null object.</p>
-     *
-     * <p>The jigsaw module introduced by Java 9 has broken this method.
-     * In Java 9 or later, the VM argument
-     * <code>--add-opens java.base/java.lang=ALL-UNNAMED</code>
-     * has to be given to the JVM so that this method can run.
-     * </p>
-     *
-     * @param loader        the class loader passed to <code>toClass()</code> or
-     *                      the default one obtained by <code>getClassLoader()</code>.
-     * @param className     the package name.
-     * @see Class#getClassLoader()
-     * @see CtClass#toClass()
-     */
+
     public static void definePackage(String className, ClassLoader loader)
         throws CannotCompileException
     {
@@ -169,8 +131,8 @@ public class DefinePackageHelper
                     null, null, null, null, null, null, null);
         }
         catch (IllegalArgumentException e) {
-            // if the package is already defined, an IllegalArgumentException
-            // is thrown.
+
+
             return;
         }
         catch (Exception e) {

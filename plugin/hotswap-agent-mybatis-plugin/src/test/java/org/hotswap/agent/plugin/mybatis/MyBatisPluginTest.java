@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.mybatis;
 
 import static org.junit.Assert.assertEquals;
@@ -47,14 +30,14 @@ public class MyBatisPluginTest {
 
     @BeforeClass
     public static void setup() throws Exception {
-        // create an SqlSessionFactory
+
         File f = Resources.getResourceAsFile("org/hotswap/agent/plugin/mybatis/Mapper1.xml");
         Files.copy(f.toPath(), f.toPath().getParent().resolve("Mapper.xml"));
         try (Reader reader = Resources.getResourceAsReader("org/hotswap/agent/plugin/mybatis/mybatis-config.xml")) {
           sqlSessionFactory = new SqlSessionFactoryBuilder().build(reader);
         }
 
-        // populate in-memory database
+
         runScript(sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(),
                 "org/hotswap/agent/plugin/mybatis/CreateDB.sql");
     }
@@ -107,9 +90,9 @@ public class MyBatisPluginTest {
             public boolean result() throws Exception {
                 return !MyBatisRefreshCommands.reloadFlag;
             }
-        }, 4000 )); // Repository is regenerated within 2*DeltaSpikePlugin.WAIT_ON_REDEFINE
+        }, 4000 ));
 
-        // TODO do not know why sleep is needed, maybe a separate thread in owb refresh?
+
         Thread.sleep(100);
     }
 }

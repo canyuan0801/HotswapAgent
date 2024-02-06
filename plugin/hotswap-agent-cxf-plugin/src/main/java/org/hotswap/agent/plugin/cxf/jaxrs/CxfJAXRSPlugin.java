@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.cxf.jaxrs;
 
 import java.util.*;
@@ -33,14 +16,9 @@ import org.hotswap.agent.logging.AgentLogger.Level;
 import org.hotswap.agent.util.AnnotationHelper;
 import org.hotswap.agent.util.ReflectionHelper;
 
-/**
- * CxfJAXRS plugin (http://cxf.apache.org/docs/jax-rs.html)
- *
- * @author Vladimir Dvorak
- *
- */
+
 @Plugin(name = "CxfJAXRS",
-        description = "CXF-JAXRS plugin for JAXRS CXF frontend. Reload jaxrs resource on resource class change. Reinject resource's injection points.", //
+        description = "CXF-JAXRS plugin for JAXRS CXF frontend. Reload jaxrs resource on resource class change. Reinject resource's injection points.", 
         testedVersions = { "3.2.7" },
         expectedVersions = { "3.2.7" },
         supportClass = { CxfJAXRSTransformer.class})
@@ -50,8 +28,8 @@ public class CxfJAXRSPlugin {
     private static final Set<String> PATH_ANNOTATIONS = new HashSet<>(Arrays.asList("jakarta.ws.rs.Path", "javax.ws.rs.Path"));
 
 
-    private static final int WAIT_ON_REDEFINE = 300; // Should be bigger then DI plugins (CDI..)
-    private static final int WAIT_ON_CREATE = 600; // Should be bigger then DI plugins (CDI..)
+    private static final int WAIT_ON_REDEFINE = 300; 
+    private static final int WAIT_ON_CREATE = 600; 
 
     @Init
     ClassLoader appClassLoader;
@@ -117,17 +95,7 @@ public class CxfJAXRSPlugin {
         clearJAXBProviderContexts();
     }
 
-    /*
-    @OnClassFileEvent(classNameRegexp = ".*", events = { FileEvent.CREATE })
-    public void newClass(ClassLoader classLoader, CtClass clazz) throws Exception {
-        if (AnnotationHelper.hasAnnotation(clazz, PATH_ANNOTATION)) {
-            if(LOGGER.isLevelEnabled(Level.TRACE)) {
-                LOGGER.trace("Load @Path annotated class {}", clazz.getName());
-            }
-            refreshClass(classLoader, clazz.getName(), null, WAIT_ON_CREATE);
-        }
-    }
-    */
+    
 
     private void refreshClass(ClassLoader classLoader, String className, Class<?> original, int timeout) {
         try {

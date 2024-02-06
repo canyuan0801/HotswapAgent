@@ -14,7 +14,7 @@ public class AnnotatedBeanDefinitionUtils {
         if (target != null) {
             return (MethodMetadata) target;
         }
-        /** earlier than spring 4.1 */
+
         if (beanDefinition.getSource() != null && beanDefinition.getSource() instanceof StandardMethodMetadata) {
             StandardMethodMetadata standardMethodMetadata = (StandardMethodMetadata) beanDefinition.getSource();
             return standardMethodMetadata;

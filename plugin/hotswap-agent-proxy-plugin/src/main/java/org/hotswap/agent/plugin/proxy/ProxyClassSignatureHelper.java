@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.proxy;
 
 import java.util.HashMap;
@@ -83,13 +66,7 @@ public class ProxyClassSignatureHelper {
         return ClassSignatureComparerHelper.isPoolClassDifferent(clazz, cp, SIGNATURE_ELEMENTS);
     }
 
-    /**
-     * Checks if the CtClass or one of its parents signature differs from the one already loaded by Java.
-     *
-     * @param clazz
-     * @param cp
-     * @return
-     */
+    
     public static boolean isPoolClassOrParentDifferent(Class<?> clazz, ClassPool cp) {
         if (isPoolClassDifferent(clazz, cp))
             return true;
@@ -108,14 +85,7 @@ public class ProxyClassSignatureHelper {
         return false;
     }
 
-    /**
-     * Checks if the CtClass or one of its parents signature differs from the one already loaded by Java. Ignores
-     * synthetic classes
-     *
-     * @param classBeingRedefined
-     * @param cp
-     * @return
-     */
+    
     public static boolean isNonSyntheticPoolClassOrParentDifferent(Class<?> classBeingRedefined, ClassPool cp) {
         Class<?> clazz = classBeingRedefined.getSuperclass();
         while (clazz.isSynthetic() || clazz.getName().contains("$Enhancer")) {
@@ -131,25 +101,12 @@ public class ProxyClassSignatureHelper {
         return false;
     }
 
-    /**
-     * Checks if the CtClass or one of its parents signature differs from the one already loaded by Java.
-     *
-     * @param clazz
-     * @param cc
-     * @return
-     */
+    
     public static boolean isPoolClassOrParentDifferent(Class<?> clazz, CtClass cc) {
         return isPoolClassDifferent(clazz, cc.getClassPool());
     }
 
-    /**
-     * Class arrays need to be in the same order. Check if a signature of class differs from aonther. Useful for
-     * checking difference in different classloaders.
-     *
-     * @param classesA
-     * @param classesB
-     * @return
-     */
+    
     public static boolean isDifferent(Class<?>[] classesA, Class<?>[] classesB) {
         for (int i = 0; i < classesB.length; i++) {
             Class<?> class1 = classesA[i];
@@ -170,13 +127,7 @@ public class ProxyClassSignatureHelper {
         }
     }
 
-    /**
-     * Checks if the Class or one of its parents signature differs from the one in the classloader.
-     *
-     * @param clazz
-     * @param cp
-     * @return
-     */
+    
     public static boolean isPoolClassOrParentDifferent(Class<?> clazz, ClassLoader cp) {
         if (isPoolClassDifferent(clazz, cp))
             return true;

@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.jbossmodules;
 
 import org.hotswap.agent.annotation.OnClassLoadEvent;
@@ -30,20 +13,11 @@ import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.classloader.HotswapAgentClassLoaderExt;
 import org.hotswap.agent.util.classloader.WatchResourcesClassLoader;
 
-/**
- * ModuleClassLoaderTransformer
- *
- * @author Vladimir Dvorak
- */
+
 public class ModuleClassLoaderTransformer {
 
     protected static AgentLogger LOGGER = AgentLogger.getLogger(ModuleClassLoaderTransformer.class);
-    /**
-     *
-     * @param ctClass the ct class
-     * @throws NotFoundException the not found exception
-     * @throws CannotCompileException the cannot compile exception
-     */
+
     @OnClassLoadEvent(classNameRegexp = "org.jboss.modules.ModuleClassLoader")
     public static void patchModuleClassLoader(ClassPool classPool, CtClass ctClass) throws CannotCompileException {
         try {
@@ -55,7 +29,7 @@ public class ModuleClassLoaderTransformer {
             ctClass.addInterface(ctHaClassLoader);
 
             if ("java.util.concurrent.atomic.AtomicReference".equals(pathsType.getName())) {
-                // version>=1.5
+
                 pathsGetter = ".get()";
             }
 
@@ -71,7 +45,7 @@ public class ModuleClassLoaderTransformer {
                     "}", ctClass)
             );
 
-            // Implementation of HotswapAgentClassLoaderExt.setExtraClassPath(...)
+
             ctClass.addMethod(CtNewMethod.make(
                     "public void $$ha$setExtraClassPath(java.net.URL[] extraClassPath) {" +
                         "try {" +
@@ -126,7 +100,7 @@ public class ModuleClassLoaderTransformer {
                     "}"
             );
 
-            // patch: URL findResource(final String name, final boolean exportsOnly)
+
             ctClass.getDeclaredMethod("findResource", new CtClass[] { classPool.get(String.class.getName()), CtClass.booleanType }).insertBefore(
                     "if (this.$$ha$watchResourceLoader != null){" +
                         "java.net.URL resource = this.$$ha$watchResourceLoader.getResource($1);" +
@@ -135,7 +109,7 @@ public class ModuleClassLoaderTransformer {
                     "}"
             );
 
-            // patch: Enumeration<URL> findResources(final String name, final boolean exportsOnly)
+
             ctClass.getDeclaredMethod("findResources", new CtClass[] { classPool.get(String.class.getName()), CtClass.booleanType }).insertBefore(
                     "if (this.$$ha$watchResourceLoader != null){" +
                         "try {" +
@@ -151,13 +125,7 @@ public class ModuleClassLoaderTransformer {
         }
     }
 
-    /**
-     *
-     * @param classPool the class pool
-     * @param ctClass the ct class
-     * @throws NotFoundException the not found exception
-     * @throws CannotCompileException the cannot compile exception
-     */
+
     @OnClassLoadEvent(classNameRegexp = "org.jboss.modules.Paths")
     public static void patchModulesPaths(ClassPool classPool, CtClass ctClass) throws NotFoundException, CannotCompileException {
         CtClass objectClass = classPool.get(Object.class.getName());

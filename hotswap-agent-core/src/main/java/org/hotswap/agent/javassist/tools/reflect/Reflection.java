@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist.tools.reflect;
 
@@ -31,47 +17,7 @@ import org.hotswap.agent.javassist.bytecode.BadBytecode;
 import org.hotswap.agent.javassist.bytecode.ClassFile;
 import org.hotswap.agent.javassist.bytecode.MethodInfo;
 
-/**
- * The class implementing the behavioral reflection mechanism.
- *
- * <p>If a class is reflective,
- * then all the method invocations on every
- * instance of that class are intercepted by the runtime
- * metaobject controlling that instance.  The methods inherited from the
- * super classes are also intercepted except final methods.  To intercept
- * a final method in a super class, that super class must be also reflective.
- *
- * <p>To do this, the original class file representing a reflective class:
- *
- * <pre>
- * class Person {
- *   public int f(int i) { return i + 1; }
- *   public int value;
- * }
- * </pre>
- *
- * <p>is modified so that it represents a class:
- *
- * <pre>
- * class Person implements Metalevel {
- *   public int _original_f(int i) { return i + 1; }
- *   public int f(int i) { <i>delegate to the metaobject</i> }
- *
- *   public int value;
- *   public int _r_value() { <i>read "value"</i> }
- *   public void _w_value(int v) { <i>write "value"</i> }
- *
- *   public ClassMetaobject _getClass() { <i>return a class metaobject</i> }
- *   public Metaobject _getMetaobject() { <i>return a metaobject</i> }
- *   public void _setMetaobject(Metaobject m) { <i>change a metaobject</i> }
- * }
- * </pre>
- *
- * @see javassist.tools.reflect.ClassMetaobject
- * @see javassist.tools.reflect.Metaobject
- * @see javassist.tools.reflect.Loader
- * @see javassist.tools.reflect.Compiler
- */
+
 public class Reflection implements Translator {
 
     static final String classobjectField = "_classobject";
@@ -102,17 +48,13 @@ public class Reflection implements Translator {
             || name.startsWith(writePrefix);
     }
 
-    /**
-     * Constructs a new <code>Reflection</code> object.
-     */
+    
     public Reflection() {
         classPool = null;
         converter = new CodeConverter();
     }
 
-    /**
-     * Initializes the object.
-     */
+    
     @Override
     public void start(ClassPool pool) throws NotFoundException {
         classPool = pool;
@@ -135,10 +77,7 @@ public class Reflection implements Translator {
         }
     }
 
-    /**
-     * Inserts hooks for intercepting accesses to the fields declared
-     * in reflective classes.
-     */
+    
     @Override
     public void onLoad(ClassPool pool, String classname)
         throws CannotCompileException, NotFoundException
@@ -147,19 +86,7 @@ public class Reflection implements Translator {
         clazz.instrument(converter);
     }
 
-    /**
-     * Produces a reflective class.
-     * If the super class is also made reflective, it must be done
-     * before the sub class.
-     *
-     * @param classname         the name of the reflective class
-     * @param metaobject        the class name of metaobjects.
-     * @param metaclass         the class name of the class metaobject.
-     * @return <code>false</code>       if the class is already reflective.
-     *
-     * @see javassist.tools.reflect.Metaobject
-     * @see javassist.tools.reflect.ClassMetaobject
-     */
+    
     public boolean makeReflective(String classname,
                                   String metaobject, String metaclass)
         throws CannotCompileException, NotFoundException
@@ -169,23 +96,7 @@ public class Reflection implements Translator {
                               classPool.get(metaclass));
     }
 
-    /**
-     * Produces a reflective class.
-     * If the super class is also made reflective, it must be done
-     * before the sub class.
-     *
-     * @param clazz             the reflective class.
-     * @param metaobject        the class of metaobjects.
-     *                          It must be a subclass of
-     *                          <code>Metaobject</code>.
-     * @param metaclass         the class of the class metaobject.
-     *                          It must be a subclass of
-     *                          <code>ClassMetaobject</code>.
-     * @return <code>false</code>       if the class is already reflective.
-     *
-     * @see javassist.tools.reflect.Metaobject
-     * @see javassist.tools.reflect.ClassMetaobject
-     */
+    
     public boolean makeReflective(Class<?> clazz,
                                   Class<?> metaobject, Class<?> metaclass)
         throws CannotCompileException, NotFoundException
@@ -194,24 +105,7 @@ public class Reflection implements Translator {
                               metaclass.getName());
     }
 
-    /**
-     * Produces a reflective class.  It modifies the given
-     * <code>CtClass</code> object and makes it reflective.
-     * If the super class is also made reflective, it must be done
-     * before the sub class.
-     *
-     * @param clazz             the reflective class.
-     * @param metaobject        the class of metaobjects.
-     *                          It must be a subclass of
-     *                          <code>Metaobject</code>.
-     * @param metaclass         the class of the class metaobject.
-     *                          It must be a subclass of
-     *                          <code>ClassMetaobject</code>.
-     * @return <code>false</code>       if the class is already reflective.
-     *
-     * @see javassist.tools.reflect.Metaobject
-     * @see javassist.tools.reflect.ClassMetaobject
-     */
+    
     public boolean makeReflective(CtClass clazz,
                                   CtClass metaobject, CtClass metaclass)
         throws CannotCompileException, CannotReflectException,
@@ -235,10 +129,7 @@ public class Reflection implements Translator {
         return modifyClassfile(clazz, metaobject, metaclass);
     }
 
-    /**
-     * Registers a reflective class.  The field accesses to the instances
-     * of this class are instrumented.
-     */
+    
     private void registerReflectiveClass(CtClass clazz) {
         CtField[] fs = clazz.getDeclaredFields();
         for (int i = 0; i < fs.length; ++i) {
@@ -257,7 +148,7 @@ public class Reflection implements Translator {
         throws CannotCompileException, NotFoundException
     {
         if (clazz.getAttribute("Reflective") != null)
-            return false;       // this is already reflective.
+            return false;       
         clazz.setAttribute("Reflective", new byte[0]);
 
         CtClass mlevel = classPool.get("org.hotswap.agent.javassist.tools.reflect.Metalevel");
@@ -308,8 +199,8 @@ public class Reflection implements Translator {
         CtMethod body;
         String name = m.getName();
 
-        if (isExcluded(name))   // internally-used method inherited
-            return;             // from a reflective class.
+        if (isExcluded(name))   
+            return;             
 
         CtMethod m2;
         if (m.getDeclaringClass() == clazz) {

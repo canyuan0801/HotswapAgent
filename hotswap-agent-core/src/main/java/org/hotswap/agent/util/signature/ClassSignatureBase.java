@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.util.signature;
 
 import java.lang.annotation.Annotation;
@@ -27,44 +10,26 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * ClassSignatureBase. Base class for class signature evaluation
- *
- * @author Erki Ehtla, Vladimir Dvorak
- */
+
 public abstract class ClassSignatureBase {
 
     private static final String[] IGNORED_METHODS = new String[] { "annotationType", "equals", "hashCode", "toString" };
 
     private final Set<ClassSignatureElement> elements = new HashSet<>();
 
-    protected static final String SWITCH_TABLE_METHOD_PREFIX = "$SWITCH_TABLE$"; // java stores switch table to class field, signature should ingore it
+    protected static final String SWITCH_TABLE_METHOD_PREFIX = "$SWITCH_TABLE$";
 
-    /**
-     * Evaluate and return signature value
-     *
-     * @return the signature value
-     * @throws Exception
-     */
+
     public abstract String getValue() throws Exception;
 
-    /**
-     * Adds the signature elements to set of used signature elements
-     *
-     * @param elems
-     */
+
     public void addSignatureElements(ClassSignatureElement elems[]) {
         for (ClassSignatureElement element : elems) {
             elements.add(element);
         }
     }
 
-    /**
-     * Check if given signature element is set.
-     *
-     * @param element
-     * @return true, if has given element
-     */
+
     public boolean hasElement(ClassSignatureElement element) {
         return elements.contains(element);
     }
@@ -102,8 +67,8 @@ public abstract class ClassSignatureBase {
                 }
             }
             b.append(")");
-            // TODO : sometimes for CtFile object.annotationType() is not known an it fails here
-            // v.d. : uncommented in v1.1 alpha with javassist update (3.21) to check if there is still problem
+
+
             b.append(object.annotationType().getName());
             if (i<a.length-1) {
                 b.append(",");
@@ -118,7 +83,7 @@ public abstract class ClassSignatureBase {
         try {
             try {
                 Method toStringMethod = Arrays.class.getMethod("toString", value.getClass());
-                // maybe because value is a subclass of Object[]
+
                 result = toStringMethod.invoke(null, value);
             } catch (NoSuchMethodException e) {
                 if (value instanceof Object[]) {

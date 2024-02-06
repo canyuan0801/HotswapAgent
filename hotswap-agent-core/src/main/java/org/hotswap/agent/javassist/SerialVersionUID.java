@@ -1,18 +1,4 @@
-/*
- * Javassist, a Java-bytecode translator toolkit.
- * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License.  Alternatively, the contents of this file may be used under
- * the terms of the GNU Lesser General Public License Version 2.1 or later,
- * or the Apache License Version 2.0.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- */
+
 
 package org.hotswap.agent.javassist;
 
@@ -28,33 +14,25 @@ import java.util.Comparator;
 import org.hotswap.agent.javassist.bytecode.ClassFile;
 import org.hotswap.agent.javassist.bytecode.Descriptor;
 
-/**
- * Utility for calculating serialVersionUIDs for Serializable classes.
- *
- * @author Bob Lee (crazybob@crazybob.org)
- * @author modified by Shigeru Chiba
- */
+
 public class SerialVersionUID {
 
-    /**
-     * Adds serialVersionUID if one does not already exist. Call this before
-     * modifying a class to maintain serialization compatability.
-     */
+
     public static void setSerialVersionUID(CtClass clazz)
         throws CannotCompileException, NotFoundException
     {
-        // check for pre-existing field.
+
         try {
             clazz.getDeclaredField("serialVersionUID");
             return;
         }
         catch (NotFoundException e) {}
 
-        // check if the class is serializable.
+
         if (!isSerializable(clazz))
             return;
             
-        // add field with default value.
+
         CtField field = new CtField(CtClass.longType, "serialVersionUID",
                                     clazz);
         field.setModifiers(Modifier.PRIVATE | Modifier.STATIC |
@@ -62,9 +40,7 @@ public class SerialVersionUID {
         clazz.addField(field, calculateDefault(clazz) + "L");
     }
 
-    /**
-     * Does the class implement Serializable?
-     */
+
     private static boolean isSerializable(CtClass clazz) 
         throws NotFoundException
     {
@@ -72,12 +48,7 @@ public class SerialVersionUID {
         return clazz.subtypeOf(pool.get("java.io.Serializable"));
     }
     
-    /**
-     * Calculate default value. See Java Serialization Specification, Stream
-     * Unique Identifiers.
-     *
-     * @since 3.20
-     */
+
     public static long calculateDefault(CtClass clazz)
         throws CannotCompileException
     {
@@ -86,13 +57,13 @@ public class SerialVersionUID {
             DataOutputStream out = new DataOutputStream(bout);
             ClassFile classFile = clazz.getClassFile();
             
-            // class name.
+
             String javaName = javaName(clazz);
             out.writeUTF(javaName);
 
             CtMethod[] methods = clazz.getDeclaredMethods();
 
-            // class modifiers.
+
             int classMods = clazz.getModifiers();
             if ((classMods & Modifier.INTERFACE) != 0)
                 if (methods.length > 0)
@@ -102,7 +73,7 @@ public class SerialVersionUID {
 
             out.writeInt(classMods);
 
-            // interfaces.
+
             String[] interfaces = classFile.getInterfaces();
             for (int i = 0; i < interfaces.length; i++)
                 interfaces[i] = javaName(interfaces[i]);
@@ -111,7 +82,7 @@ public class SerialVersionUID {
             for (int i = 0; i < interfaces.length; i++)
                 out.writeUTF(interfaces[i]);
             
-            // fields.
+
             CtField[] fields = clazz.getDeclaredFields();
             Arrays.sort(fields, new Comparator<CtField>() {
                 @Override
@@ -131,14 +102,14 @@ public class SerialVersionUID {
                 }
             }
 
-            // static initializer.
+
             if (classFile.getStaticInitializer() != null) {
                 out.writeUTF("<clinit>");
                 out.writeInt(Modifier.STATIC);
                 out.writeUTF("()V");
             }
 
-            // constructors.
+
             CtConstructor[] constructors = clazz.getDeclaredConstructors();
             Arrays.sort(constructors, new Comparator<CtConstructor>() {
                 @Override
@@ -159,7 +130,7 @@ public class SerialVersionUID {
                 }
             }
 
-            // methods.
+
             Arrays.sort(methods, new Comparator<CtMethod>() {
                 @Override
                 public int compare(CtMethod m1, CtMethod m2) {
@@ -187,7 +158,7 @@ public class SerialVersionUID {
                 }
             }
 
-            // calculate hash.
+
             out.flush();
             MessageDigest digest = MessageDigest.getInstance("SHA");
             byte[] digested = digest.digest(bout.toByteArray());

@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SpringChangedReloadCommand extends MergeableCommand {
     private static AgentLogger LOGGER = AgentLogger.getLogger(XmlsChangedCommand.class);
 
-    // unit test only
+
     private static AtomicLong waitingTaskCount = new AtomicLong(0);
 
     ClassLoader appClassLoader;
@@ -25,7 +25,7 @@ public class SpringChangedReloadCommand extends MergeableCommand {
 
     @Override
     public void executeCommand() {
-        // async call to avoid reload too much times
+
         try {
             Class<?> clazz = Class.forName("org.hotswap.agent.plugin.spring.reload.SpringChangedAgent", true, appClassLoader);
             Method method = clazz.getDeclaredMethod(
@@ -44,7 +44,7 @@ public class SpringChangedReloadCommand extends MergeableCommand {
         }
     }
 
-    // this is used by tests
+
     public static boolean isEmptyTask() {
         return waitingTaskCount.get() == 0;
     }

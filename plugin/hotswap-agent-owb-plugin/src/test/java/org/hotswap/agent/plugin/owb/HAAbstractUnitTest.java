@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.owb;
 
 import java.lang.annotation.Annotation;
@@ -50,9 +33,7 @@ public abstract class HAAbstractUnitTest
     {
     }
 
-    /**
-     * always shut down the container after each test.
-     */
+
     @After
     public void shutdown()
     {
@@ -62,12 +43,12 @@ public abstract class HAAbstractUnitTest
     protected void startContainer()
     {
         WebBeansFinder.clearInstances(WebBeansUtil.getCurrentClassLoader());
-        //Creates a new container
+
         testLifecycle = new HAOpenWebBeansTestLifeCycle();
 
         webBeansContext = WebBeansContext.getInstance();
 
-        //Start application
+
         try
         {
             testLifecycle.startApplication(null);
@@ -85,7 +66,7 @@ public abstract class HAAbstractUnitTest
 
     protected void shutDownContainer()
     {
-        //Shutdown application
+
         if(this.testLifecycle != null)
         {
             this.testLifecycle.stopApplication(null);

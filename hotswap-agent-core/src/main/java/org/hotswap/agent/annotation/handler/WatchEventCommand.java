@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.annotation.handler;
 
 import java.io.ByteArrayInputStream;
@@ -41,12 +24,7 @@ import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.IOUtils;
 import org.hotswap.agent.watch.WatchFileEvent;
 
-/**
- * Command to schedule after resource change.
- * <p/>
- * Equals is declared on all command params to group same change events to a single onWatchEvent. For event
- * only the URI is compared to group multiple event types.
- */
+
 public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(WatchEventCommand.class);
@@ -60,24 +38,24 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
             WatchFileEvent event, ClassLoader classLoader) {
         WatchEventDTO watchEventDTO = WatchEventDTO.parse(pluginAnnotation.getAnnotation());
 
-        // Watch event is not supported.
+
         if (!watchEventDTO.accept(event)) {
             return null;
         }
 
-        // regular files filter
+
         if (watchEventDTO.isOnlyRegularFiles() && !event.isFile()) {
             LOGGER.trace("Skipping URI {} because it is not a regular file.", event.getURI());
             return null;
         }
 
-        // watch type filter
+
         if (!Arrays.asList(watchEventDTO.getEvents()).contains(event.getEventType())) {
             LOGGER.trace("Skipping URI {} because it is not a requested event.", event.getURI());
             return null;
         }
 
-        // resource name filter regexp
+
         if (watchEventDTO.getFilter() != null && watchEventDTO.getFilter().length() > 0) {
             if (!event.getURI().toString().matches(watchEventDTO.getFilter())) {
                 LOGGER.trace("Skipping URI {} because it does not match filter.", event.getURI(), watchEventDTO.getFilter());
@@ -132,27 +110,25 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
                 '}';
     }
 
-    /**
-     * Run plugin the method.
-     */
+
     public void onWatchEvent(PluginAnnotation<T> pluginAnnotation, WatchFileEvent event, ClassLoader classLoader) {
         final T annot = pluginAnnotation.getAnnotation();
         Object plugin = pluginAnnotation.getPlugin();
 
-        //we may need to crate CtClass on behalf of the client and close it after invocation.
+
         CtClass ctClass = null;
 
-        // class file regexp
+
         if (watchEventDTO.isClassFileEvent()) {
             try {
-                // TODO creating class only to check name may slow down if lot of handlers is in use.
+
                 ctClass = createCtClass(event.getURI(), classLoader);
             } catch (Exception e) {
                 LOGGER.error("Unable create CtClass for URI '{}'.", e, event.getURI());
                 return;
             }
 
-            // unable to create CtClass or it's name does not match
+
             if (ctClass == null || !ctClass.getName().matches(watchEventDTO.getClassNameRegexp()))
                 return;
         }
@@ -191,7 +167,7 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
         try {
             pluginAnnotation.getMethod().invoke(plugin, args.toArray());
 
-            // close CtClass if created from here
+
             if (ctClass != null) {
                 ctClass.detach();
             }
@@ -207,14 +183,7 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
     }
 
 
-    /**
-     * Creats javaassist CtClass for bytecode manipulation. Add default classloader.
-     *
-     * @param uri         uri
-     * @param classLoader loader
-     * @return created class
-     * @throws org.hotswap.agent.javassist.NotFoundException
-     */
+
     private CtClass createCtClass(URI uri, ClassLoader classLoader) throws NotFoundException, IOException {
         File file = new File(uri);
         if (file.exists()) {

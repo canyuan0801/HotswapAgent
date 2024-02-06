@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.util.signature;
 
 import static org.junit.Assert.assertEquals;
@@ -61,7 +44,7 @@ public class SignatureTest {
         SigTestEnum value2() default SigTestEnum.FINISHED;
         String[] array() default {"string"};
 
-        // TransformationState value3();
+
     }
 
     @Target({ ElementType.PARAMETER, ElementType.TYPE })
@@ -217,7 +200,7 @@ public class SignatureTest {
     }
 
     public interface TestSignatures {
-        // test ordering
+
         public int get3();
 
         public int get2();
@@ -228,7 +211,7 @@ public class SignatureTest {
 
         public int getB();
 
-        // test return types
+
 
         public int[] getBArray();
 
@@ -236,7 +219,7 @@ public class SignatureTest {
 
         public Object getBObject();
 
-        // test parameters
+
         public int get3(int[] a);
 
         public int get2(int[] a, int[] b);

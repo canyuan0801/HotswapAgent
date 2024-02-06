@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.cdi;
 
 import java.lang.annotation.Annotation;
@@ -34,9 +17,7 @@ import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.ReflectionHelper;
 
-/**
- * Helper class for common names definition for CDI plugins
- */
+
 public class HaCdiCommons {
 
     private static final AgentLogger LOGGER = AgentLogger.getLogger(HaCdiCommons.class);
@@ -77,14 +58,7 @@ public class HaCdiCommons {
         return false;
     }
 
-    /**
-     * Add bean registry field to context, register bean instances in get(...) methods
-     *
-     * @param classPool the class pool
-     * @param ctClass   the ct class
-     * @throws CannotCompileException cannot compile exception
-     * @throws NotFoundException      the not found exception
-     */
+    
     public static void transformContext(ClassPool classPool, CtClass ctClass) throws CannotCompileException, NotFoundException {
         addBeanRegistryToContext(classPool, ctClass);
         transformGet1(classPool, ctClass);
@@ -92,13 +66,7 @@ public class HaCdiCommons {
         LOGGER.debug(ctClass.getName() + " - patched by bean registration.");
     }
 
-    /**
-     * Adds the bean registry to context.
-     *
-     * @param classPool the class pool
-     * @param ctClass   the ct class
-     * @throws CannotCompileException cannot compile exception
-     */
+    
     public static void addBeanRegistryToContext(ClassPool classPool, CtClass ctClass) throws CannotCompileException {
         CtField beanRegistryFld = CtField.make(
             "public static java.util.Map " + BEAN_REGISTRY_FIELD + ";" , ctClass
@@ -174,12 +142,7 @@ public class HaCdiCommons {
         return result;
     }
 
-    /**
-     * Return all bean instances.
-     *
-     * @param bean the bean
-     * @return the bean instances
-     */
+    
     @SuppressWarnings({ "rawtypes"})
     public static List<Object> getBeanInstances(Object bean) {
         List<Object> result = new ArrayList<>();
@@ -212,19 +175,14 @@ public class HaCdiCommons {
                 Field field = clazz.getDeclaredField(BEAN_REGISTRY_FIELD);
                 return field.get(null);
             } catch (Exception e) {
-                // ignore
+                
             }
             clazz = clazz.getSuperclass();
         }
         return null;
     }
 
-    /**
-     * Register context class.
-     *
-     * @param scope the scope
-     * @param contextClass the context class
-     */
+    
     public static void registerContextClass(Class<? extends Annotation> scope, Class<?> contextClass) {
         Map<Class<? extends Annotation>, Class<?>> currentScopeToContextMap = getCurrentScopeToContextMap();
 
@@ -234,22 +192,12 @@ public class HaCdiCommons {
         }
     }
 
-    /**
-     * Gets the context class for specified scope.
-     *
-     * @param scope the scope
-     * @return the context class
-     */
+    
     public static Class<?> getContextClass(Class<? extends Annotation> scope) {
         return getCurrentScopeToContextMap().get(scope);
     }
 
-    /**
-     * Checks if scope is registered
-     *
-     * @param scope the scope
-     * @return true, if is registered scope
-     */
+    
     public static boolean isRegisteredScope(Class<? extends Annotation> scope) {
         return getContextClass(scope) != null;
     }
@@ -272,20 +220,12 @@ public class HaCdiCommons {
         return scopeToContextMap;
     }
 
-    /**
-     * Register extra context.
-     *
-     * @param extraContext the extra context
-     */
+    
     public static void registerExtraContext(HaCdiExtraContext extraContext) {
         extraContexts.put(extraContext, Boolean.TRUE);
     }
 
-    /**
-     * Unregister extra context.
-     *
-     * @param extraContext the extra context
-     */
+    
     public static void unregisterExtraContext(HaCdiExtraContext extraContext) {
         extraContexts.remove(extraContext);
     }

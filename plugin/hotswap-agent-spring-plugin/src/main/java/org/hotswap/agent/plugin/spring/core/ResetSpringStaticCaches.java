@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.spring.core;
 
 import java.lang.reflect.Field;
@@ -29,25 +12,16 @@ import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.ReflectionUtils;
 
-/**
- * Reset various Spring static caches. It is safe to run multiple times,
- * basically every time any configuration is changed.
- *
- * @author Jiri Bubnik
- */
+
 public class ResetSpringStaticCaches {
     private static AgentLogger LOGGER = AgentLogger.getLogger(ResetSpringStaticCaches.class);
 
-    /**
-     * Spring bean by type cache.
-     *
-     * Cache names change between versions, call via reflection and ignore errors.
-     */
+
     public static void resetBeanNamesByType(DefaultListableBeanFactory defaultListableBeanFactory) {
         try {
             Field field = DefaultListableBeanFactory.class.getDeclaredField("singletonBeanNamesByType");
             field.setAccessible(true);
-            // noinspection unchecked
+
             Map singletonBeanNamesByType = (Map) field.get(defaultListableBeanFactory);
             singletonBeanNamesByType.clear();
         } catch (Exception e) {
@@ -57,7 +31,7 @@ public class ResetSpringStaticCaches {
         try {
             Field field = DefaultListableBeanFactory.class.getDeclaredField("allBeanNamesByType");
             field.setAccessible(true);
-            // noinspection unchecked
+
             Map allBeanNamesByType = (Map) field.get(defaultListableBeanFactory);
             allBeanNamesByType.clear();
         } catch (Exception e) {
@@ -67,7 +41,7 @@ public class ResetSpringStaticCaches {
         try {
             Field field = DefaultListableBeanFactory.class.getDeclaredField("nonSingletonBeanNamesByType");
             field.setAccessible(true);
-            // noinspection unchecked
+
             Map nonSingletonBeanNamesByType = (Map) field.get(defaultListableBeanFactory);
             nonSingletonBeanNamesByType.clear();
         } catch (Exception e) {
@@ -76,9 +50,7 @@ public class ResetSpringStaticCaches {
 
     }
 
-    /**
-     * Reset all caches.
-     */
+
     public static void reset() {
         resetTypeVariableCache();
         resetAnnotationUtilsCache();
@@ -97,7 +69,7 @@ public class ResetSpringStaticCaches {
         try {
             Field field = GenericTypeResolver.class.getDeclaredField("typeVariableCache");
             field.setAccessible(true);
-            // noinspection unchecked
+
             Map<Class, Map> typeVariableCache = (Map<Class, Map>) field.get(null);
             typeVariableCache.clear();
             LOGGER.trace("Cache cleared: GenericTypeResolver.typeVariableCache");

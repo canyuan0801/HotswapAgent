@@ -1,21 +1,4 @@
-/*
- * Copyright 2013-2023 the HotswapAgent authors.
- *
- * This file is part of HotswapAgent.
- *
- * HotswapAgent is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 2 of the License, or (at your
- * option) any later version.
- *
- * HotswapAgent is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
- */
+
 package org.hotswap.agent.plugin.jersey1;
 
 import java.lang.reflect.InvocationTargetException;
@@ -56,12 +39,7 @@ public class Jersey1Plugin {
     Set<Object> registeredJerseyContainers = Collections.newSetFromMap(new WeakHashMap<Object, Boolean>());
     Set<Class<?>> allRegisteredClasses = Collections.newSetFromMap(new WeakHashMap<Class<?>, Boolean>());
 
-    /**
-     *  Initialize the plugin when Jersey's ServletContainer.init(WebConfig config) is called.  This is called from both init() for a servlet
-     *  and init(Config) for a filter.
-     *
-     *  Also, add the ServletContainer to a list of registeredJerseyContainers so that we can call reload on it later when classes change
-     */
+
     @OnClassLoadEvent(classNameRegexp = "com.sun.jersey.spi.container.servlet.ServletContainer")
     public static void jerseyServletCallInitialized(CtClass ctClass, ClassPool classPool) throws NotFoundException, CannotCompileException {
         CtMethod init = ctClass.getDeclaredMethod("init", new CtClass[] { classPool.get("com.sun.jersey.spi.container.servlet.WebConfig") });
@@ -73,9 +51,7 @@ public class Jersey1Plugin {
         init.insertAfter(registerThis);
     }
 
-    /**
-     * Register the jersey container and the classes involved in configuring the Jersey Application
-     */
+
     public void registerJerseyContainer(Object jerseyContainer, Object resourceConfig) {
         try {
             Class<?> resourceConfigClass = resolveClass("com.sun.jersey.api.core.ResourceConfig");
@@ -93,9 +69,7 @@ public class Jersey1Plugin {
         }
     }
 
-    /**
-     * Gets a list of classes used in configure the Jersey Application
-     */
+
     private Set<Class<?>> getContainerClasses(Class<?> resourceConfigClass, Object resourceConfig)
                 throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
 
@@ -114,20 +88,17 @@ public class Jersey1Plugin {
         return containerClasses;
     }
 
-    /**
-     * Call reload on the jersey Application when any class changes that is either involved in configuring
-     * the Jersey Application, or if was newly annotated and will be involved in configuring the application.
-     */
+
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
     public void invalidate(CtClass ctClass, Class original) throws Exception {
         if (allRegisteredClasses.contains(original)) {
             scheduler.scheduleCommand(reloadJerseyContainers);
         } else {
-            // TODO: When a class is not annotated at startup, and is annotated during debug, it never gets found
-            // here.  Is this a DCEVM issue?  Also, the Jersey Container  does not find the newly annotated class
-            // during a reload called from reloadJerseyContainers, so this seems like the annotation is not being
-            // added
-            // vd: it is wrong here, since original class is scanned for Path !
+
+
+
+
+
             if (AnnotationHelper.hasAnnotation(original, "javax.ws.rs.Path")
                     || AnnotationHelper.hasAnnotation(ctClass, "javax.ws.rs.Path")) {
                 allRegisteredClasses.add(original);
@@ -136,9 +107,7 @@ public class Jersey1Plugin {
         }
     }
 
-    /**
-     * Call reload on the Jersey Application
-     */
+
     private Command reloadJerseyContainers = new Command() {
         public void executeCommand() {
             try {

@@ -1,6 +1,4 @@
-/**
- * 
- */
+
 package org.hotswap.agent.plugin.myfaces.transformer;
 
 import static org.hotswap.agent.plugin.myfaces.MyFacesConstants.LIFECYCLE_IMPL_CLASS;
@@ -13,14 +11,7 @@ import org.hotswap.agent.javassist.CtMethod;
 import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 
-/**
- * A transformer which modifies {@link org.apache.myfaces.lifecycle.LifecycleImpl} class.
- *
- * <p>This transformer adds a hook to process dirty managed beans.
- *
- * @author sinan.yumak
- *
- */
+
 public class LifecycleImplTransformer {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(LifecycleImplTransformer.class);
@@ -43,7 +34,7 @@ public class LifecycleImplTransformer {
     @OnClassLoadEvent(classNameRegexp = LIFECYCLE_IMPL_CLASS)
     public static void init(ClassLoader classLoader, ClassPool classPool, CtClass ctClass) throws CannotCompileException, NotFoundException {
         if (!isJavax(classPool)) {
-            return; // no managed beans in jakarta
+            return;
         }
         LOGGER.info("Patching lifecycle implementation. classLoader: {}", classLoader);
 
@@ -67,9 +58,7 @@ public class LifecycleImplTransformer {
         classPool.importPackage("org.apache.myfaces.el.unified.resolver");
     }
 
-    /**
-     * Patches the {@link org.apache.myfaces.lifecycle.LifecycleImpl#execute} to process dirty managed beans.
-     */
+
     private static void patchExecuteMethod(CtClass ctClass) throws CannotCompileException, NotFoundException {
         ClassPool classPool = ctClass.getClassPool();
 
