@@ -24,80 +24,44 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hotswap.agent.javassist.bytecode.ConstPool.*;
+
 
 public final class ConstPool {
     LongVector items;
     int numOfItems;
     int thisClassInfo;
     Map<ConstInfo, ConstInfo> itemsCache;
-    public static final int CONST_Class = ClassInfo.tag;
-    public static final int CONST_Fieldref = FieldrefInfo.tag;
-    public static final int CONST_Methodref = MethodrefInfo.tag;
-    public static final int CONST_InterfaceMethodref
-            = InterfaceMethodrefInfo.tag;
-    public static final int CONST_String = StringInfo.tag;
 
-
-    public static final int CONST_Integer = IntegerInfo.tag;
-
-
-    public static final int CONST_Float = FloatInfo.tag;
-
-
-    public static final int CONST_Long = LongInfo.tag;
-
-
-    public static final int CONST_Double = DoubleInfo.tag;
-
-
-    public static final int CONST_NameAndType = NameAndTypeInfo.tag;
-
-
-    public static final int CONST_Utf8 = Utf8Info.tag;
-
-
-    public static final int CONST_MethodHandle = MethodHandleInfo.tag;
-
-
-    public static final int CONST_MethodType = MethodTypeInfo.tag;
-
-
-    public static final int CONST_InvokeDynamic = InvokeDynamicInfo.tag;
-
-
-    public static final int CONST_Module = ModuleInfo.tag;
-
-
-    public static final int CONST_Package = PackageInfo.tag;
+    public static final int CONST_Utf8 = 1;
+    public static final int CONST_Integer = 3;
+    public static final int CONST_Float = 4;
+    public static final int CONST_Long = 5;
+    public static final int CONST_Double = 6;
+    public static final int CONST_Class = 7;
+    public static final int CONST_String = 8;
+    public static final int CONST_Fieldref = 9;
+    public static final int CONST_Methodref = 10;
+    public static final int CONST_InterfaceMethodref = 11;
+    public static final int CONST_NameAndType = 12;
+    public static final int CONST_MethodHandle = 15;
+    public static final int CONST_MethodType = 16;
+    public static final int CONST_InvokeDynamic = 18;
+    public static final int CONST_Module = 19;
+    public static final int CONST_Package = 20;
 
 
     public static final CtClass THIS = null;
 
 
     public static final int REF_getField = 1;
-
-
     public static final int REF_getStatic = 2;
-
-
     public static final int REF_putField = 3;
-
-
     public static final int REF_putStatic = 4;
-
-
     public static final int REF_invokeVirtual = 5;
-
-
     public static final int REF_invokeStatic = 6;
-
-
     public static final int REF_invokeSpecial = 7;
-
-
     public static final int REF_newInvokeSpecial = 8;
-
-
     public static final int REF_invokeInterface = 9;
 
 
@@ -835,7 +799,7 @@ class ConstInfoPadding extends ConstInfo {
 }
 
 class ClassInfo extends ConstInfo {
-    static final int tag = 7;
+    static final int tag = CONST_Class;
     int name;
 
     public ClassInfo(int className, int index) {
@@ -943,7 +907,7 @@ class ClassInfo extends ConstInfo {
 }
 
 class NameAndTypeInfo extends ConstInfo {
-    static final int tag = 12;
+    static final int tag = CONST_NameAndType;
     int memberName;
     int typeDescriptor;
 
@@ -1095,7 +1059,7 @@ abstract class MemberrefInfo extends ConstInfo {
 }
 
 class FieldrefInfo extends MemberrefInfo {
-    static final int tag = 9;
+    static final int tag = CONST_Fieldref;
 
     public FieldrefInfo(int cindex, int ntindex, int thisIndex) {
         super(cindex, ntindex, thisIndex);
@@ -1123,7 +1087,7 @@ class FieldrefInfo extends MemberrefInfo {
 }
 
 class MethodrefInfo extends MemberrefInfo {
-    static final int tag = 10;
+    static final int tag = CONST_Methodref;
 
     public MethodrefInfo(int cindex, int ntindex, int thisIndex) {
         super(cindex, ntindex, thisIndex);
@@ -1151,7 +1115,7 @@ class MethodrefInfo extends MemberrefInfo {
 }
 
 class InterfaceMethodrefInfo extends MemberrefInfo {
-    static final int tag = 11;
+    static final int tag = CONST_InterfaceMethodref;
 
     public InterfaceMethodrefInfo(int cindex, int ntindex, int thisIndex) {
         super(cindex, ntindex, thisIndex);
@@ -1179,7 +1143,7 @@ class InterfaceMethodrefInfo extends MemberrefInfo {
 }
 
 class StringInfo extends ConstInfo {
-    static final int tag = 8;
+    static final int tag = CONST_String;
     int string;
 
     public StringInfo(int str, int index) {
@@ -1226,7 +1190,7 @@ class StringInfo extends ConstInfo {
 }
 
 class IntegerInfo extends ConstInfo {
-    static final int tag = 3;
+    static final int tag = CONST_Integer;
     int value;
 
     public IntegerInfo(int v, int index) {
@@ -1273,7 +1237,7 @@ class IntegerInfo extends ConstInfo {
 }
 
 class FloatInfo extends ConstInfo {
-    static final int tag = 4;
+    static final int tag = CONST_Float;
     float value;
 
     public FloatInfo(float f, int index) {
@@ -1320,7 +1284,7 @@ class FloatInfo extends ConstInfo {
 }
 
 class LongInfo extends ConstInfo {
-    static final int tag = 5;
+    static final int tag = CONST_Long;
     long value;
 
     public LongInfo(long l, int index) {
@@ -1367,7 +1331,7 @@ class LongInfo extends ConstInfo {
 }
 
 class DoubleInfo extends ConstInfo {
-    static final int tag = 6;
+    static final int tag = CONST_Double;
     double value;
 
     public DoubleInfo(double d, int index) {
@@ -1416,7 +1380,7 @@ class DoubleInfo extends ConstInfo {
 }
 
 class Utf8Info extends ConstInfo {
-    static final int tag = 1;
+    static final int tag = CONST_Utf8;
     String string;
 
     public Utf8Info(String utf8, int index) {
@@ -1468,7 +1432,7 @@ class Utf8Info extends ConstInfo {
 }
 
 class MethodHandleInfo extends ConstInfo {
-    static final int tag = 15;
+    static final int tag = CONST_MethodHandle;
     int refKind, refIndex;
 
     public MethodHandleInfo(int kind, int referenceIndex, int index) {
@@ -1527,7 +1491,7 @@ class MethodHandleInfo extends ConstInfo {
 }
 
 class MethodTypeInfo extends ConstInfo {
-    static final int tag = 16;
+    static final int tag = CONST_MethodType;
     int descriptor;
 
     public MethodTypeInfo(int desc, int index) {
@@ -1609,7 +1573,7 @@ class MethodTypeInfo extends ConstInfo {
 }
 
 class InvokeDynamicInfo extends ConstInfo {
-    static final int tag = 18;
+    static final int tag = CONST_InvokeDynamic;
     int bootstrap, nameAndType;
 
     public InvokeDynamicInfo(int bootstrapMethod,
@@ -1670,7 +1634,7 @@ class InvokeDynamicInfo extends ConstInfo {
 }
 
 class ModuleInfo extends ConstInfo {
-    static final int tag = 19;
+    static final int tag = CONST_Module;
     int name;
 
     public ModuleInfo(int moduleName, int index) {
@@ -1726,7 +1690,7 @@ class ModuleInfo extends ConstInfo {
 }
 
 class PackageInfo extends ConstInfo {
-    static final int tag = 20;
+    static final int tag = CONST_Package;
     int name;
 
     public PackageInfo(int moduleName, int index) {
