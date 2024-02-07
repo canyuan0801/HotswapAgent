@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.config;
 
 import static java.lang.Boolean.parseBoolean;
@@ -12,7 +29,9 @@ import java.util.Properties;
 
 import org.hotswap.agent.logging.AgentLogger;
 
-
+/**
+ * Configure LOG level and handler according to properties.
+ */
 public class LogConfigurationHelper {
     private static AgentLogger LOGGER = AgentLogger.getLogger(LogConfigurationHelper.class);
 
@@ -21,7 +40,12 @@ public class LogConfigurationHelper {
     private static final String LOGFILE = "LOGFILE";
     private static final String LOGFILE_APPEND = "LOGFILE.append";
 
-
+    /**
+     * Search properties for prefix LOGGER and set level for package in format:
+     * LOGGER.my.package=LEVEL
+     *
+     * @param properties properties
+     */
     public static void configureLog(Properties properties) {
         for (String property : properties.stringPropertyNames()) {
             if (property.startsWith(LOGGER_PREFIX)) {
@@ -55,7 +79,7 @@ public class LogConfigurationHelper {
         }
     }
 
-
+    // resolve level from enum
     private static AgentLogger.Level getLevel(String property, String levelName) {
         try {
             return AgentLogger.Level.valueOf(levelName.toUpperCase(Locale.ENGLISH));
@@ -65,7 +89,7 @@ public class LogConfigurationHelper {
         }
     }
 
-
+    // get package name from logger
     private static String getClassPrefix(String property) {
         if (property.equals(LOGGER_PREFIX)) {
             return null;

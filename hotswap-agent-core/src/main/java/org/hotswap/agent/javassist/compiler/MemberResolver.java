@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.compiler;
 
@@ -25,7 +39,8 @@ import org.hotswap.agent.javassist.compiler.ast.Declarator;
 import org.hotswap.agent.javassist.compiler.ast.Keyword;
 import org.hotswap.agent.javassist.compiler.ast.Symbol;
 
-
+/* Code generator methods depending on javassist.* classes.
+ */
 public class MemberResolver implements TokenId {
     private ClassPool classPool;
 
@@ -50,7 +65,9 @@ public class MemberResolver implements TokenId {
             notmatch = n;
         }
 
-
+        /**
+         * Returns true if the invoked method is static.
+         */
         public boolean isStatic() {
             int acc = info.getAccessFlags();
             return (acc & AccessFlag.STATIC) != 0;
@@ -64,7 +81,7 @@ public class MemberResolver implements TokenId {
         throws CompileError
     {
         Method maybe = null;
-
+        // to enable the creation of a recursively called method
         if (current != null && clazz == currentClass)
             if (current.getName().equals(methodName)) {
                 int res = compareSignature(current.getDescriptor(),
@@ -91,8 +108,8 @@ public class MemberResolver implements TokenId {
     {
         Method maybe = null;
         ClassFile cf = clazz.getClassFile2();
-
-
+        // If the class is an array type, the class file is null.
+        // If so, search the super class java.lang.Object for clone() etc.
         if (cf != null) {
             List<MethodInfo> list = cf.getMethods();
             for (MethodInfo minfo:list) {
@@ -120,7 +137,7 @@ public class MemberResolver implements TokenId {
         int mod = clazz.getModifiers();
         boolean isIntf = Modifier.isInterface(mod);
         try {
-
+            // skip searching java.lang.Object if clazz is an interface type.
             if (!isIntf) {
                 CtClass pclazz = clazz.getSuperclass();
                 if (pclazz != null) {
@@ -144,7 +161,7 @@ public class MemberResolver implements TokenId {
             }
 
             if (isIntf) {
-
+                // finally search java.lang.Object.
                 CtClass pclazz = clazz.getSuperclass();
                 if (pclazz != null) {
                     Method r = lookupMethod(pclazz, methodName, argTypes,
@@ -162,7 +179,18 @@ public class MemberResolver implements TokenId {
     private static final int YES = 0;
     private static final int NO = -1;
 
-
+    /*
+     * Returns YES if actual parameter types matches the given signature.
+     *
+     * argTypes, argDims, and argClassNames represent actual parameters.
+     *
+     * This method does not correctly implement the Java method dispatch
+     * algorithm.
+     *
+     * If some of the parameter types exactly match but others are subtypes of
+     * the corresponding type in the signature, this method returns the number
+     * of parameter types that do not exactly match.
+     */
     private int compareSignature(String desc, int[] argTypes,
                                  int[] argDims, String[] argClassNames)
         throws CompileError
@@ -199,13 +227,13 @@ public class MemberResolver implements TokenId {
                       && desc.startsWith("java/lang/Object;", i)))
                     return NO;
 
-
+                // if the thread reaches here, c must be 'L'.
                 i = desc.indexOf(';', i) + 1;
                 result++;
                 if (i <= 0)
-                    return NO;
+                    return NO;  // invalid descriptor?
             }
-            else if (c == 'L') {
+            else if (c == 'L') {        // not compare
                 int j = desc.indexOf(';', i);
                 if (j < 0 || argTypes[n] != CLASS)
                     return NO;
@@ -220,7 +248,7 @@ public class MemberResolver implements TokenId {
                             return NO;
                     }
                     catch (NotFoundException e) {
-                        result++;
+                        result++; // should be NO?
                     }
                 }
 
@@ -241,7 +269,12 @@ public class MemberResolver implements TokenId {
         return NO;
     }
 
-
+    /**
+     * Only used by fieldAccess() in MemberCodeGen and TypeChecker.
+     *
+     * @param jvmClassName  a JVM class name.  e.g. java/lang/String
+     * @see #lookupClass(String, boolean)
+     */
     public CtField lookupFieldByJvmName2(String jvmClassName, Symbol fieldSym,
                                          ASTree expr) throws NoFieldException
     {
@@ -251,7 +284,7 @@ public class MemberResolver implements TokenId {
             cc = lookupClass(jvmToJavaName(jvmClassName), true);
         }
         catch (CompileError e) {
-
+            // EXPR might be part of a qualified class name.
             throw new NoFieldException(jvmClassName + "/" + field, expr);
         }
 
@@ -259,20 +292,24 @@ public class MemberResolver implements TokenId {
             return cc.getField(field);
         }
         catch (NotFoundException e) {
-
+            // maybe an inner class.
             jvmClassName = javaToJvmName(cc.getName());
             throw new NoFieldException(jvmClassName + "$" + field, expr);
         }
     }
 
-
+    /**
+     * @param jvmClassName  a JVM class name.  e.g. java/lang/String
+     */
     public CtField lookupFieldByJvmName(String jvmClassName, Symbol fieldName)
         throws CompileError
     {
         return lookupField(jvmToJavaName(jvmClassName), fieldName);
     }
 
-
+    /**
+     * @param className      a qualified class name. e.g. java.lang.String
+     */
     public CtField lookupField(String className, Symbol fieldName)
         throws CompileError
     {
@@ -297,7 +334,9 @@ public class MemberResolver implements TokenId {
                            decl.getClassName());
     }
 
-
+    /**
+     * @param classname         jvm class name.
+     */
     public CtClass lookupClass(int type, int dim, String classname)
         throws CompileError
     {
@@ -319,7 +358,9 @@ public class MemberResolver implements TokenId {
         return lookupClass(cname, false);
     }
 
-
+    /*
+     * type cannot be CLASS
+     */
     static String getTypeName(int type) throws CompileError {
         String cname = "";
         switch (type) {
@@ -357,7 +398,9 @@ public class MemberResolver implements TokenId {
         return cname;
     }
 
-
+    /**
+     * @param name      a qualified class name. e.g. java.lang.String
+     */
     public CtClass lookupClass(String name, boolean notCheckInner)
         throws CompileError
     {
@@ -388,7 +431,7 @@ public class MemberResolver implements TokenId {
             new WeakHashMap<ClassPool, Reference<Map<String,String>>>();
     private Map<String,String> invalidNames = null;
 
-
+    // for unit tests
     public static int getInvalidMapSize() { return invalidNamesMap.size(); }
 
     private Map<String,String> getInvalidNames() {
@@ -456,14 +499,20 @@ public class MemberResolver implements TokenId {
         return cc;
     }
 
-
+    /* Converts a class name into a JVM-internal representation.
+     *
+     * It may also expand a simple class name to java.lang.*.
+     * For example, this converts Object into java/lang/Object.
+     */
     public String resolveClassName(ASTList name) throws CompileError {
         if (name == null)
             return null;
         return javaToJvmName(lookupClassByName(name).getName());
     }
 
-
+    /* Expands a simple class name to java.lang.*.
+     * For example, this converts Object into java/lang/Object.
+     */
     public String resolveJvmClassName(String jvmName) throws CompileError {
         if (jvmName == null)
             return null;
@@ -527,7 +576,7 @@ public class MemberResolver implements TokenId {
             return CLASS;
         default :
             fatal();
-            return VOID;
+            return VOID;    // never reach here
         }
     }
 

@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 package org.hotswap.agent.javassist.bytecode.analysis;
 
 import java.util.HashMap;
@@ -13,7 +27,11 @@ import org.hotswap.agent.javassist.bytecode.ExceptionTable;
 import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.javassist.bytecode.Opcode;
 
-
+/**
+ * Discovers the subroutines in a method, and tracks all callers.
+ *
+ * @author Jason T. Greene
+ */
 public class SubroutineScanner implements Opcode {
 
     private Subroutine[] subroutines;
@@ -34,8 +52,8 @@ public class SubroutineScanner implements Opcode {
         ExceptionTable exceptions = code.getExceptionTable();
         for (int i = 0; i < exceptions.size(); i++) {
             int handler = exceptions.handlerPc(i);
-
-
+            // If an exception is thrown in subroutine, the handler
+            // is part of the same subroutine.
             scan(handler, iter, subroutines[exceptions.startPc(i)]);
         }
 
@@ -43,7 +61,7 @@ public class SubroutineScanner implements Opcode {
     }
 
     private void scan(int pos, CodeIterator iter, Subroutine sub) throws BadBytecode {
-
+        // Skip already processed blocks
         if (done.contains(pos))
             return;
 
@@ -78,7 +96,7 @@ public class SubroutineScanner implements Opcode {
             return false;
         }
 
-
+        // All forms of return and throw end current code flow
         if (Util.isReturn(opcode) || opcode == RET || opcode == ATHROW)
             return false;
 
@@ -96,7 +114,7 @@ public class SubroutineScanner implements Opcode {
             } else {
                 scan(target, iter, sub);
 
-
+                // GOTO ends current code flow
                 if (Util.isGoto(opcode))
                     return false;
             }
@@ -107,12 +125,12 @@ public class SubroutineScanner implements Opcode {
 
     private void scanLookupSwitch(int pos, CodeIterator iter, Subroutine sub) throws BadBytecode {
         int index = (pos & ~3) + 4;
-
+        // default
         scan(pos + iter.s32bitAt(index), iter, sub);
         int npairs = iter.s32bitAt(index += 4);
         int end = npairs * 8 + (index += 4);
 
-
+        // skip "match"
         for (index += 4; index < end; index += 8) {
             int target = iter.s32bitAt(index) + pos;
             scan(target, iter, sub);
@@ -120,15 +138,15 @@ public class SubroutineScanner implements Opcode {
     }
 
     private void scanTableSwitch(int pos, CodeIterator iter, Subroutine sub) throws BadBytecode {
-
+        // Skip 4 byte alignment padding
         int index = (pos & ~3) + 4;
-
+        // default
         scan(pos + iter.s32bitAt(index), iter, sub);
         int low = iter.s32bitAt(index += 4);
         int high = iter.s32bitAt(index += 4);
         int end = (high - low + 1) * 4 + (index += 4);
 
-
+        // Offset table
         for (; index < end; index += 4) {
             int target = iter.s32bitAt(index) + pos;
             scan(target, iter, sub);

@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist;
 
@@ -42,26 +56,28 @@ import org.hotswap.agent.javassist.compiler.CompileError;
 import org.hotswap.agent.javassist.compiler.Javac;
 import org.hotswap.agent.javassist.expr.ExprEditor;
 
-
+/**
+ * Class<?> types.
+ */
 class CtClassType extends CtClass {
     ClassPool classPool;
     boolean wasChanged;
     private boolean wasFrozen;
     boolean wasPruned;
-    boolean gcConstPool;
+    boolean gcConstPool;    // if true, the constant pool entries will be garbage collected.
     ClassFile classfile;
-    byte[] rawClassfile;
+    byte[] rawClassfile;    // backup storage
 
     private Reference<CtMember.Cache> memberCache;
     private AccessorMaker accessors;
 
     private FieldInitLink fieldInitializers;
-    private Map<CtMethod,String> hiddenMethods;
+    private Map<CtMethod,String> hiddenMethods;    // must be synchronous
     private int uniqueNumberSeed;
 
     private boolean doPruning = ClassPool.doPruning;
     private int getCount;
-    private static final int GET_THRESHOLD = 2;
+    private static final int GET_THRESHOLD = 2;     // see compress()
 
     CtClassType(String name, ClassPool cp) {
         super(name);
@@ -213,11 +229,19 @@ class CtClassType extends CtClass {
         }
     }
 
-
+   /* Inherited from CtClass.  Called by get() in ClassPool.
+    *
+    * @see javassist.CtClass#incGetCounter()
+    * @see #toBytecode(DataOutputStream)
+    */
     @Override
    final void incGetCounter() { ++getCount; }
 
-
+   /**
+    * Invoked from ClassPool#compress().
+    * It releases the class files that have not been recently used
+    * if they are unmodified.
+    */
     @Override
    void compress() {
        if (getCount < GET_THRESHOLD)
@@ -229,9 +253,13 @@ class CtClassType extends CtClass {
        getCount = 0;
    }
 
-
+   /**
+     * Converts a ClassFile object into a byte array
+     * for saving memory space.
+     */
     private synchronized void saveClassFile() {
-
+        /* getMembers() and removeClassFile() are also synchronized.
+         */
         if (classfile == null || hasMemberCache() != null)
             return;
 
@@ -251,7 +279,9 @@ class CtClassType extends CtClass {
             classfile = null;
     }
 
-
+    /**
+     * Updates {@code classfile} if it is null.
+     */
     private synchronized ClassFile setClassFile(ClassFile cf) {
         if (classfile == null)
             classfile = cf;
@@ -334,7 +364,7 @@ class CtClassType extends CtClass {
         if (name.equals(oldname))
             return;
 
-
+        // check this in advance although classNameChanged() below does.
         classPool.checkNotFrozen(name);
         ClassFile cf = getClassFile2();
         super.setName(name);
@@ -366,7 +396,7 @@ class CtClassType extends CtClass {
             = classnames.get(Descriptor.toJvmName(oldClassName));
         if (newClassName != null) {
             newClassName = Descriptor.toJavaName(newClassName);
-
+            // check this in advance although classNameChanged() below does.
             classPool.checkNotFrozen(newClassName);
         }
 
@@ -422,7 +452,7 @@ class CtClassType extends CtClass {
             if ((inner & AccessFlag.PUBLIC) != 0)
                 acc |= AccessFlag.PUBLIC;
             else {
-                acc &= ~AccessFlag.PUBLIC;
+                acc &= ~AccessFlag.PUBLIC; //clear PUBLIC
                 if ((inner & AccessFlag.PROTECTED) != 0)
                     acc |= AccessFlag.PROTECTED;
                 else if ((inner & AccessFlag.PRIVATE) != 0)
@@ -447,7 +477,7 @@ class CtClassType extends CtClass {
             String name = ica.innerClass(i);
             if (name != null)
                 if (name.startsWith(thisName)) {
-
+                    // if it is an immediate nested class
                     if (name.lastIndexOf('$') < thisName.length())
                         list.add(classPool.get(name));
                 }
@@ -469,9 +499,9 @@ class CtClassType extends CtClass {
         InnerClassesAttribute ica
             = (InnerClassesAttribute)cf.getAttribute(InnerClassesAttribute.tag);
         if (ica != null) {
-
-
-
+            // If the class is a static inner class, its modifier
+            // does not contain the static bit.  Its inner class attribute
+            // contains the static bit.
             int mod = newMod & ~Modifier.STATIC;
             int i = ica.find(name);
             if (i >= 0) {
@@ -510,7 +540,9 @@ class CtClassType extends CtClass {
         return hasAnnotationType(annotationName, getClassPool(), ainfo, ainfo2);
     }
 
-
+    /**
+     * @deprecated
+     */
     @Deprecated
     static boolean hasAnnotationType(Class<?> clz, ClassPool cp,
                                      AnnotationsAttribute a1,
@@ -848,7 +880,7 @@ class CtClassType extends CtClass {
                 if (outName != null)
                     return classPool.get(outName);
 
-
+                // maybe anonymous or local class.
                 EnclosingMethodAttribute ema
                     = (EnclosingMethodAttribute)cf.getAttribute(
                                                 EnclosingMethodAttribute.tag);
@@ -875,7 +907,7 @@ class CtClassType extends CtClass {
                 if (outName != null)
                     return true;
                 else {
-
+                    // maybe anonymous or local class.
                     EnclosingMethodAttribute ema
                         = (EnclosingMethodAttribute)cf.getAttribute(
                                                     EnclosingMethodAttribute.tag);
@@ -930,7 +962,8 @@ class CtClassType extends CtClass {
         return c;
     }
 
-
+    /* flush cached names.
+     */
     private void nameReplaced() {
         CtMember.Cache cache = hasMemberCache();
         if (cache != null) {
@@ -943,7 +976,9 @@ class CtClassType extends CtClass {
         }
     }
 
-
+    /**
+     * Returns null if members are not cached.
+     */
     protected CtMember.Cache hasMemberCache() {
         if (memberCache != null)
             return memberCache.get();
@@ -1538,7 +1573,10 @@ class CtClassType extends CtClass {
             editor.doit(this, minfo);
     }
 
-
+    /**
+     * @see javassist.CtClass#prune()
+     * @see javassist.CtClass#stopPruning(boolean)
+     */
     @Override
     public void prune()
     {
@@ -1574,15 +1612,15 @@ class CtClassType extends CtClass {
                 out.flush();
                 fieldInitializers = null;
                 if (doPruning) {
-
+                    // to save memory
                     cf.prune();
                     wasPruned = true;
                 }
             }
             else {
                 classPool.writeClassfile(getName(), out);
-
-
+                // to save memory
+                // classfile = null;
             }
 
             getCount = 0;
@@ -1607,7 +1645,8 @@ class CtClassType extends CtClass {
         }
     }
 
-
+    /* See also checkModified()
+     */
     private void checkPruned(String method)
     {
         if (wasPruned)
@@ -1644,7 +1683,7 @@ class CtClassType extends CtClass {
             }
         }
 
-        if (doInit)
+        if (doInit)    // need an initializer for static fileds.
             modifyClassConstructor(cf, code, stacksize, 0);
     }
 
@@ -1735,9 +1774,9 @@ class CtClassType extends CtClass {
         if (index < 0) {
             index = it.skipThisConstructor();
             if (index >= 0)
-                return;
+                return;         // this() is called.
 
-
+            // Neither this() or super() is called.
         }
 
         int pos = it.insertEx(initializer.get());
@@ -1772,7 +1811,7 @@ class CtClassType extends CtClass {
         return stacksize;
     }
 
-
+    // Methods used by CtNewWrappedMethod
 
     Map<CtMethod,String> getHiddenMethods() {
         if (hiddenMethods == null)

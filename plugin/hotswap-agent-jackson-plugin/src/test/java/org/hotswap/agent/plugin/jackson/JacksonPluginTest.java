@@ -14,9 +14,12 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-
+/**
+ * @author liuzhengyang
+ * 2021/12/3
+ */
 public class JacksonPluginTest {
-
+    // create object mapper, add field, check object mappers to json from json
 
 
     @Test
@@ -27,7 +30,7 @@ public class JacksonPluginTest {
         String json = objectMapper.writeValueAsString(testModel1);
         assertTrue(json.contains("\"age\":1"));
 
-
+        // save cache
         objectMapper.readValue(json, TestModel1.class);
 
         swapClasses();

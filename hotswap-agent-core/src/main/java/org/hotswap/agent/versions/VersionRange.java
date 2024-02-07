@@ -1,7 +1,41 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.versions;
 
-
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,32 +43,53 @@ import java.util.Iterator;
 import java.util.List;
 
 
-
+/**
+ * Construct a version range from a specification.
+ *
+ * @author <a href="mailto:brett@apache.org">Brett Porter</a>
+ */
 public class VersionRange {
     
-
+    /** The recommended version. */
     private final ArtifactVersion recommendedVersion;
 
-
+    /** The restrictions. */
     private final List<Restriction> restrictions;
 
-
+    /**
+     * Instantiates a new version range.
+     *
+     * @param recommendedVersion the recommended version
+     * @param restrictions the restrictions
+     */
     private VersionRange(ArtifactVersion recommendedVersion, List<Restriction> restrictions) {
         this.recommendedVersion = recommendedVersion;
         this.restrictions = restrictions;
     }
 
-
+    /**
+     * Gets the recommended version.
+     *
+     * @return the recommended version
+     */
     public ArtifactVersion getRecommendedVersion() {
         return recommendedVersion;
     }
 
-
+    /**
+     * Gets the restrictions.
+     *
+     * @return the restrictions
+     */
     public List<Restriction> getRestrictions() {
         return restrictions;
     }
 
-
+    /**
+     * Clone of.
+     *
+     * @return the version range
+     */
     public VersionRange cloneOf() {
         List<Restriction> copiedRestrictions = null;
 
@@ -49,13 +104,34 @@ public class VersionRange {
         return new VersionRange(recommendedVersion, copiedRestrictions);
     }
 
-
+    /**
+     * Any.
+     *
+     * @return the version range
+     */
     public static VersionRange any() {
         return new VersionRange(new ArtifactVersion(""), Collections.singletonList(Restriction.NONE));
 
     }
 
-
+    /**
+     * Create a version range from a string representation
+     * <p/>
+     * Some spec examples are
+     * <ul>
+     * <li><code>1.0</code> Version 1.0</li>
+     * <li><code>[1.0,2.0)</code> Versions 1.0 (included) to 2.0 (not included)
+     * </li>
+     * <li><code>[1.0,2.0]</code> Versions 1.0 to 2.0 (both included)</li>
+     * <li><code>[1.5,)</code> Versions 1.5 and higher</li>
+     * <li><code>(,1.0],[1.2,)</code> Versions up to 1.0 (included) and 1.2 or
+     * higher</li>
+     * </ul>
+     *
+     * @param spec            string representation of a version or version range
+     * @return a new {@link VersionRange} object that represents the spec
+     * @throws InvalidVersionSpecificationException the invalid version specification exception
+     */
     public static VersionRange createFromVersionSpec(String spec) throws InvalidVersionSpecificationException {
         if (spec == null) {
             return null;
@@ -106,14 +182,20 @@ public class VersionRange {
                 throw new InvalidVersionSpecificationException("Only fully-qualified sets allowed in multiple set scenario: " + spec);
             } else {
                 version = new ArtifactVersion(process);
-                restrictions.add(new Restriction(version, true, version, true));
+                restrictions.add(new Restriction(version, true, version, true));// Restriction.EVERYTHING);
             }
         }
 
         return new VersionRange(version, restrictions);
     }
 
-
+    /**
+     * Parses the restriction.
+     *
+     * @param spec the spec
+     * @return the restriction
+     * @throws InvalidVersionSpecificationException the invalid version specification exception
+     */
     private static Restriction parseRestriction(String spec) throws InvalidVersionSpecificationException {
         boolean lowerBoundInclusive = spec.startsWith("[");
         boolean upperBoundInclusive = spec.endsWith("]");
@@ -158,13 +240,51 @@ public class VersionRange {
         return restriction;
     }
 
-
+    /**
+     * Creates the from version.
+     *
+     * @param version the version
+     * @return the version range
+     */
     public static VersionRange createFromVersion(String version) {
         List<Restriction> restrictions = Collections.emptyList();
         return new VersionRange(new ArtifactVersion(version), restrictions);
     }
 
-
+    /**
+     * Creates and returns a new <code>VersionRange</code> that is a restriction
+     * of this version range and the specified version range.
+     * <p>
+     * Note: Precedence is given to the recommended version from this version
+     * range over the recommended version from the specified version range.
+     * </p>
+     *
+     * @param restriction
+     *            the <code>VersionRange</code> that will be used to restrict
+     *            this version range.
+     * @return the <code>VersionRange</code> that is a restriction of this
+     *         version range and the specified version range.
+     *         <p>
+     *         The restrictions of the returned version range will be an
+     *         intersection of the restrictions of this version range and the
+     *         specified version range if both version ranges have restrictions.
+     *         Otherwise, the restrictions on the returned range will be empty.
+     *         </p>
+     *         <p>
+     *         The recommended version of the returned version range will be the
+     *         recommended version of this version range, provided that ranges
+     *         falls within the intersected restrictions. If the restrictions
+     *         are empty, this version range's recommended version is used if it
+     *         is not <code>null</code>. If it is <code>null</code>, the
+     *         specified version range's recommended version is used (provided
+     *         it is non-<code>null</code>). If no recommended version can be
+     *         obtained, the returned version range's recommended version is set
+     *         to <code>null</code>.
+     *         </p>
+     * @throws NullPointerException
+     *             if the specified <code>VersionRange</code> is
+     *             <code>null</code>.
+     */
     public VersionRange restrict(VersionRange restriction) {
         List<Restriction> r1 = this.restrictions;
         List<Restriction> r2 = restriction.restrictions;
@@ -180,32 +300,42 @@ public class VersionRange {
         if (restrictions.size() > 0) {
             for (Restriction r : restrictions) {
                 if (recommendedVersion != null && r.containsVersion(recommendedVersion)) {
-
+                    // if we find the original, use that
                     version = recommendedVersion;
                     break;
                 } else if (version == null && restriction.getRecommendedVersion() != null && r.containsVersion(restriction.getRecommendedVersion())) {
-
+                    // use this if we can, but prefer the original if possible
                     version = restriction.getRecommendedVersion();
                 }
             }
         }
-
-
+        // Either the original or the specified version ranges have no
+        // restrictions
         else if (recommendedVersion != null) {
-
+            // Use the original recommended version since it exists
             version = recommendedVersion;
         } else if (restriction.recommendedVersion != null) {
-
-
-
+            // Use the recommended version from the specified VersionRange since
+            // there is no
+            // original recommended version
             version = restriction.recommendedVersion;
         }
-
+        /*
+         * TODO: should throw this immediately, but need artifact else { throw
+         * new OverConstrainedVersionException(
+         * "Restricting incompatible version ranges" ); }
+         */
 
         return new VersionRange(version, restrictions);
     }
 
-
+    /**
+     * Intersection.
+     *
+     * @param r1 the r1
+     * @param r2 the r2
+     * @return the list
+     */
     private List<Restriction> intersection(List<Restriction> r1, List<Restriction> r2) {
         List<Restriction> restrictions = new ArrayList<>(r1.size() + r2.size());
         Iterator<Restriction> i1 = r1.iterator();
@@ -222,7 +352,7 @@ public class VersionRange {
                     boolean lowerInclusive;
                     boolean upperInclusive;
 
-
+                    // overlaps
                     if (res1.getLowerBound() == null) {
                         lower = res2.getLowerBound();
                         lowerInclusive = res2.isLowerBoundInclusive();
@@ -263,23 +393,23 @@ public class VersionRange {
                         }
                     }
 
-
+                    // don't add if they are equal and one is not inclusive
                     if (lower == null || upper == null || lower.compareTo(upper) != 0) {
                         restrictions.add(new Restriction(lower, lowerInclusive, upper, upperInclusive));
                     } else if (lowerInclusive && upperInclusive) {
                         restrictions.add(new Restriction(lower, lowerInclusive, upper, upperInclusive));
                     }
 
-
+                    // noinspection ObjectEquality
                     if (upper == res2.getUpperBound()) {
-
+                        // advance res2
                         if (i2.hasNext()) {
                             res2 = i2.next();
                         } else {
                             done = true;
                         }
                     } else {
-
+                        // advance res1
                         if (i1.hasNext()) {
                             res1 = i1.next();
                         } else {
@@ -287,7 +417,7 @@ public class VersionRange {
                         }
                     }
                 } else {
-
+                    // move on to next in r1
                     if (i1.hasNext()) {
                         res1 = i1.next();
                     } else {
@@ -295,7 +425,7 @@ public class VersionRange {
                     }
                 }
             } else {
-
+                // move on to next in r2
                 if (i2.hasNext()) {
                     res2 = i2.next();
                 } else {
@@ -307,7 +437,11 @@ public class VersionRange {
         return restrictions;
     }
 
-
+    /**
+     * Gets the selected version.
+     *
+     * @return the selected version
+     */
     public ArtifactVersion getSelectedVersion() {
         ArtifactVersion version;
         if (recommendedVersion != null) {
@@ -318,7 +452,11 @@ public class VersionRange {
         return version;
     }
 
-
+    /**
+     * Checks if is selected version known.
+     *
+     * @return true, if is selected version known
+     */
     public boolean isSelectedVersionKnown() {
         boolean value = false;
         if (recommendedVersion != null) {
@@ -326,35 +464,40 @@ public class VersionRange {
         }
         return value;
     }
+    //
+    // public String toString() {
+    // if (recommendedVersion != null) {
+    // return recommendedVersion.dump();
+    // } else {
+    // StringBuilder buf = new StringBuilder();
+    // for (Iterator<Restriction> i = restrictions.iterator(); i.hasNext();) {
+    // Restriction r = i.next();
+    //
+    // buf.append(r.toString());
+    //
+    // if (i.hasNext()) {
+    // buf.append(',');
+    // }
+    // }
+    // return buf.toString();
+    // }
+    // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    /**
+     * Match version.
+     *
+     * @param versions the versions
+     * @return the artifact version
+     */
     public ArtifactVersion matchVersion(List<ArtifactVersion> versions) {
-
-
+        // TODO: could be more efficient by sorting the list and then moving
+        // along the restrictions in order?
 
         ArtifactVersion matched = null;
         for (ArtifactVersion version : versions) {
             if (containsVersion(version)) {
-
-
+                // valid - check if it is greater than the currently matched
+                // version
                 if (matched == null || version.compareTo(matched) > 0) {
                     matched = version;
                 }
@@ -363,13 +506,20 @@ public class VersionRange {
         return matched;
     }
 
-
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
     @Override
     public String toString() {
         return "VersionRange [recommendedVersion=" + recommendedVersion + ", restrictions=" + restrictions + "]";
     }
 
-
+    /**
+     * Contains version.
+     *
+     * @param version the version
+     * @return true, if successful
+     */
     public boolean containsVersion(ArtifactVersion version) {
         for (Restriction restriction : restrictions) {
             if (restriction.containsVersion(version)) {
@@ -379,12 +529,18 @@ public class VersionRange {
         return false;
     }
 
-
+    /**
+     * Checks for restrictions.
+     *
+     * @return true, if successful
+     */
     public boolean hasRestrictions() {
         return !restrictions.isEmpty() && recommendedVersion == null;
     }
 
-
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -399,7 +555,9 @@ public class VersionRange {
         return equals;
     }
 
-
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
     public int hashCode() {
         int hash = 7;
         hash = 31 * hash + (recommendedVersion == null ? 0 : recommendedVersion.hashCode());

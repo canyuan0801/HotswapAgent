@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.tools.rmi;
 
@@ -22,7 +36,15 @@ import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.javassist.tools.web.BadHttpRequest;
 import org.hotswap.agent.javassist.tools.web.Webserver;
 
-
+/**
+ * An AppletServer object is a web server that an ObjectImporter
+ * communicates with.  It makes the objects specified by
+ * <code>exportObject()</code> remotely accessible from applets.
+ * If the classes of the exported objects are requested by the client-side
+ * JVM, this web server sends proxy classes for the requested classes.
+ *
+ * @see javassist.tools.rmi.ObjectImporter
+ */
 public class AppletServer extends Webserver {
     private StubGenerator stubGen;
     private Map<String,ExportedObject> exportedNames;
@@ -31,21 +53,34 @@ public class AppletServer extends Webserver {
     private static final byte[] okHeader
                                 = "HTTP/1.0 200 OK\r\n\r\n".getBytes();
 
-
+    /**
+     * Constructs a web server.
+     *
+     * @param port      port number
+     */
     public AppletServer(String port)
         throws IOException, NotFoundException, CannotCompileException
     {
         this(Integer.parseInt(port));
     }
 
-
+    /**
+     * Constructs a web server.
+     *
+     * @param port      port number
+     */
     public AppletServer(int port)
         throws IOException, NotFoundException, CannotCompileException
     {
         this(ClassPool.getDefault(), new StubGenerator(), port);
     }
 
-
+    /**
+     * Constructs a web server.
+     *
+     * @param port      port number
+     * @param src       the source of classs files.
+     */
     public AppletServer(int port, ClassPool src)
         throws IOException, NotFoundException, CannotCompileException
     {
@@ -62,13 +97,26 @@ public class AppletServer extends Webserver {
         addTranslator(loader, gen);
     }
 
-
+    /**
+     * Begins the HTTP service.
+     */
     @Override
     public void run() {
         super.run();
     }
 
-
+    /**
+     * Exports an object.
+     * This method produces the bytecode of the proxy class used
+     * to access the exported object.  A remote applet can load
+     * the proxy class and call a method on the exported object.
+     *
+     * @param name      the name used for looking the object up.
+     * @param obj       the exported object.
+     * @return          the object identifier
+     *
+     * @see javassist.tools.rmi.ObjectImporter#lookupObject(String)
+     */
     public synchronized int exportObject(String name, Object obj)
         throws CannotCompileException
     {
@@ -91,7 +139,9 @@ public class AppletServer extends Webserver {
         return eo.identifier;
     }
 
-
+    /**
+     * Processes a request from a web browser (an ObjectImporter).
+     */
     @Override
     public void doReply(InputStream in, OutputStream out, String cmd)
         throws IOException, BadHttpRequest
@@ -170,7 +220,7 @@ public class AppletServer extends Webserver {
         throws CannotCompileException
     {
         if (rvalue == null)
-            return null;
+            return null;        // the return type is void.
 
         String classname = rvalue.getClass().getName();
         if (stubGen.isProxyClass(classname))
@@ -188,7 +238,7 @@ public class AppletServer extends Webserver {
         ObjectOutputStream out = new ObjectOutputStream(outs);
         if (found == null) {
             logging2(name + "not found.");
-            out.writeInt(-1);
+            out.writeInt(-1);           // error code
             out.writeUTF("error");
         }
         else {

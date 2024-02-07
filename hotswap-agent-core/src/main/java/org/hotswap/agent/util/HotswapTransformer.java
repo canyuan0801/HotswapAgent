@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.util;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -21,21 +38,30 @@ import org.hotswap.agent.annotation.handler.PluginClassFileTransformer;
 import org.hotswap.agent.config.PluginManager;
 import org.hotswap.agent.logging.AgentLogger;
 
-
+/**
+ * Java instrumentation transformer.
+ * <p/>
+ * The is the single instance of transformer registered by HotswapAgent. It will delegate to plugins to
+ * do the transformer work.
+ *
+ * @author Jiri Bubnik
+ */
 public class HotswapTransformer implements ClassFileTransformer {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(HotswapTransformer.class);
 
-
+    /**
+     * Exclude these classLoaders from initialization (system classloaders). Note that
+     */
     private static final Set<String> skippedClassLoaders = new HashSet<>(Arrays.asList(
             "jdk.internal.reflect.DelegatingClassLoader",
             "sun.reflect.DelegatingClassLoader"
     ));
 
-
+    // TODO : check if felix class loaders could be skipped
     private static final Set<String> excludedClassLoaders = new HashSet<>(Arrays.asList(
-            "org.apache.felix.framework.BundleWiringImpl$BundleClassLoader",
-            "org.apache.felix.framework.BundleWiringImpl$BundleClassLoaderJava5"
+            "org.apache.felix.framework.BundleWiringImpl$BundleClassLoader", // delegating ClassLoader in GlassFish
+            "org.apache.felix.framework.BundleWiringImpl$BundleClassLoaderJava5" // delegating ClassLoader in_GlassFish
     ));
 
     private static class RegisteredTransformersRecord {
@@ -46,7 +72,7 @@ public class HotswapTransformer implements ClassFileTransformer {
     protected Map<String, RegisteredTransformersRecord> redefinitionTransformers = new LinkedHashMap<>();
     protected Map<String, RegisteredTransformersRecord> otherTransformers = new LinkedHashMap<>();
 
-
+    // keep track about which classloader requested which transformer
     protected Map<ClassFileTransformer, ClassLoader> classLoaderTransformers = new LinkedHashMap<>();
 
     protected Map<ClassLoader, Object> seenClassLoaders = new WeakHashMap<>();
@@ -61,7 +87,10 @@ public class HotswapTransformer implements ClassFileTransformer {
     }
 
 
-
+    /**
+     * @param excludedClassLoaderPatterns
+     *            the excludedClassLoaderPatterns to set
+     */
     public void setExcludedClassLoaderPatterns(List<Pattern> excludedClassLoaderPatterns) {
         this.excludedClassLoaderPatterns = excludedClassLoaderPatterns;
     }
@@ -70,7 +99,17 @@ public class HotswapTransformer implements ClassFileTransformer {
         return excludedClassLoaderPatterns;
     }
 
-
+    /**
+     * Register a transformer for a regexp matching class names.
+     * Used by {@link org.hotswap.agent.annotation.OnClassLoadEvent} annotation respective
+     * {@link org.hotswap.agent.annotation.handler.OnClassLoadedHandler}.
+     *
+     * @param classLoader the classloader to which this transformation is associated
+     * @param classNameRegexp regexp to match fully qualified class name.
+     *                        Because "." is any character in regexp, this will match / in the transform method as well
+     *                        (diffentence between java/lang/String and java.lang.String).
+     * @param transformer     the transformer to be called for each class matching regexp.
+     */
     public void registerTransformer(ClassLoader classLoader, String classNameRegexp, HaClassFileTransformer transformer) {
         LOGGER.debug("Registering transformer for class regexp '{}'.", classNameRegexp);
 
@@ -89,7 +128,7 @@ public class HotswapTransformer implements ClassFileTransformer {
             transformerRecord.transformerList.add(transformer);
         }
 
-
+        // register classloader association to allow classloader unregistration
         if (classLoader != null) {
             classLoaderTransformers.put(transformer, classLoader);
         }
@@ -102,7 +141,12 @@ public class HotswapTransformer implements ClassFileTransformer {
         return otherTransformers;
     }
 
-
+    /**
+     * Remove registered transformer.
+     *
+     * @param classNameRegexp regexp to match fully qualified class name.
+     * @param transformer     currently registered transformer
+     */
     public void removeTransformer(String classNameRegexp, HaClassFileTransformer transformer) {
         String normalizeRegexp = normalizeTypeRegexp(classNameRegexp);
         Map<String, RegisteredTransformersRecord> transformersMap = getTransformerMap(transformer);
@@ -112,7 +156,10 @@ public class HotswapTransformer implements ClassFileTransformer {
         }
     }
 
-
+    /**
+     * Remove all transformers registered with a classloader
+     * @param classLoader
+     */
     public void closeClassLoader(ClassLoader classLoader) {
         for (Iterator<Map.Entry<ClassFileTransformer, ClassLoader>> entryIterator = classLoaderTransformers.entrySet().iterator();
                 entryIterator.hasNext(); ) {
@@ -131,12 +178,21 @@ public class HotswapTransformer implements ClassFileTransformer {
         LOGGER.debug("All transformers removed for classLoader {}", classLoader);
     }
 
-
+    /**
+     * Main transform method called by Java instrumentation.
+     * <p/>
+     * <p>It does not do the instrumentation itself, instead iterates registered transformers and compares
+     * registration class regexp - if the regexp matches, the classloader is called.
+     * <p/>
+     * <p>Note that class bytes may be send to multiple transformers, but the order is not defined.
+     *
+     * @see ClassFileTransformer#transform(ClassLoader, String, Class, java.security.ProtectionDomain, byte[])
+     */
     @Override
     public byte[] transform(final ClassLoader classLoader, String className, Class<?> redefiningClass,
                             final ProtectionDomain protectionDomain, byte[] bytes) throws IllegalClassFormatException {
 
-
+        // Skip delegating classloaders used for reflection
         String classLoaderClassName = classLoader != null ? classLoader.getClass().getName() : null;
         if (skippedClassLoaders.contains(classLoaderClassName)) {
             return bytes;
@@ -147,7 +203,7 @@ public class HotswapTransformer implements ClassFileTransformer {
         List<ClassFileTransformer> toApply = new ArrayList<>();
         List<PluginClassFileTransformer> pluginTransformers = new ArrayList<>();
         try {
-
+            // 1. call transform method of defining transformers
             for (RegisteredTransformersRecord transformerRecord : new ArrayList<RegisteredTransformersRecord>(otherTransformers.values())) {
                 if ((className != null && transformerRecord.pattern.matcher(className).matches()) ||
                         (redefiningClass != null && transformerRecord.pattern.matcher(redefiningClass.getName()).matches())) {
@@ -163,7 +219,7 @@ public class HotswapTransformer implements ClassFileTransformer {
                     }
                 }
             }
-
+            // 2. call transform method of redefining transformers
             if (redefiningClass != null && className != null) {
                 for (RegisteredTransformersRecord transformerRecord : new ArrayList<RegisteredTransformersRecord>(redefinitionTransformers.values())) {
                     if (transformerRecord.pattern.matcher(className).matches()) {
@@ -188,7 +244,7 @@ public class HotswapTransformer implements ClassFileTransformer {
             pluginTransformers =  reduce(classLoader, pluginTransformers, className);
         }
 
-
+        // ensure classloader initialized
        ensureClassLoaderInitialized(classLoader, protectionDomain);
 
         if(toApply.isEmpty() && pluginTransformers.isEmpty()) {
@@ -246,16 +302,26 @@ public class HotswapTransformer implements ClassFileTransformer {
 
         return reduced;
     }
-
+    /**
+     * Every classloader should be initialized. Usually if anything interesting happens,
+     * it is initialized during plugin initialization process. However, some plugins (e.g. Hotswapper)
+     * are triggered during classloader initialization process itself (@Init on static method). In this case,
+     * the plugin will be never invoked, until the classloader initialization is invoked from here.
+     *
+     * Schedule with some timeout to allow standard plugin initialization process to precede.
+     *
+     * @param classLoader the classloader to which this transformation is associated
+     * @param protectionDomain associated protection domain (if any)
+     */
     protected void ensureClassLoaderInitialized(final ClassLoader classLoader, final ProtectionDomain protectionDomain) {
         if (!seenClassLoaders.containsKey(classLoader)) {
             seenClassLoaders.put(classLoader, null);
 
             if (classLoader == null) {
-
+                // directly init null (bootstrap) classloader
                 PluginManager.getInstance().initClassLoader(null, protectionDomain);
             } else {
-
+                // ensure the classloader should not be excluded
                 if (shouldScheduleClassLoader(classLoader)) {
                     PluginManager.getInstance().initClassLoader(classLoader, protectionDomain);
                 }
@@ -289,7 +355,12 @@ public class HotswapTransformer implements ClassFileTransformer {
     }
 
 
-
+    /**
+     * Transform type to ^regexp$ form - match only whole pattern.
+     *
+     * @param registeredType type
+     * @return
+     */
     protected String normalizeTypeRegexp(String registeredType) {
         String regexp = registeredType;
         if (!registeredType.startsWith("^")){

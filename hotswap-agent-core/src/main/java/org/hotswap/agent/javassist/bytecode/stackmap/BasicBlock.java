@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.bytecode.stackmap;
 
@@ -15,19 +29,24 @@ import org.hotswap.agent.javassist.bytecode.ExceptionTable;
 import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.javassist.bytecode.Opcode;
 
-
+/**
+ * A basic block is a sequence of bytecode that does not contain jump/branch
+ * instructions except at the last bytecode.
+ * Since Java7 or later does not allow JSR, this class throws an exception when
+ * it finds JSR.
+ */
 public class BasicBlock {
     static class JsrBytecode extends BadBytecode {
-
+        /** default serialVersionUID */
         private static final long serialVersionUID = 1L;
 
         JsrBytecode() { super("JSR"); }
     }
 
     protected int position, length;
-    protected int incoming;
-    protected BasicBlock[] exit;
-    protected boolean stop;
+    protected int incoming;        // the number of incoming branches.
+    protected BasicBlock[] exit;   // null if the block is a leaf.
+    protected boolean stop;        // true if the block ends with an unconditional jump. 
     protected Catch toCatch;
 
     protected BasicBlock(int pos) {
@@ -88,13 +107,16 @@ public class BasicBlock {
         sbuf.append("}");
     }
 
-
+    /**
+     * A Mark indicates the position of a branch instruction
+     * or a branch target.
+     */
     static class Mark implements Comparable<Mark> {
         int position;
         BasicBlock block;
         BasicBlock[] jump;
-        boolean alwaysJmp;
-        int size;
+        boolean alwaysJmp;     // true if an unconditional branch.
+        int size;       // 0 unless the mark indicates RETURN etc. 
         Catch catcher;
 
         Mark(int p) {
@@ -121,7 +143,9 @@ public class BasicBlock {
     }
 
     public static class Maker {
-
+        /* Override these two methods if a subclass of BasicBlock must be
+         * instantiated.
+         */
         protected BasicBlock makeBlock(int pos) {
             return new BasicBlock(pos);
         }
@@ -162,12 +186,15 @@ public class BasicBlock {
             return bb;
         }
 
-
+        /* Branch target
+         */
         private Mark makeMark(Map<Integer,Mark> table, int pos) {
             return makeMark0(table, pos, true, true);
         }
 
-
+        /* Branch instruction.
+         * size > 0
+         */
         private Mark makeMark(Map<Integer,Mark> table, int pos, BasicBlock[] jump,
                               int size, boolean always) {
             Mark m = makeMark0(table, pos, false, false);
@@ -231,7 +258,7 @@ public class BasicBlock {
                         int high = ci.s32bitAt(pos + 8);
                         int ncases = high - low + 1;
                         BasicBlock[] to = makeArray(ncases + 1);
-                        to[0] = makeMark(marks, index + ci.s32bitAt(pos)).block;
+                        to[0] = makeMark(marks, index + ci.s32bitAt(pos)).block;   // default branch target
                         int p = pos + 12;
                         int n = p + ncases * 4;
                         int k = 1;
@@ -245,7 +272,7 @@ public class BasicBlock {
                         int pos = (index & ~3) + 4;
                         int ncases = ci.s32bitAt(pos + 4);
                         BasicBlock[] to = makeArray(ncases + 1);
-                        to[0] = makeMark(marks, index + ci.s32bitAt(pos)).block;
+                        to[0] = makeMark(marks, index + ci.s32bitAt(pos)).block;   // default branch target
                         int p = pos + 8 + 4;
                         int n = p + ncases * 8 - 4;
                         int k = 1;
@@ -283,9 +310,17 @@ public class BasicBlock {
             makeMark(marks, pos, jumps, size, true);
         }
 
-
+        /*
+         * We could ignore JSR since Java 7 or later does not allow it.
+         * See The JVM Spec. Sec. 4.10.2.5.
+         */
         protected void makeJsr(Map<Integer,Mark> marks, int pos, int target, int size) throws BadBytecode {
-
+            /*
+            Mark to = makeMark(marks, target);
+            Mark next = makeMark(marks, pos + size);
+            BasicBlock[] jumps = makeArray(to.block, next.block);
+            makeMark(marks, pos, jumps, size, false);
+            */
             throw new JsrBytecode();
         }
 
@@ -305,9 +340,9 @@ public class BasicBlock {
                 Mark m = marks[i++];
                 BasicBlock bb = getBBlock(m);
                 if (bb == null) {
-
+                    // the mark indicates a branch instruction
                     if (prev.length > 0) {
-
+                        // the previous mark already has exits.
                         prev = makeBlock(prev.position + prev.length);
                         blocks.add(prev);
                     }
@@ -317,22 +352,22 @@ public class BasicBlock {
                     prev.stop = m.alwaysJmp;
                 }
                 else {
-
+                    // the mark indicates a branch target
                     if (prev.length == 0) {
                         prev.length = m.position - prev.position;
                         bb.incoming++;
                         prev.exit = makeArray(bb);
                     }
                     else {
-
+                        // the previous mark already has exits.
                         if (prev.position + prev.length < m.position) {
-
+                            // dead code is found.
                             prev = makeBlock(prev.position + prev.length);
                             blocks.add(prev);
                             prev.length = m.position - prev.position;
-
-
-                            prev.stop = true;
+                            // the incoming flow from dead code is not counted
+                            // bb.incoming++;
+                            prev.stop = true;   // because the incoming flow is not counted.
                             prev.exit = makeArray(bb);
                         }
                     }

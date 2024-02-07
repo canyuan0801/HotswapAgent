@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.proxy.test.methods;
 
 import static org.hotswap.agent.plugin.proxy.test.util.HotSwapTestHelper.*;
@@ -18,7 +35,7 @@ import org.springframework.cglib.proxy.MethodProxy;
 
 public class AddEnhancerMethodProxyTest {
 
-    
+    // Version 0
     public static class AImpl implements A {
         @Override
         public int getValue1() {
@@ -26,7 +43,7 @@ public class AddEnhancerMethodProxyTest {
         }
     }
 
-    
+    // Version 0
     public static class AImpl___0 implements A___0 {
         @Override
         public int getValue1() {
@@ -34,7 +51,7 @@ public class AddEnhancerMethodProxyTest {
         }
     }
 
-    
+    // Version 1
     public static class AImpl___1 implements A___1 {
         @Override
         public int getValue2() {
@@ -42,7 +59,7 @@ public class AddEnhancerMethodProxyTest {
         }
     }
 
-    
+    // Version 2
     public static class AImpl___2 implements A___2 {
         @Override
         public int getValue3() {
@@ -50,22 +67,22 @@ public class AddEnhancerMethodProxyTest {
         }
     }
 
-    
+    // Version 0
     public interface A {
         public int getValue1();
     }
 
-    
+    // Version 0
     public interface A___0 {
         public int getValue1();
     }
 
-    
+    // Version 1
     public interface A___1 {
         public int getValue2();
     }
 
-    
+    // Version 2
     public interface A___2 {
         public int getValue3();
     }

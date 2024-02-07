@@ -9,7 +9,12 @@ import java.util.Arrays;
 public class PlaceholderConfigurerSupportTransformer {
     private static AgentLogger LOGGER = AgentLogger.getLogger(PlaceholderConfigurerSupportTransformer.class);
 
-
+    /**
+     * @param clazz
+     * @param classPool
+     * @throws NotFoundException
+     * @throws CannotCompileException
+     */
     @OnClassLoadEvent(classNameRegexp = "org.springframework.beans.factory.config.PlaceholderConfigurerSupport")
     public static void transform(CtClass clazz, ClassPool classPool) throws NotFoundException, CannotCompileException {
         for (CtClass interfaceClazz : clazz.getInterfaces()) {

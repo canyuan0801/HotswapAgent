@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.compiler;
 
@@ -21,7 +35,9 @@ public class Lex implements TokenId {
     @SuppressWarnings("unused")
     private int position, maxlen, lineNumber;
 
-
+    /**
+     * Constructs a lexical analyzer.
+     */
     public Lex(String s) {
         lastChar = -1;
         textBuffer = new StringBuffer();
@@ -43,7 +59,9 @@ public class Lex implements TokenId {
         return t.tokenId;
     }
 
-
+    /**
+     * Looks at the next token.
+     */
     public int lookAhead() {
         return lookAhead(0);
     }
@@ -51,7 +69,7 @@ public class Lex implements TokenId {
     public int lookAhead(int i) {
         Token tk = lookAheadTokens;
         if (tk == null) {
-            lookAheadTokens = tk = currentToken;
+            lookAheadTokens = tk = currentToken;  // reuse an object!
             tk.next = null;
             get(tk);
         }
@@ -323,7 +341,7 @@ public class Lex implements TokenId {
         return DoubleConstant;
     }
 
-
+    // !"#$%&'(    )*+,-./0    12345678    9:;<=>?
     private static final int[] equalOps
         =  { NEQ, 0, 0, 0, MOD_E, AND_E, 0, 0,
              0, MUL_E, PLUS_E, 0, MINUS_E, 0, DIV_E, 0,
@@ -408,7 +426,13 @@ public class Lex implements TokenId {
         int t = ktable.lookup(name);
         if (t >= 0)
             return t;
-
+        /* tbuf.toString() is executed quickly since it does not
+         * need memory copy.  Using a hand-written extensible
+         * byte-array class instead of StringBuffer is not a good idea
+         * for execution speed.  Converting a byte array to a String
+         * object is very slow.  Using an extensible char array
+         * might be OK.
+         */
         token.textValue = name;
         return Identifier;
     }

@@ -35,7 +35,12 @@ public class ResourceUtils {
         return path;
     }
 
-
+    /**
+     * convert src/main/resources/xxx.xml and classes/xxx.xml to xxx.xml
+     *
+     * @param filePath the file path to convert
+     * @return if convert succeed, return classpath path, or else return file path
+     */
     public static String convertToClasspathURL(String filePath) {
         String[] paths = filePath.split("src/main/resources/");
         if (paths.length == 2) {
@@ -66,7 +71,13 @@ public class ResourceUtils {
         return filePath;
     }
 
-
+    /**
+     * convert src/main/resources/xxx.xml and classes/xxx.xml to xxx.xml
+     *
+     * @param extraClassPaths the extra class paths
+     * @param filePath        the file path to convert
+     * @return if convert succeed, return classpath path, or else return file path
+     */
     public static String convertToClasspathURL(URL[] extraClassPaths, String filePath) {
         String path = convertToClasspathURL(filePath);
         if (!StringUtils.isEmpty(path)) {

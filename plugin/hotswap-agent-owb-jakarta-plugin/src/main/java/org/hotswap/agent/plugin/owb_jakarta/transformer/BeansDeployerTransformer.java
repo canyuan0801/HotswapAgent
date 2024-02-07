@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.owb_jakarta.transformer;
 
 import org.hotswap.agent.annotation.OnClassLoadEvent;
@@ -12,12 +29,23 @@ import org.hotswap.agent.plugin.cdi.HaCdiCommons;
 import org.hotswap.agent.plugin.owb_jakarta.OwbJakartaPlugin;
 import org.hotswap.agent.util.PluginManagerInvoker;
 
-
+/**
+ * Hook into org.apache.webbeans.config.BeansDeployer deploy to initialize OwbPlugin
+ *
+ * @author Vladimir Dvorak
+ */
 public class BeansDeployerTransformer {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(BeansDeployerTransformer.class);
 
-
+    /**
+     * Basic CdiArchive transformation.
+     *
+     * @param clazz
+     * @param classPool
+     * @throws NotFoundException
+     * @throws CannotCompileException
+     */
     @OnClassLoadEvent(classNameRegexp = "org.apache.webbeans.config.BeansDeployer")
     public static void transform(CtClass clazz, ClassPool classPool) throws NotFoundException, CannotCompileException {
         if (!HaCdiCommons.isJakarta(classPool)) {

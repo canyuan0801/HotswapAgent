@@ -1,4 +1,6 @@
-
+/**
+ *
+ */
 package org.hotswap.agent.plugin.myfaces.transformer;
 
 import static org.hotswap.agent.plugin.myfaces.MyFacesConstants.MANAGED_BEAN_RESOLVER_CLASS;
@@ -13,7 +15,14 @@ import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.plugin.myfaces.MyFacesConstants;
 
-
+/**
+ * A transformer which modifies {@link org.apache.myfaces.el.unified.resolver.ManagedBeanResolver} class.
+ *
+ * <p>This transformer adds functionality to hold and reload the dirty managed beans.
+ *
+ * @author sinan.yumak
+ *
+ */
 public class ManagedBeanResolverTransformer {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(ManagedBeanResolverTransformer.class);
@@ -54,7 +63,9 @@ public class ManagedBeanResolverTransformer {
         classPool.importPackage("org.apache.myfaces.config.element");
     }
 
-
+    /**
+     * Creates a field which holds dirty beans.
+     */
     private static void createDirtyBeansField(CtClass ctClass) throws CannotCompileException, NotFoundException {
         CtField dirtyBeansField = CtField.make(
             "public static List " + DIRTY_BEANS_FIELD + " = new ArrayList();" , ctClass
@@ -62,7 +73,9 @@ public class ManagedBeanResolverTransformer {
         ctClass.addField(dirtyBeansField);
     }
 
-
+    /**
+     * Creates a method which adds a managed bean class to dirty beans list.
+     */
     private static void createAddToDirtyBeansMethod(CtClass ctClass) throws CannotCompileException, NotFoundException {
         CtMethod addToDirtyBeansMethod = CtMethod.make(
             "public static synchronized void addToDirtyBeans(Class beanClass) {" +
@@ -75,7 +88,10 @@ public class ManagedBeanResolverTransformer {
         ctClass.addMethod(addToDirtyBeansMethod);
     }
 
-
+    /**
+     * Creates a method which returns managed bean infos with the
+     * {@link org.apache.myfaces.config.element.FacesConfig} format.
+     */
     private static void createGetManagedBeanInfosMethod(CtClass ctClass) throws CannotCompileException, NotFoundException {
         CtMethod getManagedBeanInfosMethod = CtMethod.make(
             "public FacesConfig getManagedBeanInfos() {" +
@@ -101,7 +117,10 @@ public class ManagedBeanResolverTransformer {
         ctClass.addMethod(getManagedBeanInfosMethod);
     }
 
-
+    /**
+     * Creates a method which updates {@link org.apache.myfaces.config.RuntimeConfig} with
+     * the dirty managed bean infos.
+     */
     private static void createUpdateRuntimeConfigMethod(CtClass ctClass) throws CannotCompileException, NotFoundException {
         CtMethod updateRuntimeConfigMethod = CtMethod.make(
             "public void updateRuntimeConfig(FacesConfig facesConfig) {" +
@@ -127,7 +146,9 @@ public class ManagedBeanResolverTransformer {
         ctClass.addMethod(updateRuntimeConfigMethod);
     }
 
-
+    /**
+     * Creates a method which creates managed bean instances with the {@link org.apache.myfaces.config.element.FacesConfig}.
+     */
     private static void createCreateDirtyManagedBeansMethod(CtClass ctClass) throws CannotCompileException, NotFoundException {
         CtMethod createDirtyManagedBeansMethod = CtMethod.make(
             "public void createDirtyManagedBeans(FacesConfig facesConfig) {" +
@@ -155,7 +176,9 @@ public class ManagedBeanResolverTransformer {
         ctClass.addMethod(createDirtyManagedBeansMethod);
     }
 
-
+    /**
+     * Creates a method which processes the dirty beans.
+     */
     private static void createProcessDirtyBeansMethod(CtClass ctClass) throws CannotCompileException, NotFoundException {
         CtMethod processDirtyBeansMethod = CtMethod.make(
             "public synchronized void processDirtyBeans() {" +

@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.deltaspike;
 
 import java.util.ArrayList;
@@ -30,9 +47,12 @@ import org.hotswap.agent.plugin.deltaspike.transformer.RepositoryTransformer;
 import org.hotswap.agent.plugin.deltaspike.transformer.ViewConfigTransformer;
 import org.hotswap.agent.util.AnnotationHelper;
 
-
+/**
+ * Apache DeltaSpike
+ * @author Vladimir Dvorak
+ */
 @Plugin(name = "Deltaspike",
-        description = "Apache DeltaSpike (http:
+        description = "Apache DeltaSpike (http://deltaspike.apache.org/), support repository reloading",
         testedVersions = {"1.5.2, 1.7.x-1.9.x"},
         expectedVersions = {"1.5.x-1.9.x"},
         supportClass = {
@@ -56,9 +76,9 @@ public class DeltaSpikePlugin {
     Map<Object, String> registeredPartialBeans = new WeakHashMap<>();
     Map<Object, List<String>> registeredViewConfExtRootClasses = new WeakHashMap<>();
     Set<Object> registeredWindowContexts = Collections.newSetFromMap(new WeakHashMap<Object, Boolean>());
-
+    // ds<1.9
     Map<Object, String> registeredRepoComponents = new WeakHashMap<>();
-
+    // ds>=1.9
     Map<Object, String> registeredRepoProxies = new WeakHashMap<>();
     List<Class<?>> repositoryClasses;
 
@@ -67,7 +87,7 @@ public class DeltaSpikePlugin {
         LOGGER.info("Deltaspike plugin initialized.");
     }
 
-
+    // ds<1.9
     public void registerRepoComponent(Object repoComponent, Class<?> repositoryClass) {
         if (!registeredRepoComponents.containsKey(repoComponent)) {
             LOGGER.debug("DeltaspikePlugin - Repository Component registered : {}", repositoryClass.getName());
@@ -79,7 +99,7 @@ public class DeltaSpikePlugin {
         this.repositoryClasses = new ArrayList<>(repositoryClassesList);
     }
 
-
+    // ds>=1.9
     public void registerRepoProxy(Object repoProxy, Class<?> repositoryClass) {
         if (repositoryClasses == null) {
             return;
@@ -135,7 +155,7 @@ public class DeltaSpikePlugin {
             Object repositoryComponent = getObjectByName(registeredRepoComponents, clazz.getName());
             RepositoryRefreshCommand cmd = null;
             if (repositoryComponent != null) {
-
+                // for ds < 1.9
                 cmd = new RepositoryRefreshCommand(appClassLoader, clazz.getName(), repositoryComponent);
             } else if (repositoryClasses!= null) {
                 cmd = new RepositoryRefreshCommand(appClassLoader, clazz.getName(), getRepositoryProxies(clazz.getName()));

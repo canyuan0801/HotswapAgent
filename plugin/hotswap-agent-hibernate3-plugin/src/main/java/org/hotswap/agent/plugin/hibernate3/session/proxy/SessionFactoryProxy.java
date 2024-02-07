@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.hibernate3.session.proxy;
 
 import java.lang.reflect.Constructor;
@@ -15,14 +32,27 @@ import org.hotswap.agent.javassist.util.proxy.MethodHandler;
 import org.hotswap.agent.javassist.util.proxy.Proxy;
 import org.hotswap.agent.javassist.util.proxy.ProxyFactory;
 
-
+/**
+ * For Hibernate without EJB (EntityManager).
+ * <p/>
+ * TODO - Not tested, some additional Configuration cleanup may be necessary
+ *
+ * @author Jiri Bubnik
+ * @author alpapad@gmail.com
+ */
 @SuppressWarnings("restriction")
 public class SessionFactoryProxy {
 
-
+    /** The proxied factories. */
     private static Map<Configuration, SessionFactoryProxy> proxiedFactories = new HashMap<>();
 
-
+    /**
+     * Gets the wrapper.
+     *
+     * @param configuration
+     *            the configuration
+     * @return the wrapper
+     */
     public static SessionFactoryProxy getWrapper(Configuration configuration) {
         synchronized (proxiedFactories) {
             if (!proxiedFactories.containsKey(configuration)) {
@@ -32,7 +62,9 @@ public class SessionFactoryProxy {
         }
     }
 
-
+    /**
+     * Refresh proxied factories.
+     */
     public static void refreshProxiedFactories() {
         synchronized (proxiedFactories) {
             for (SessionFactoryProxy wrapper : proxiedFactories.values()) {
@@ -45,25 +77,45 @@ public class SessionFactoryProxy {
         }
     }
 
-
+    /** The configuration. */
     private Configuration configuration;
 
-
+    /** The current instance. */
     private volatile SessionFactory currentInstance;
 
-
+    /**
+     * Instantiates a new session factory proxy.
+     *
+     * @param configuration
+     *            the configuration
+     */
     private SessionFactoryProxy(Configuration configuration) {
         this.configuration = configuration;
     }
 
-
+    /**
+     * Refresh proxied factory.
+     *
+     * @throws NoSuchMethodException
+     *             the no such method exception
+     * @throws InvocationTargetException
+     *             the invocation target exception
+     * @throws IllegalAccessException
+     *             the illegal access exception
+     */
     public void refreshProxiedFactory() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         ReInitializable r = ReInitializable.class.cast(configuration);
         r.hotSwap();
         currentInstance = r._buildSessionFactory();
     }
 
-
+    /**
+     * Proxy.
+     *
+     * @param sessionFactory
+     *            the session factory
+     * @return the session factory
+     */
     public SessionFactory proxy(SessionFactory sessionFactory) {
         try {
             this.currentInstance = sessionFactory;
@@ -81,7 +133,7 @@ public class SessionFactoryProxy {
 
             Object instance;
             try {
-                Constructor<?> constructor = sun.reflect.ReflectionFactory.getReflectionFactory()
+                Constructor<?> constructor = sun.reflect.ReflectionFactory.getReflectionFactory()//
                         .newConstructorForSerialization(factory.createClass(), Object.class.getDeclaredConstructor(new Class[0]));
                 instance = constructor.newInstance();
                 ((Proxy) instance).setHandler(handler);

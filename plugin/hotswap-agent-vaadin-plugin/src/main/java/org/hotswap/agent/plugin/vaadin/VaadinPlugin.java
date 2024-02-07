@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.vaadin;
 
 import java.lang.reflect.InvocationTargetException;
@@ -21,7 +38,15 @@ import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.PluginManagerInvoker;
 
-
+/**
+ * Vaadin 14.0+ plugin for HotswapAgent.
+ *
+ * https://vaadin.com
+ *
+ * @author Artur Signell
+ * @author Matti Tahvonen
+ * @author Johannes Eriksson
+ */
 @Plugin(name = "Vaadin",
         description = "Vaadin support",
         testedVersions = {"23.0.0", "24.0.0.beta1"},
@@ -52,7 +77,7 @@ public class VaadinPlugin {
 
     private static final String RELOAD_QUIET_TIME_PARAMETER = "vaadin.liveReloadQuietTime";
 
-    private static final int DEFAULT_RELOAD_QUIET_TIME = 1000;
+    private static final int DEFAULT_RELOAD_QUIET_TIME = 1000; // ms
 
     private int reloadQuietTime = 0;
 
@@ -106,7 +131,7 @@ public class VaadinPlugin {
             LOGGER.debug("Modify class file event for " + ctClass.getName());
             modifiedClasses.add(resolveClass(ctClass.getName()));
         }
-
+        // Note that scheduling multiple calls to the same command postpones it
         scheduler.scheduleCommand(updateRouteRegistryCommand);
     }
 
@@ -139,7 +164,7 @@ public class VaadinPlugin {
             this.vaadinIntegration = vaadinIntegration;
         }
 
-
+        // NOTE: Identity equality semantics
 
         @Override
         public boolean equals(Object that) {

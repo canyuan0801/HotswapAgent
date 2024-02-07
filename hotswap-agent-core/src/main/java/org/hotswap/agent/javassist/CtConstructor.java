@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist;
 
@@ -14,13 +28,39 @@ import org.hotswap.agent.javassist.bytecode.Opcode;
 import org.hotswap.agent.javassist.compiler.CompileError;
 import org.hotswap.agent.javassist.compiler.Javac;
 
-
+/**
+ * An instance of CtConstructor represents a constructor.
+ * It may represent a static constructor
+ * (class initializer).  To distinguish a constructor and a class
+ * initializer, call <code>isClassInitializer()</code>.
+ *
+ * <p>See the super class <code>CtBehavior</code> as well since
+ * a number of useful methods are in <code>CtBehavior</code>.
+ *
+ * @see CtClass#getDeclaredConstructors()
+ * @see CtClass#getClassInitializer()
+ * @see CtNewConstructor
+ */
 public final class CtConstructor extends CtBehavior {
     protected CtConstructor(MethodInfo minfo, CtClass declaring) {
         super(declaring, minfo);
     }
 
-
+    /**
+     * Creates a constructor with no constructor body.
+     * The created constructor
+     * must be added to a class with <code>CtClass.addConstructor()</code>.
+     *
+     * <p>The created constructor does not include a constructor body,
+     * which must be specified with <code>setBody()</code>.
+     *
+     * @param declaring         the class to which the created method is added.
+     * @param parameters        a list of the parameter types
+     *
+     * @see CtClass#addConstructor(CtConstructor)
+     * @see CtConstructor#setBody(String)
+     * @see CtConstructor#setBody(CtConstructor,ClassMap)
+     */
     public CtConstructor(CtClass[] parameters, CtClass declaring) {
         this((MethodInfo)null, declaring);
         ConstPool cp = declaring.getClassFile2().getConstPool();
@@ -29,7 +69,40 @@ public final class CtConstructor extends CtBehavior {
         setModifiers(Modifier.PUBLIC);
     }
 
-
+    /**
+     * Creates a copy of a <code>CtConstructor</code> object.
+     * The created constructor must be
+     * added to a class with <code>CtClass.addConstructor()</code>.
+     *
+     * <p>All occurrences of class names in the created constructor
+     * are replaced with names specified by
+     * <code>map</code> if <code>map</code> is not <code>null</code>.
+     *
+     * <p>By default, all the occurrences of the names of the class
+     * declaring <code>src</code> and the superclass are replaced
+     * with the name of the class and the superclass that
+     * the created constructor is added to.
+     * This is done whichever <code>map</code> is null or not.
+     * To prevent this replacement, call <code>ClassMap.fix()</code>
+     * or <code>put()</code> to explicitly specify replacement.
+     *
+     * <p><b>Note:</b> if the <code>.class</code> notation (for example,
+     * <code>String.class</code>) is included in an expression, the
+     * Javac compiler may produce a helper method.
+     * Since this constructor never
+     * copies this helper method, the programmers have the responsiblity of
+     * copying it.  Otherwise, use <code>Class.forName()</code> in the
+     * expression.
+     *
+     * @param src       the source method.
+     * @param declaring    the class to which the created method is added.
+     * @param map       the hashtable associating original class names
+     *                  with substituted names.
+     *                  It can be <code>null</code>.
+     *
+     * @see CtClass#addConstructor(CtConstructor)
+     * @see ClassMap#fix(String)
+     */
     public CtConstructor(CtConstructor src, CtClass declaring, ClassMap map)
         throws CannotCompileException
     {
@@ -37,17 +110,26 @@ public final class CtConstructor extends CtBehavior {
         copy(src, true, map);
     }
 
-
+    /**
+     * Returns true if this object represents a constructor.
+     */
     public boolean isConstructor() {
         return methodInfo.isConstructor();
     }
 
-
+    /**
+     * Returns true if this object represents a static initializer.
+     */
     public boolean isClassInitializer() {
         return methodInfo.isStaticInitializer();
     }
 
-
+    /**
+     * Returns the constructor name followed by parameter types
+     * such as <code>javassist.CtConstructor(CtClass[],CtClass)</code>.
+     *
+     * @since 3.5
+     */
     @Override
     public String getLongName() {
         return getDeclaringClass().getName()
@@ -55,7 +137,12 @@ public final class CtConstructor extends CtBehavior {
                                   : ("." + MethodInfo.nameClinit + "()"));
     }
 
-
+    /**
+     * Obtains the name of this constructor.
+     * It is the same as the simple name of the class declaring this
+     * constructor.  If this object represents a class initializer,
+     * then this method returns <code>"&lt;clinit&gt;"</code>.
+     */
     @Override
     public String getName() {
         if (methodInfo.isStaticInitializer())
@@ -63,20 +150,26 @@ public final class CtConstructor extends CtBehavior {
         return declaringClass.getSimpleName();
     }
 
-
+    /**
+     * Returns true if the constructor (or static initializer)
+     * is the default one.  This method returns true if the constructor
+     * takes some arguments but it does not perform anything except
+     * calling <code>super()</code> (the no-argument constructor of
+     * the super class).
+     */
     @Override
     public boolean isEmpty() {
         CodeAttribute ca = getMethodInfo2().getCodeAttribute();
         if (ca == null)
-            return false;
-
+            return false;       // native or abstract??
+                                // they are not allowed, though.
 
         ConstPool cp = ca.getConstPool();
         CodeIterator it = ca.iterator();
         try {
             int pos, desc;
             int op0 = it.byteAt(it.next());
-            return op0 == Opcode.RETURN
+            return op0 == Opcode.RETURN     // empty static initializer
                 || (op0 == Opcode.ALOAD_0
                     && it.byteAt(pos = it.next()) == Opcode.INVOKESPECIAL
                     && (desc = cp.isConstructor(getSuperclassName(),
@@ -94,7 +187,11 @@ public final class CtConstructor extends CtBehavior {
         return cf.getSuperclass();
     }
 
-
+    /**
+     * Returns true if this constructor calls a constructor
+     * of the super class.  This method returns false if it
+     * calls another constructor of this class by <code>this()</code>. 
+     */
     public boolean callsSuper() throws CannotCompileException {
         CodeAttribute codeAttr = methodInfo.getCodeAttribute();
         if (codeAttr != null) {
@@ -111,7 +208,15 @@ public final class CtConstructor extends CtBehavior {
         return false;
     }
 
-
+    /**
+     * Sets a constructor body.
+     *
+     * @param src       the source code representing the constructor body.
+     *                  It must be a single statement or block.
+     *                  If it is <code>null</code>, the substituted
+     *                  constructor body does nothing except calling
+     *                  <code>super()</code>.
+     */
     @Override
     public void setBody(String src) throws CannotCompileException {
         if (src == null)
@@ -123,7 +228,18 @@ public final class CtConstructor extends CtBehavior {
         super.setBody(src);
     }
 
-
+    /**
+     * Copies a constructor body from another constructor.
+     *
+     * <p>All occurrences of the class names in the copied body
+     * are replaced with the names specified by
+     * <code>map</code> if <code>map</code> is not <code>null</code>.
+     *
+     * @param src       the method that the body is copied from.
+     * @param map       the hashtable associating original class names
+     *                  with substituted names.
+     *                  It can be <code>null</code>.
+     */
     public void setBody(CtConstructor src, ClassMap map)
         throws CannotCompileException
     {
@@ -131,7 +247,14 @@ public final class CtConstructor extends CtBehavior {
                  declaringClass, methodInfo, map);
     }
 
-
+    /**
+     * Inserts bytecode just after another constructor in the super class
+     * or this class is called.
+     * It does not work if this object represents a class initializer.
+     *
+     * @param src       the source code representing the inserted bytecode.
+     *                  It must be a single statement or block.
+     */
     public void insertBeforeBody(String src) throws CannotCompileException {
         CtClass cc = declaringClass;
         cc.checkModify();
@@ -165,7 +288,9 @@ public final class CtConstructor extends CtBehavior {
         }
     }
 
-
+    /* This method is called by addCatch() in CtBehavior.
+     * super() and this() must not be in a try statement.
+     */
     @Override
     int getStartPosOfBody(CodeAttribute ca) throws CannotCompileException {
         CodeIterator ci = ca.iterator();
@@ -178,14 +303,60 @@ public final class CtConstructor extends CtBehavior {
         }
     }
 
-
+    /**
+     * Makes a copy of this constructor and converts it into a method.
+     * The signature of the mehtod is the same as the that of this constructor.
+     * The return type is <code>void</code>.  The resulting method must be
+     * appended to the class specified by <code>declaring</code>.
+     * If this constructor is a static initializer, the resulting method takes
+     * no parameter.
+     *
+     * <p>An occurrence of another constructor call <code>this()</code>
+     * or a super constructor call <code>super()</code> is
+     * eliminated from the resulting method. 
+     *
+     * <p>The immediate super class of the class declaring this constructor
+     * must be also a super class of the class declaring the resulting method.
+     * If the constructor accesses a field, the class declaring the resulting method
+     * must also declare a field with the same name and type.
+     *
+     * @param name              the name of the resulting method.
+     * @param declaring         the class declaring the resulting method.
+     */
     public CtMethod toMethod(String name, CtClass declaring)
         throws CannotCompileException
     {
         return toMethod(name, declaring, null);
     }
 
-
+    /**
+     * Makes a copy of this constructor and converts it into a method.
+     * The signature of the method is the same as the that of this constructor.
+     * The return type is <code>void</code>.  The resulting method must be
+     * appended to the class specified by <code>declaring</code>.
+     * If this constructor is a static initializer, the resulting method takes
+     * no parameter.
+     *
+     * <p>An occurrence of another constructor call <code>this()</code>
+     * or a super constructor call <code>super()</code> is
+     * eliminated from the resulting method. 
+     *
+     * <p>The immediate super class of the class declaring this constructor
+     * must be also a super class of the class declaring the resulting method
+     * (this is obviously true if the second parameter <code>declaring</code> is
+     * the same as the class declaring this constructor).
+     * If the constructor accesses a field, the class declaring the resulting method
+     * must also declare a field with the same name and type.
+     *
+     * @param name              the name of the resulting method.
+     * @param declaring         the class declaring the resulting method.
+     *                          It is normally the same as the class declaring this
+     *                          constructor.
+     * @param map       the hash table associating original class names
+     *                  with substituted names.  The original class names will be
+     *                  replaced while making a copy.
+     *                  <code>map</code> can be <code>null</code>.
+     */
     public CtMethod toMethod(String name, CtClass declaring, ClassMap map)
         throws CannotCompileException
     {
@@ -223,7 +394,7 @@ public final class CtConstructor extends CtBehavior {
                 if (num > 3)
                     pos = iterator.insertGapAt(pos, num - 3, false).position;
 
-                iterator.writeByte(Opcode.POP, pos++);
+                iterator.writeByte(Opcode.POP, pos++);  // this
                 iterator.writeByte(Opcode.NOP, pos);
                 iterator.writeByte(Opcode.NOP, pos + 1);
                 Descriptor.Iterator it = new Descriptor.Iterator(desc);

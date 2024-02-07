@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.hibernate;
 
 import java.lang.reflect.Method;
@@ -24,7 +41,11 @@ import org.hotswap.agent.javassist.CtClass;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.AnnotationHelper;
 
-
+/**
+ * Reload Hibernate configuration after entity create/change.
+ *
+ * @author Jiri Bubnik
+ */
 @Plugin(name = "Hibernate",
         group = "groupHibernate",
         fallback = true,
@@ -48,7 +69,7 @@ import org.hotswap.agent.util.AnnotationHelper;
                         @Name(key=Name.BundleSymbolicName, value="org.hibernate.core")
                 }),
                 @Manifest(value="[4.0,6.0)", names= {
-                        @Name(key=Name.ImplementationUrl, value="http:
+                        @Name(key=Name.ImplementationUrl, value="http://hibernate.org"),
                         @Name(key=Name.ImplementationVendorId, value="org.hibernate")
                 }),
         }
@@ -67,7 +88,7 @@ public class HibernatePlugin {
 
     Map<Object, String> regBeanMetaDataManagersMap = new WeakHashMap<Object, String>();
 
-
+    // refresh commands
     Command reloadEntityManagerFactoryCommand =
             new ReflectionCommand(this, HibernateRefreshCommands.class.getName(), "reloadEntityManagerFactory");
     Command reloadSessionFactoryCommand =
@@ -95,19 +116,23 @@ public class HibernatePlugin {
         }
     };
 
-
+    // is EJB3 or plain hibernate
     boolean hibernateEjb;
 
-
+    /**
+     * Plugin initialization properties (from HibernatePersistenceHelper or SessionFactoryProxy)
+     */
     public void init(String version, Boolean hibernateEjb) {
         LOGGER.info("Hibernate plugin initialized - Hibernate Core version '{}'", version);
         this.hibernateEjb = hibernateEjb;
     }
 
-
+    /**
+     * Reload after entity class change. It covers also @Entity annotation removal.
+     */
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
     public void entityReload(CtClass clazz, Class original) {
-
+        // TODO list of entity/resource files is known to hibernate, better to check this list
         if (AnnotationHelper.hasAnnotation(original, ENTITY_ANNOTATION)
                 || AnnotationHelper.hasAnnotation(clazz, ENTITY_ANNOTATION)
                 ) {
@@ -116,7 +141,13 @@ public class HibernatePlugin {
         }
     }
 
-
+    /**
+     * New entity class - not covered by reloading mechanism.
+     * <p/>
+     * Increase the reload timeout to avoid duplicate reloading in case of recompile with IDE
+     * and delete/create event sequence - than create is cached by this event and hotswap for
+     * the same class by entityReload.
+     */
     @OnClassFileEvent(classNameRegexp = ".*", events = {FileEvent.CREATE})
     public void newEntity(CtClass clazz) throws Exception {
         if (AnnotationHelper.hasAnnotation(clazz, ENTITY_ANNOTATION)) {
@@ -131,8 +162,8 @@ public class HibernatePlugin {
         }
     }
 
-
-
+    // reload the configuration - schedule a command to run in the application classloader and merge
+    // duplicate commands.
     private void refresh(int timeout) {
         if (hibernateEjb) {
             scheduler.scheduleCommand(reloadEntityManagerFactoryCommand, timeout);

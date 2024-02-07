@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.expr;
 
@@ -22,7 +36,12 @@ import org.hotswap.agent.javassist.compiler.JvstTypeChecker;
 import org.hotswap.agent.javassist.compiler.ProceedHandler;
 import org.hotswap.agent.javassist.compiler.ast.ASTList;
 
-
+/**
+ * Array creation.
+ *
+ * <p>This class does not provide methods for obtaining the initial
+ * values of array elements.
+ */
 public class NewArray extends Expr {
     int opcode;
 
@@ -32,29 +51,51 @@ public class NewArray extends Expr {
         opcode = op;
     }
 
-
+    /**
+     * Returns the method or constructor containing the array creation
+     * represented by this object.
+     */
     @Override
     public CtBehavior where() { return super.where(); }
 
-
+    /**
+     * Returns the line number of the source line containing the
+     * array creation.
+     *
+     * @return -1       if this information is not available.
+     */
     @Override
     public int getLineNumber() {
         return super.getLineNumber();
     }
 
-
+    /**
+     * Returns the source file containing the array creation.
+     *
+     * @return null     if this information is not available.
+     */
     @Override
     public String getFileName() {
         return super.getFileName();
     }
 
-
+    /**
+     * Returns the list of exceptions that the expression may throw.
+     * This list includes both the exceptions that the try-catch statements
+     * including the expression can catch and the exceptions that
+     * the throws declaration allows the method to throw.
+     */
     @Override
     public CtClass[] mayThrow() {
         return super.mayThrow();
     }
 
-
+    /**
+     * Returns the type of array components.  If the created array is
+     * a two-dimensional array of <code>int</code>,
+     * the type returned by this method is
+     * not <code>int[]</code> but <code>int</code>.
+     */
     public CtClass getComponentType() throws NotFoundException {
         if (opcode == Opcode.NEWARRAY) {
             int atype = iterator.byteAt(currentPos + 1);
@@ -95,7 +136,9 @@ public class NewArray extends Expr {
         }
     }
 
-
+    /**
+     * Returns the dimension of the created array.
+     */
     public int getDimension() {
         if (opcode == Opcode.NEWARRAY)
             return 1;
@@ -110,14 +153,27 @@ public class NewArray extends Expr {
             throw new RuntimeException("bad opcode: " + opcode);
     }
 
-
+    /**
+     * Returns the number of dimensions of arrays to be created.
+     * If the opcode is multianewarray, this method returns the second
+     * operand.  Otherwise, it returns 1.
+     */
     public int getCreatedDimensions() {
         if (opcode == Opcode.MULTIANEWARRAY)
             return iterator.byteAt(currentPos + 3);
         return 1;
     }
 
-
+    /**
+     * Replaces the array creation with the bytecode derived from
+     * the given source text.
+     *
+     * <p>$0 is available even if the called method is static.
+     * If the field access is writing, $_ is available but the value
+     * of $_ is ignored.
+     *
+     * @param statement         a Java statement except try-catch.
+     */
     @Override
     public void replace(String statement) throws CannotCompileException {
         try {
@@ -134,7 +190,7 @@ public class NewArray extends Expr {
         throws CompileError, NotFoundException, BadBytecode,
                CannotCompileException
     {
-        thisClass.getClassFile();
+        thisClass.getClassFile();   // to call checkModify().
         ConstPool constPool = getConstPool();
         int pos = currentPos;
         CtClass retType;
@@ -143,7 +199,7 @@ public class NewArray extends Expr {
         int dim = 1;
         String desc;
         if (opcode == Opcode.NEWARRAY) {
-            index = iterator.byteAt(currentPos + 1);
+            index = iterator.byteAt(currentPos + 1);    // atype
             CtPrimitiveType cpt = (CtPrimitiveType)getPrimitiveType(index); 
             desc = "[" + cpt.getDescriptor();
             codeLength = 2;
@@ -180,7 +236,8 @@ public class NewArray extends Expr {
         jc.recordParams(javaLangObject, params,
                         true, paramVar, withinStatic());
 
-
+        /* Is $_ included in the source code?
+         */
         checkResultValue(retType, statement);
         int retVar = jc.recordReturnType(retType, true);
         jc.recordProceed(new ProceedForArray(retType, opcode, index, dim));
@@ -189,7 +246,7 @@ public class NewArray extends Expr {
         storeStack(params, true, paramVar, bytecode);
         jc.recordLocalVariables(ca, pos);
 
-        bytecode.addOpcode(ACONST_NULL);
+        bytecode.addOpcode(ACONST_NULL);        // initialize $_
         bytecode.addAstore(retVar);
 
         jc.compileStmnt(statement);
@@ -198,7 +255,8 @@ public class NewArray extends Expr {
         replace0(pos, bytecode, codeLength);
     }
 
-
+    /* <array type> $proceed(<dim> ..)
+     */
     static class ProceedForArray implements ProceedHandler {
         CtClass arrayType;
         int opcode;
@@ -227,7 +285,7 @@ public class NewArray extends Expr {
                 bytecode.addIndex(index);
             else if (opcode == Opcode.NEWARRAY)
                 bytecode.add(index);
-            else  {
+            else /* if (opcode == Opcode.MULTIANEWARRAY) */ {
                 bytecode.addIndex(index);
                 bytecode.add(dimension);
                 bytecode.growStack(1 - dimension);

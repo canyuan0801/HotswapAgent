@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.spring.core;
 
 import org.hotswap.agent.logging.AgentLogger;
@@ -30,14 +47,18 @@ public class BeanFactoryProcessor {
     }
 
     public static void destroySingleton(DefaultListableBeanFactory beanFactory, String beanName) {
-
+        // remove embeddedValueResolvers cache in PlaceholderConfigurerSupport
         resetEmbeddedValueResolvers(beanFactory, beanName);
         beanFactory.destroySingleton(beanName);
     }
 
-
+    /**
+     * invoked by @see org.hotswap.agent.plugin.spring.transformers.BeanFactoryTransformer
+     * @param beanFactory
+     * @param beanName
+     */
     public static void postProcessDestroySingleton(DefaultSingletonBeanRegistry beanFactory, String beanName) {
-
+        // check if reload , then log
         if (beanFactory instanceof ConfigurableListableBeanFactory &&
             BeanFactoryAssistant.getBeanFactoryAssistant((ConfigurableListableBeanFactory)beanFactory).isReload()) {
             LOGGER.info("destroy bean '{}' from '{}'", beanName, ObjectUtils.identityToString(beanFactory));
@@ -47,10 +68,15 @@ public class BeanFactoryProcessor {
         }
     }
 
-
+    /**
+     * invoked by @see org.hotswap.agent.plugin.spring.transformers.BeanFactoryTransformer
+     *
+     * @param beanFactory
+     * @param beanName
+     */
     public static void postProcessCreateBean(AbstractAutowireCapableBeanFactory beanFactory, String beanName,
         RootBeanDefinition mbd) {
-
+        // check if reload , then log
         if (beanFactory instanceof ConfigurableListableBeanFactory
             && BeanFactoryAssistant.getBeanFactoryAssistant((ConfigurableListableBeanFactory)beanFactory).isReload()
             && mbd.isSingleton()) {
@@ -118,7 +144,7 @@ public class BeanFactoryProcessor {
     }
 
     public static boolean isAllowBeanDefinitionOverriding(DefaultListableBeanFactory beanFactory) {
-
+        // org.springframework.beans.factory.support.DefaultListableBeanFactory.isAllowBeanDefinitionOverriding is introduced in spring 4.1.2
         Object target = ReflectionHelper.getNoException(beanFactory, beanFactory.getClass(), "allowBeanDefinitionOverriding");
         if (target == null) {
             return false;

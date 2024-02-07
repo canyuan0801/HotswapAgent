@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.webobjects;
 
 import static org.hotswap.agent.annotation.LoadEvent.REDEFINE;
@@ -27,8 +44,8 @@ expectedVersions = "5.4.3")
 
 public class HotswapWebObjectsPlugin {
 
-
-
+    // Agent logger is a very simple custom logging mechanism. Do not use any common logging framework
+    // to avoid compatibility and classloading issues.
     private static AgentLogger LOGGER = AgentLogger.getLogger(HotswapWebObjectsPlugin.class);
 
     @Init
@@ -55,8 +72,8 @@ public class HotswapWebObjectsPlugin {
     }
 
 
-
-
+    // We use reflection to get the methods from WebObjects because the jar is not distribuable publicly
+    // and we want to build witout it.
     @Init
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void init(PluginConfiguration pluginConfiguration, ClassLoader appClassLoader) {

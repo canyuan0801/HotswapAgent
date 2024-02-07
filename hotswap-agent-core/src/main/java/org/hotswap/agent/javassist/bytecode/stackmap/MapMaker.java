@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.bytecode.stackmap;
 
@@ -16,11 +30,69 @@ import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.javassist.bytecode.StackMap;
 import org.hotswap.agent.javassist.bytecode.StackMapTable;
 
-
+/**
+ * Stack map maker.
+ */
 public class MapMaker extends Tracer {
-    
+    /*
+    public static void main(String[] args) throws Exception {
+        boolean useMain2 = args[0].equals("0");
+        if (useMain2 && args.length > 1) {
+            main2(args);
+            return;
+        }
 
-    
+        for (int i = 0; i < args.length; i++)
+            main1(args[i]);
+    }
+
+    public static void main1(String className) throws Exception {
+        ClassPool cp = ClassPool.getDefault();
+        //javassist.CtClass cc = cp.get(className);
+        javassist.CtClass cc = cp.makeClass(new java.io.FileInputStream(className));
+        System.out.println(className);
+        ClassFile cf = cc.getClassFile();
+        java.util.List minfos = cf.getMethods();
+        for (int i = 0; i < minfos.size(); i++) {
+            MethodInfo minfo = (MethodInfo)minfos.get(i);
+            CodeAttribute ca = minfo.getCodeAttribute();
+            if (ca != null)
+                ca.setAttribute(make(cp, minfo));
+        }
+
+        cc.writeFile("tmp");
+    }
+
+    public static void main2(String[] args) throws Exception {
+        ClassPool cp = ClassPool.getDefault();
+        //javassist.CtClass cc = cp.get(args[1]);
+        javassist.CtClass cc = cp.makeClass(new java.io.FileInputStream(args[1]));
+        MethodInfo minfo;
+        if (args[2].equals("_init_"))
+            minfo = cc.getDeclaredConstructors()[0].getMethodInfo();
+            // minfo = cc.getClassInitializer().getMethodInfo();
+        else
+            minfo = cc.getDeclaredMethod(args[2]).getMethodInfo();
+
+        CodeAttribute ca = minfo.getCodeAttribute();
+        if (ca == null) {
+            System.out.println("abstarct method");
+            return;
+        }
+
+        TypedBlock[] blocks = TypedBlock.makeBlocks(minfo, ca, false);
+        MapMaker mm = new MapMaker(cp, minfo, ca);
+        mm.make(blocks, ca.getCode());
+        for (int i = 0; i < blocks.length; i++)
+            System.out.println(blocks[i]);
+    }
+    */
+
+    /**
+     * Computes the stack map table of the given method and returns it.
+     * It returns null if the given method does not have to have a
+     * stack map table or it includes JSR.
+     */
     public static StackMapTable make(ClassPool classes, MethodInfo minfo)
         throws BadBytecode
     {
@@ -50,7 +122,11 @@ public class MapMaker extends Tracer {
         return mm.toStackMap(blocks);
     }
 
-    
+    /**
+     * Computes the stack map table for J2ME.
+     * It returns null if the given method does not have to have a
+     * stack map table or it includes JSR.
+     */
     public static StackMap make2(ClassPool classes, MethodInfo minfo)
         throws BadBytecode
     {
@@ -87,7 +163,9 @@ public class MapMaker extends Tracer {
 
     protected MapMaker(MapMaker old) { super(old); }
 
-    
+    /**
+     * Runs an analyzer (Phase 1 and 2).
+     */
     void make(TypedBlock[] blocks, byte[] code)
         throws BadBytecode
     {
@@ -100,7 +178,7 @@ public class MapMaker extends Tracer {
         }
     }
 
-    
+    // Phase 1
 
     private void make(byte[] code, TypedBlock tb)
         throws BadBytecode
@@ -172,7 +250,7 @@ public class MapMaker extends Tracer {
         if (src == target)
             return target;
         else if (target instanceof TypeData.ClassName
-                 || target instanceof TypeData.BasicType)  
+                 || target instanceof TypeData.BasicType)  // a parameter
             return target;
         else if (target instanceof TypeData.AbsTypeVar) {
             ((TypeData.AbsTypeVar)target).merge(src);
@@ -201,7 +279,7 @@ public class MapMaker extends Tracer {
 
     private TypeData.ClassName toExceptionType(int exceptionType) {
         String type;
-        if (exceptionType == 0)     
+        if (exceptionType == 0)     // for finally clauses
             type= "java.lang.Throwable";
         else
             type = cpool.getClassInfo(exceptionType);
@@ -224,7 +302,7 @@ public class MapMaker extends Tracer {
             TypeData t = validateTypeData(srcTypes, n, i);
             destTypes[i] = t.join();
             if (t != TOP)
-            	k = i + 1;		
+            	k = i + 1;		// t might be long or double.
         }
 
         return k + 1;
@@ -244,9 +322,13 @@ public class MapMaker extends Tracer {
         return td;
     }
 
-    
+    // Phase 1.5
 
-    
+    /*
+     * Javac may generate an exception handler that catches only the exception
+     * thrown within the handler itself.  It is dead code.
+     * See javassist.JvstTest4.testJIRA195().
+     */
 
     private void findDeadCatchers(byte[] code, TypedBlock[] blocks) throws BadBytecode {
         int len = blocks.length;
@@ -258,8 +340,8 @@ public class MapMaker extends Tracer {
                 if (handler != null) {
                     TypedBlock tb = (TypedBlock)handler.body;
                     if (!tb.alreadySet()) {
-                        
-                        
+                        // tb is a handler that catches only the exceptions
+                        // thrown from dead code.
                         recordStackMap(tb, handler.typeIndex);
                         fixDeadcode(code, tb);
                         tb.incoming = 1;
@@ -274,7 +356,7 @@ public class MapMaker extends Tracer {
         int pos = block.position;
         int len = block.length - 3;
         if (len < 0) {
-            
+            // if the dead-code length is shorter than 3 bytes.
             if (len == -1)
                 code[pos] = Bytecode.NOP;
 
@@ -284,8 +366,8 @@ public class MapMaker extends Tracer {
             return;
         }
 
-        
-        
+        // if block.incomping > 0, all the incoming edges are from
+        // other dead code blocks.  So set block.incoming to 0.
         block.incoming = 0;
 
         for (int k = 0; k < len; k++) 
@@ -295,16 +377,22 @@ public class MapMaker extends Tracer {
         ByteArray.write16bit(-len, code, pos + len + 1);
     }
 
-    
+    // Phase 2
 
-    
+    /*
+     * This method first finds strongly connected components (SCCs)
+     * in a TypeData graph by Tarjan's algorithm.
+     * SCCs are TypeData nodes sharing the same type.
+     * Since SCCs are found in the topologically sorted order,
+     * their types are also fixed when they are found. 
+     */
     private void fixTypes(byte[] code, TypedBlock[] blocks) throws NotFoundException, BadBytecode {
         List<TypeData> preOrder = new ArrayList<TypeData>();
         int len = blocks.length;
         int index = 0;
         for (int i = 0; i < len; i++) {
             TypedBlock block = blocks[i];
-            if (block.alreadySet()) {   
+            if (block.alreadySet()) {   // if block is not dead code
                 int n = block.localsTypes.length;
                 for (int j = 0; j < n; j++)
                     index = block.localsTypes[j].dfs(preOrder, index, classPool);
@@ -316,14 +404,14 @@ public class MapMaker extends Tracer {
         }
     }
 
-    
+    // Phase 3
 
     public StackMapTable toStackMap(TypedBlock[] blocks) {
         StackMapTable.Writer writer = new StackMapTable.Writer(32);
         int n = blocks.length;
         TypedBlock prev = blocks[0];
         int offsetDelta = prev.length;
-        if (prev.incoming > 0) {     
+        if (prev.incoming > 0) {     // the first instruction is a branch target.
             writer.sameFrame(0);
             offsetDelta--;
         }
@@ -339,7 +427,7 @@ public class MapMaker extends Tracer {
                 prev = bb;
             }
             else if (bb.incoming == 0) {
-                
+                // dead code.
                 writer.sameFrame(offsetDelta);
                 offsetDelta = bb.length - 1;
             }
@@ -350,7 +438,9 @@ public class MapMaker extends Tracer {
         return writer.toStackMapTable(cpool);
     }
 
-    
+    /**
+     * Returns true if cur is a branch target.
+     */
     private boolean isTarget(TypedBlock cur, TypedBlock prev) {
         int in = cur.incoming;
         if (in > 1)
@@ -363,8 +453,8 @@ public class MapMaker extends Tracer {
 
     private void toStackMapBody(StackMapTable.Writer writer, TypedBlock bb,
                                 int diffL, int offsetDelta, TypedBlock prev) {
-        
-        
+        // if diffL is -100, two TypeData arrays do not share
+        // any elements.
 
         int stackTop = bb.stackTop;
         if (stackTop == 0) {
@@ -393,7 +483,7 @@ public class MapMaker extends Tracer {
         else if (stackTop == 2 && diffL == 0) {
             TypeData td = bb.stackTypes[0];
             if (td.is2WordType()) {
-                
+                // bb.stackTypes[1] must be TOP.
                 writer.sameLocals(offsetDelta, td.getTypeTag(), td.getTypeData(cpool));
                 return;
             }
@@ -463,15 +553,15 @@ public class MapMaker extends Tracer {
         return num;
     }
 
-    
+    // Phase 3 for J2ME
 
     public StackMap toStackMap2(ConstPool cp, TypedBlock[] blocks) {
         StackMap.Writer writer = new StackMap.Writer();
-        int n = blocks.length;      
+        int n = blocks.length;      // should be > 0
         boolean[] effective = new boolean[n];
         TypedBlock prev = blocks[0];
 
-        
+        // Is the first instruction a branch target?
         effective[0] = prev.incoming > 0;
 
         int num = effective[0] ? 1 : 0;

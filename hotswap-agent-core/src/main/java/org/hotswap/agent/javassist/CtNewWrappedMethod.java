@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist;
 
@@ -38,7 +52,7 @@ class CtNewWrappedMethod {
                                  parameterTypes, returnType, constParam);
         MethodInfo minfo = mt.getMethodInfo2();
         minfo.setCodeAttribute(code.toCodeAttribute());
-
+        // a stack map has been already created. 
         return mt;
     }
 
@@ -58,7 +72,9 @@ class CtNewWrappedMethod {
         return code;
     }
 
-
+    /* The generated method body does not need a stack map table
+     * because it does not contain a branch instruction.
+     */
     protected static int makeBody0(CtClass clazz, ClassFile classfile,
                                    CtMethod wrappedBody,
                                    boolean isStatic, CtClass[] parameters,
@@ -92,7 +108,9 @@ class CtNewWrappedMethod {
         try {
             bodyname = addBodyMethod((CtClassType)clazz, classfile,
                                      wrappedBody);
-
+            /* if an exception is thrown below, the method added above
+             * should be removed. (future work :<)
+             */
         }
         catch (BadBytecode e) {
             throw new CannotCompileException(e);
@@ -103,7 +121,7 @@ class CtNewWrappedMethod {
         else
             code.addInvokespecial(Bytecode.THIS, bodyname, desc);
 
-        compileReturn(code, returnType);
+        compileReturn(code, returnType);        // consumes 2 stack entries
 
         if (stacksize < stacksize2 + 2)
             stacksize = stacksize2 + 2;
@@ -141,7 +159,7 @@ class CtNewWrappedMethod {
             int acc = body.getAccessFlags();
             body.setAccessFlags(AccessFlag.setPrivate(acc));
             body.addAttribute(new SyntheticAttribute(classfile.getConstPool()));
-
+            // a stack map is copied.  rebuilding it is not needed.
             classfile.addMethod(body);
             bodies.put(src, bodyname);
             CtMember.Cache cache = clazz.hasMemberCache();
@@ -152,13 +170,21 @@ class CtNewWrappedMethod {
         return bodyname;
     }
 
-
+    /* compileParameterList() returns the stack size used
+     * by the produced code.
+     *
+     * @param regno     the index of the local variable in which
+     *                  the first argument is received.
+     *                  (0: static method, 1: regular method.)
+     */
     static int compileParameterList(Bytecode code,
                                     CtClass[] params, int regno) {
         return JvstCodeGen.compileParameterList(code, params, regno);
     }
 
-
+    /*
+     * The produced codes cosume 1 or 2 stack entries.
+     */
     private static void compileReturn(Bytecode code, CtClass type) {
         if (type.isPrimitive()) {
             CtPrimitiveType pt = (CtPrimitiveType)type;

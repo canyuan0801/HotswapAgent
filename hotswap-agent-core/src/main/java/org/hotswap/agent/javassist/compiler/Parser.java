@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.compiler;
 
@@ -35,7 +49,9 @@ public final class Parser implements TokenId {
 
     public boolean hasMore() { return lex.lookAhead() >= 0; }
 
-
+    /* member.declaration
+     * : method.declaration | field.declaration
+     */
     public ASTList parseMember(SymbolTable tbl) throws CompileError {
         ASTList mem = parseMember1(tbl);
         if (mem instanceof MethodDecl)
@@ -43,7 +59,8 @@ public final class Parser implements TokenId {
         return mem;
     }
 
-
+    /* A method body is not parsed.
+     */
     public ASTList parseMember1(SymbolTable tbl) throws CompileError {
         ASTList mods = parseMemberMods();
         Declarator d;
@@ -70,7 +87,11 @@ public final class Parser implements TokenId {
         return parseField(tbl, mods, d);
     }
 
-
+    /* field.declaration
+     *  : member.modifiers
+     *    formal.type Identifier
+     *    [ "=" expression ] ";"
+     */
     private FieldDecl parseField(SymbolTable tbl, ASTList mods,
                                 Declarator d) throws CompileError
     {
@@ -90,7 +111,16 @@ public final class Parser implements TokenId {
             throw new SyntaxError(lex);
     }
 
-
+    /* method.declaration
+     *  : member.modifiers
+     *    [ formal.type ]
+     *    Identifier "(" [ formal.parameter ( "," formal.parameter )* ] ")"
+     *    array.dimension
+     *    [ THROWS class.type ( "," class.type ) ]
+     *    ( block.statement | ";" )
+     *
+     * Note that a method body is not parsed.
+     */
     private MethodDecl parseMethod1(SymbolTable tbl, boolean isConstructor,
                                     ASTList mods, Declarator d)
         throws CompileError
@@ -109,7 +139,7 @@ public final class Parser implements TokenId {
                     break;
             }
 
-        lex.get();
+        lex.get();      // ')'
         d.addArrayDim(parseArrayDimension());
         if (isConstructor && d.getArrayDim() > 0)
             throw new SyntaxError(lex);
@@ -130,7 +160,8 @@ public final class Parser implements TokenId {
                                 ASTList.make(parms, throwsList, null)));
     }
 
-
+    /* Parses a method body.
+     */
     public MethodDecl parseMethod2(SymbolTable tbl, MethodDecl md)
         throws CompileError
     {
@@ -147,7 +178,11 @@ public final class Parser implements TokenId {
         return md;
     }
 
-
+    /* member.modifiers
+     *  : ( FINAL | SYNCHRONIZED | ABSTRACT
+     *    | PUBLIC | PROTECTED | PRIVATE | STATIC
+     *    | VOLATILE | TRANSIENT | STRICT )*
+     */
     private ASTList parseMemberMods() {
         int t;
         ASTList list = null;
@@ -164,11 +199,12 @@ public final class Parser implements TokenId {
         return list;
     }
 
-
+    /* formal.type : ( build-in-type | class.type ) array.dimension
+     */
     private Declarator parseFormalType(SymbolTable tbl) throws CompileError {
         int t = lex.lookAhead();
         if (isBuiltinType(t) || t == VOID) {
-            lex.get();
+            lex.get();  // primitive type
             int dim = parseArrayDimension();
             return new Declarator(t, dim);
         }
@@ -182,7 +218,8 @@ public final class Parser implements TokenId {
                 || t == INT || t == LONG || t == FLOAT || t == DOUBLE);
     }
 
-
+    /* formal.parameter : formal.type Identifier array.dimension
+     */
     private Declarator parseFormalParam(SymbolTable tbl)
         throws CompileError
     {
@@ -197,7 +234,25 @@ public final class Parser implements TokenId {
         return d;
     }
 
-
+    /* statement : [ label ":" ]* labeled.statement
+     *
+     * labeled.statement
+     *          : block.statement
+     *          | if.statement
+     *          | while.statement
+     *          | do.statement
+     *          | for.statement
+     *          | switch.statement
+     *          | try.statement
+     *          | return.statement
+     *          | thorw.statement
+     *          | break.statement
+     *          | continue.statement
+     *          | declaration.or.expression
+     *          | ";"
+     *
+     * This method may return null (empty statement).
+     */
     public Stmnt parseStatement(SymbolTable tbl)
         throws CompileError
     {
@@ -206,12 +261,12 @@ public final class Parser implements TokenId {
             return parseBlock(tbl);
         else if (t == ';') {
             lex.get();
-            return new Stmnt(BLOCK);
+            return new Stmnt(BLOCK);    // empty statement
         }
         else if (t == Identifier && lex.lookAhead(1) == ':') {
-            lex.get();
+            lex.get();  // Identifier
             String label = lex.getString();
-            lex.get();
+            lex.get();  // ':'
             return Stmnt.make(LABEL, new Symbol(label), parseStatement(tbl));
         }
         else if (t == IF)
@@ -240,7 +295,8 @@ public final class Parser implements TokenId {
             return parseDeclarationOrExpression(tbl, false);
     }
 
-
+    /* block.statement : "{" statement* "}"
+     */
     private Stmnt parseBlock(SymbolTable tbl) throws CompileError {
         if (lex.get() != '{')
             throw new SyntaxError(lex);
@@ -253,15 +309,17 @@ public final class Parser implements TokenId {
                 body = (Stmnt)ASTList.concat(body, new Stmnt(BLOCK, s));
         }
 
-        lex.get();
+        lex.get();      // '}'
         if (body == null)
-            return new Stmnt(BLOCK);
+            return new Stmnt(BLOCK);    // empty block
         return body;
     }
 
-
+    /* if.statement : IF "(" expression ")" statement
+     *                [ ELSE statement ]
+     */
     private Stmnt parseIf(SymbolTable tbl) throws CompileError {
-        int t = lex.get();
+        int t = lex.get();      // IF
         ASTree expr = parseParExpression(tbl);
         Stmnt thenp = parseStatement(tbl);
         Stmnt elsep;
@@ -275,19 +333,21 @@ public final class Parser implements TokenId {
         return new Stmnt(t, expr, new ASTList(thenp, new ASTList(elsep)));
     }
 
-
+    /* while.statement : WHILE "(" expression ")" statement
+     */
     private Stmnt parseWhile(SymbolTable tbl)
         throws CompileError
     {
-        int t = lex.get();
+        int t = lex.get();      // WHILE
         ASTree expr = parseParExpression(tbl);
         Stmnt body = parseStatement(tbl);
         return new Stmnt(t, expr, body);
     }
 
-
+    /* do.statement : DO statement WHILE "(" expression ")" ";"
+     */
     private Stmnt parseDo(SymbolTable tbl) throws CompileError {
-        int t = lex.get();
+        int t = lex.get();      // DO
         Stmnt body = parseStatement(tbl);
         if (lex.get() != WHILE || lex.get() != '(')
             throw new SyntaxError(lex);
@@ -299,11 +359,13 @@ public final class Parser implements TokenId {
         return new Stmnt(t, expr, body);
     }
 
-
+    /* for.statement : FOR "(" decl.or.expr expression ";" expression ")"
+     *                 statement
+     */
     private Stmnt parseFor(SymbolTable tbl) throws CompileError {
         Stmnt expr1, expr3;
         ASTree expr2;
-        int t = lex.get();
+        int t = lex.get();      // FOR
 
         SymbolTable tbl2 = new SymbolTable(tbl);
 
@@ -338,9 +400,15 @@ public final class Parser implements TokenId {
                                                new ASTList(expr3, body)));
     }
 
-
+    /* switch.statement : SWITCH "(" expression ")" "{" switch.block "}"
+     *
+     * swtich.block : ( switch.label statement* )*
+     *
+     * swtich.label : DEFAULT ":"
+     *              | CASE const.expression ":"
+     */
     private Stmnt parseSwitch(SymbolTable tbl) throws CompileError {
-        int t = lex.get();
+        int t = lex.get();	// SWITCH
         ASTree expr = parseParExpression(tbl);
         Stmnt body = parseSwitchBlock(tbl);
         return new Stmnt(t, expr, body);
@@ -374,7 +442,7 @@ public final class Parser implements TokenId {
             }
         }
 
-        lex.get();
+        lex.get();      // '}'
         return body;
     }
 
@@ -396,9 +464,11 @@ public final class Parser implements TokenId {
         return s;
     }
 
-
+    /* synchronized.statement :
+     *     SYNCHRONIZED "(" expression ")" block.statement
+     */
     private Stmnt parseSynchronized(SymbolTable tbl) throws CompileError {
-        int t = lex.get();
+        int t = lex.get();	// SYNCHRONIZED
         if (lex.get() != '(')
             throw new SyntaxError(lex);
 
@@ -410,13 +480,17 @@ public final class Parser implements TokenId {
         return new Stmnt(t, expr, body);
     }
 
-
+    /* try.statement
+     * : TRY block.statement
+     *   [ CATCH "(" class.type Identifier ")" block.statement ]*
+     *   [ FINALLY block.statement ]*
+     */
     private Stmnt parseTry(SymbolTable tbl) throws CompileError {
-        lex.get();
+        lex.get();      // TRY
         Stmnt block = parseBlock(tbl);
         ASTList catchList = null;
         while (lex.lookAhead() == CATCH) {
-            lex.get();
+            lex.get();  // CATCH
             if (lex.get() != '(')
                 throw new SyntaxError(lex);
 
@@ -434,16 +508,17 @@ public final class Parser implements TokenId {
 
         Stmnt finallyBlock = null;
         if (lex.lookAhead() == FINALLY) {
-            lex.get();
+            lex.get();  // FINALLY
             finallyBlock = parseBlock(tbl);
         }
 
         return Stmnt.make(TRY, block, catchList, finallyBlock);
     }
 
-
+    /* return.statement : RETURN [ expression ] ";"
+     */
     private Stmnt parseReturn(SymbolTable tbl) throws CompileError {
-        int t = lex.get();
+        int t = lex.get();      // RETURN
         Stmnt s = new Stmnt(t);
         if (lex.lookAhead() != ';')
             s.setLeft(parseExpression(tbl));
@@ -454,9 +529,10 @@ public final class Parser implements TokenId {
         return s;
     }
 
-
+    /* throw.statement : THROW expression ";"
+     */
     private Stmnt parseThrow(SymbolTable tbl) throws CompileError {
-        int t = lex.get();
+        int t = lex.get();      // THROW
         ASTree expr = parseExpression(tbl);
         if (lex.get() != ';')
             throw new CompileError("; is missing", lex);
@@ -464,18 +540,20 @@ public final class Parser implements TokenId {
         return new Stmnt(t, expr);
     }
 
-
+    /* break.statement : BREAK [ Identifier ] ";"
+     */
     private Stmnt parseBreak(SymbolTable tbl)
         throws CompileError
     {
         return parseContinue(tbl);
     }
 
-
+    /* continue.statement : CONTINUE [ Identifier ] ";"
+     */
     private Stmnt parseContinue(SymbolTable tbl)
         throws CompileError
     {
-        int t = lex.get();
+        int t = lex.get();      // CONTINUE
         Stmnt s = new Stmnt(t);
         int t2 = lex.get();
         if (t2 == Identifier) {
@@ -489,7 +567,15 @@ public final class Parser implements TokenId {
         return s;
     }
 
-
+    /* declaration.or.expression
+     *      : [ FINAL ] built-in-type array.dimension declarators
+     *      | [ FINAL ] class.type array.dimension declarators
+     *      | expression ';'
+     *      | expr.list ';'             if exprList is true
+     *
+     * Note: FINAL is currently ignored.  This must be fixed
+     * in future.
+     */
     private Stmnt parseDeclarationOrExpression(SymbolTable tbl,
                                                boolean exprList)
         throws CompileError
@@ -527,7 +613,8 @@ public final class Parser implements TokenId {
         return expr;
     }
 
-
+    /* expr.list : ( expression ',')* expression
+     */
     private Stmnt parseExprList(SymbolTable tbl) throws CompileError {
         Stmnt expr = null;
         for (;;) {
@@ -540,7 +627,8 @@ public final class Parser implements TokenId {
         }
     }
 
-
+    /* declarators : declarator [ ',' declarator ]* ';'
+     */
     private Stmnt parseDeclarators(SymbolTable tbl, Declarator d)
         throws CompileError
     {
@@ -556,7 +644,8 @@ public final class Parser implements TokenId {
         }
     }
 
-
+    /* declarator : Identifier array.dimension [ '=' initializer ]
+     */
     private Declarator parseDeclarator(SymbolTable tbl, Declarator d)
         throws CompileError
     {
@@ -577,18 +666,21 @@ public final class Parser implements TokenId {
         return decl;
     }
 
-
+    /* initializer : expression | array.initializer
+     */
     private ASTree parseInitializer(SymbolTable tbl) throws CompileError {
         if (lex.lookAhead() == '{')
             return parseArrayInitializer(tbl);
         return parseExpression(tbl);
     }
 
-
+    /* array.initializer :
+     *  '{' (( array.initializer | expression ) ',')* '}'
+     */
     private ArrayInit parseArrayInitializer(SymbolTable tbl)
         throws CompileError
     {
-        lex.get();
+        lex.get();      // '{'
         ASTree expr = parseExpression(tbl);
         ArrayInit init = new ArrayInit(expr);
         while (lex.lookAhead() == ',') {
@@ -603,7 +695,8 @@ public final class Parser implements TokenId {
         return init;
     }
 
-
+    /* par.expression : '(' expression ')'
+     */
     private ASTree parseParExpression(SymbolTable tbl) throws CompileError {
         if (lex.get() != '(')
             throw new SyntaxError(lex);
@@ -615,7 +708,9 @@ public final class Parser implements TokenId {
         return expr;
     }
 
-
+    /* expression : conditional.expr
+     *            | conditional.expr assign.op expression (right-to-left)
+     */
     public ASTree parseExpression(SymbolTable tbl) throws CompileError {
         ASTree left = parseConditionalExpr(tbl);
         if (!isAssignOp(lex.lookAhead()))
@@ -633,7 +728,9 @@ public final class Parser implements TokenId {
                 || t == RSHIFT_E || t == ARSHIFT_E;
     }
 
-
+    /* conditional.expr                 (right-to-left)
+     *     : logical.or.expr [ '?' expression ':' conditional.expr ]
+     */
     private ASTree parseConditionalExpr(SymbolTable tbl) throws CompileError {
         ASTree cond = parseBinaryExpr(tbl);
         if (lex.lookAhead() == '?') {
@@ -648,7 +745,47 @@ public final class Parser implements TokenId {
         return cond;
     }
 
-
+    /* logical.or.expr          10 (operator precedence)
+     * : logical.and.expr
+     * | logical.or.expr OROR logical.and.expr          left-to-right
+     *
+     * logical.and.expr         9
+     * : inclusive.or.expr
+     * | logical.and.expr ANDAND inclusive.or.expr
+     *
+     * inclusive.or.expr        8
+     * : exclusive.or.expr
+     * | inclusive.or.expr "|" exclusive.or.expr
+     *
+     * exclusive.or.expr        7
+     *  : and.expr
+     * | exclusive.or.expr "^" and.expr
+     *
+     * and.expr                 6
+     * : equality.expr
+     * | and.expr "&" equality.expr
+     *
+     * equality.expr            5
+     * : relational.expr
+     * | equality.expr (EQ | NEQ) relational.expr
+     *
+     * relational.expr          4
+     * : shift.expr
+     * | relational.expr (LE | GE | "<" | ">") shift.expr
+     * | relational.expr INSTANCEOF class.type ("[" "]")*
+     *
+     * shift.expr               3
+     * : additive.expr
+     * | shift.expr (LSHIFT | RSHIFT | ARSHIFT) additive.expr
+     *
+     * additive.expr            2
+     * : multiply.expr
+     * | additive.expr ("+" | "-") multiply.expr
+     *
+     * multiply.expr            1
+     * : unary.expr
+     * | multiply.expr ("*" | "/" | "%") unary.expr
+     */
     private ASTree parseBinaryExpr(SymbolTable tbl) throws CompileError {
         ASTree expr = parseUnaryExpr(tbl);
         for (;;) {
@@ -665,7 +802,7 @@ public final class Parser implements TokenId {
     {
         int t = lex.lookAhead();
         if (isBuiltinType(t)) {
-            lex.get();
+            lex.get();  // primitive type
             int dim = parseArrayDimension();
             return new InstanceOfExpr(t, dim, expr);
         }
@@ -692,7 +829,7 @@ public final class Parser implements TokenId {
         }
     }
 
-
+    // !"#$%&'(    )*+,-./0    12345678    9:;<=>?
     private static final int[] binaryOpPrecedence
         =  { 0, 0, 0, 0, 1, 6, 0, 0,
              0, 1, 2, 0, 2, 0, 1, 0,
@@ -717,10 +854,18 @@ public final class Parser implements TokenId {
         else if (c == LSHIFT || c == RSHIFT || c == ARSHIFT)
             return 3;
         else
-            return 0;
+            return 0;   // not a binary operator
     }
 
+    /* unary.expr : "++"|"--" unary.expr
+                  | "+"|"-" unary.expr
+                  | "!"|"~" unary.expr
+                  | cast.expr
+                  | postfix.expr
 
+       unary.expr.not.plus.minus is a unary expression starting without
+       "+", "-", "++", or "--".
+     */
     private ASTree parseUnaryExpr(SymbolTable tbl) throws CompileError {
         int t;
         switch (lex.lookAhead()) {
@@ -756,12 +901,19 @@ public final class Parser implements TokenId {
         }
     }
 
+    /* cast.expr : "(" builtin.type ("[" "]")* ")" unary.expr
+                 | "(" class.type ("[" "]")* ")" unary.expr2
 
+       unary.expr2 is a unary.expr beginning with "(", NULL, StringL,
+       Identifier, THIS, SUPER, or NEW.
+
+       Either "(int.class)" or "(String[].class)" is a not cast expression.
+     */
     private ASTree parseCast(SymbolTable tbl) throws CompileError {
         int t = lex.lookAhead(1);
         if (isBuiltinType(t) && nextIsBuiltinCast()) {
-            lex.get();
-            lex.get();
+            lex.get();  // '('
+            lex.get();  // primitive type
             int dim = parseArrayDimension();
             if (lex.get() != ')')
                 throw new CompileError(") is missing", lex);
@@ -769,7 +921,7 @@ public final class Parser implements TokenId {
             return new CastExpr(t, dim, parseUnaryExpr(tbl));
         }
         else if (t == Identifier && nextIsClassCast()) {
-            lex.get();
+            lex.get();  // '('
             ASTList name = parseClassType(tbl);
             int dim = parseArrayDimension();
             if (lex.get() != ')')
@@ -823,7 +975,8 @@ public final class Parser implements TokenId {
         return i - 1;
     }
 
-
+    /* array.dimension : [ "[" "]" ]*
+     */
     private int parseArrayDimension() throws CompileError {
         int arrayDim = 0;
         while (lex.lookAhead() == '[') {
@@ -836,7 +989,8 @@ public final class Parser implements TokenId {
         return arrayDim;
     }
 
-
+    /* class.type : Identifier ( "." Identifier )*
+     */
     private ASTList parseClassType(SymbolTable tbl) throws CompileError {
         ASTList list = null;
         for (;;) {
@@ -853,10 +1007,26 @@ public final class Parser implements TokenId {
         return list;
     }
 
-
+    /* postfix.expr : number.literal
+     *              | primary.expr
+     *              | method.expr
+     *              | postfix.expr "++" | "--"
+     *              | postfix.expr "[" array.size "]"
+     *              | postfix.expr "." Identifier
+     *              | postfix.expr ( "[" "]" )* "." CLASS
+     *              | postfix.expr "#" Identifier
+     *              | postfix.expr "." SUPER
+     *
+     * "#" is not an operator of regular Java.  It separates
+     * a class name and a member name in an expression for static member
+     * access.  For example,
+     *     java.lang.Integer.toString(3)        in regular Java
+     * can be written like this:
+     *     java.lang.Integer#toString(3)        for this compiler.
+     */
     private ASTree parsePostfix(SymbolTable tbl) throws CompileError {
         int token = lex.lookAhead();
-        switch (token) {
+        switch (token) {    // see also parseUnaryExpr()
         case LongConstant :
         case IntConstant :
         case CharConstant :
@@ -930,7 +1100,10 @@ public final class Parser implements TokenId {
         }
     }
 
-
+    /* Parse a .class expression on a class type.  For example,
+     * String.class   => ('.' "String" "class")
+     * String[].class => ('.' "[LString;" "class")
+     */
     private ASTree parseDotClass(ASTree className, int dim)
         throws CompileError
     {
@@ -947,7 +1120,10 @@ public final class Parser implements TokenId {
         return Expr.make('.', new Symbol(cname), new Member("class"));
     }
 
-
+    /* Parses a .class expression on a built-in type.  For example,
+     * int.class   => ('#' "java.lang.Integer" "TYPE")
+     * int[].class => ('.' "[I", "class")
+     */
     private ASTree parseDotClass(int builtinType, int dim)
         throws CompileError
     {
@@ -992,7 +1168,11 @@ public final class Parser implements TokenId {
         return Expr.make(MEMBER, new Symbol(cname), new Member("TYPE"));
     }
 
-
+    /* method.call : method.expr "(" argument.list ")"
+     * method.expr : THIS | SUPER | Identifier
+     *             | postfix.expr "." Identifier
+     *             | postfix.expr "#" Identifier
+     */
     private ASTree parseMethodCall(SymbolTable tbl, ASTree expr)
         throws CompileError
     {
@@ -1001,7 +1181,7 @@ public final class Parser implements TokenId {
             if (token != THIS && token != SUPER)
                 throw new SyntaxError(lex);
         }
-        else if (expr instanceof Symbol)
+        else if (expr instanceof Symbol)        // Identifier
             ;
         else if (expr instanceof Expr) {
             int op = ((Expr)expr).getOperator();
@@ -1040,7 +1220,16 @@ public final class Parser implements TokenId {
         throw new CompileError("bad static member access", lex);
     }
 
-
+    /* primary.expr : THIS | SUPER | TRUE | FALSE | NULL
+     *              | StringL
+     *              | Identifier
+     *              | NEW new.expr
+     *              | "(" expression ")"
+     *              | builtin.type ( "[" "]" )* "." CLASS
+     *
+     * Identifier represents either a local variable name, a member name,
+     * or a class name.
+     */
     private ASTree parsePrimaryExpr(SymbolTable tbl) throws CompileError {
         int t;
         String name;
@@ -1058,8 +1247,8 @@ public final class Parser implements TokenId {
             name = lex.getString();
             decl = tbl.lookup(name);
             if (decl == null)
-                return new Member(name);
-            return new Variable(name, decl);
+                return new Member(name);        // this or static member
+            return new Variable(name, decl); // local variable
         case StringL :
             return new StringL(lex.getString());
         case NEW :
@@ -1080,7 +1269,10 @@ public final class Parser implements TokenId {
         }
     }
 
-
+    /* new.expr : class.type "(" argument.list ")"
+     *          | class.type     array.size [ array.initializer ]
+     *          | primitive.type array.size [ array.initializer ]
+     */
     private NewExpr parseNew(SymbolTable tbl) throws CompileError {
         ArrayInit init = null;
         int t = lex.lookAhead();
@@ -1111,7 +1303,8 @@ public final class Parser implements TokenId {
         throw new SyntaxError(lex);
     }
 
-
+    /* array.size : [ array.index ]*
+     */
     private ASTList parseArraySize(SymbolTable tbl) throws CompileError {
         ASTList list = null;
         while (lex.lookAhead() == '[')
@@ -1120,9 +1313,10 @@ public final class Parser implements TokenId {
         return list;
     }
 
-
+    /* array.index : "[" [ expression ] "]"
+     */
     private ASTree parseArrayIndex(SymbolTable tbl) throws CompileError {
-        lex.get();
+        lex.get();      // '['
         if (lex.lookAhead() == ']') {
             lex.get();
             return null;
@@ -1134,7 +1328,8 @@ public final class Parser implements TokenId {
         return index;
     }
 
-
+    /* argument.list : "(" [ expression [ "," expression ]* ] ")"
+     */
     private ASTList parseArgumentList(SymbolTable tbl) throws CompileError {
         if (lex.get() != '(')
             throw new CompileError("( is missing", lex);

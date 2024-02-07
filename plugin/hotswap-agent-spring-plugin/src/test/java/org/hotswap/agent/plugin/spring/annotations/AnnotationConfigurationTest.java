@@ -107,21 +107,21 @@ public class AnnotationConfigurationTest {
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//    @Test
+//    public void swapSingleClassTest() throws Exception {
+//        assertNotNull(applicationContext.getBean("item2", TeacherConfiguration.class).getName());
+//
+//        HotSwapper.swapClasses(TeacherConfiguration.class, Item2WithoutValue.class.getName());
+//        XmlBeanDefinitionScannerAgent.reloadFlag = true;
+//        Assert.assertTrue(WaitHelper.waitForCommand(new WaitHelper.Command() {
+//            @Override
+//            public boolean result() throws Exception {
+//                return !XmlBeanDefinitionScannerAgent.reloadFlag;
+//            }
+//        }, 5000));
+//
+//        assertNull(applicationContext.getBean("item2", TeacherConfiguration.class).getName());
+//    }
 
     private void modifyPropertyFile() throws Exception {
         Files.copy(changedPropertyFile.getFile().toPath(), propertyFile.getFile().toPath(),

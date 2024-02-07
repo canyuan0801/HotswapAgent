@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.spring.scanner;
 
 import org.hotswap.agent.javassist.CannotCompileException;
@@ -32,43 +49,61 @@ import java.util.Map;
 import java.util.Set;
 
 
-
+/**
+ * Registers
+ *
+ * @author Jiri Bubnik
+ */
 public class ClassPathBeanDefinitionScannerAgent {
     private static AgentLogger LOGGER = AgentLogger.getLogger(ClassPathBeanDefinitionScannerAgent.class);
 
     private static Map<ClassPathBeanDefinitionScanner, ClassPathBeanDefinitionScannerAgent> instances = new HashMap<>();
 
-
+    /**
+     * Flag to check reload status.
+     * In unit test we need to wait for reload finish before the test can continue. Set flag to true
+     * in the test class and wait until the flag is false again.
+     */
     public static boolean reloadFlag = false;
 
-
+    // target scanner this agent shadows
     ClassPathBeanDefinitionScanner scanner;
 
-
+    // list of basePackages registered with target scanner
     Set<String> basePackages = new HashSet<>();
 
-
+    // registry obtained from the scanner
     BeanDefinitionRegistry registry;
 
-
+    // metadata resolver obtained from the scanner
     ScopeMetadataResolver scopeMetadataResolver;
 
-
+    // bean name generator obtained from the scanner
     BeanNameGenerator beanNameGenerator;
 
     private Set<BeanDefinition> beanDefinitions = new HashSet<>();
 
-
+    /**
+     * Return an agent instance for a scanner. If the instance does not exists yet, it is created.
+     *
+     * @param scanner the scanner
+     * @return agent instance
+     */
     public static ClassPathBeanDefinitionScannerAgent getInstance(ClassPathBeanDefinitionScanner scanner) {
         ClassPathBeanDefinitionScannerAgent classPathBeanDefinitionScannerAgent = instances.get(scanner);
-
+        // registry may be different if there is multiple app. (this is just a temporary solution)
         if (classPathBeanDefinitionScannerAgent == null || classPathBeanDefinitionScannerAgent.registry != scanner.getRegistry()) {
             instances.put(scanner, new ClassPathBeanDefinitionScannerAgent(scanner));
         }
         return instances.get(scanner);
     }
 
-
+    /**
+     * Find scanner agent by base package.
+     *
+     * @param basePackage the scanner agent or null if no such agent exists
+     * @return the agent
+     */
     public static ClassPathBeanDefinitionScannerAgent getInstance(String basePackage) {
         for (ClassPathBeanDefinitionScannerAgent scannerAgent : instances.values()) {
             if (scannerAgent.basePackages.contains(basePackage))
@@ -77,7 +112,7 @@ public class ClassPathBeanDefinitionScannerAgent {
         return null;
     }
 
-
+    // Create new instance from getInstance(ClassPathBeanDefinitionScanner scanner) and obtain services from the scanner
     private ClassPathBeanDefinitionScannerAgent(ClassPathBeanDefinitionScanner scanner) {
         this.scanner = scanner;
 
@@ -86,7 +121,11 @@ public class ClassPathBeanDefinitionScannerAgent {
         this.beanNameGenerator = (BeanNameGenerator) ReflectionHelper.get(scanner, "beanNameGenerator");
     }
 
-
+    /**
+     * Initialize base package from ClassPathBeanDefinitionScanner.scan() (hooked by a Transformer)
+     *
+     * @param basePackage package that Spring will scan
+     */
     public void registerBasePackage(String basePackage) {
         this.basePackages.add(basePackage);
 
@@ -94,7 +133,14 @@ public class ClassPathBeanDefinitionScannerAgent {
                 "registerComponentScanBasePackage", new Class[]{String.class}, new Object[]{basePackage});
     }
 
-
+    /**
+     * Called by a reflection command from SpringPlugin transformer.
+     *
+     * @param appClassLoader  the class loader - container or application class loader.
+     * @param basePackage     base package on witch the transformer was registered, used to obtain associated scanner.
+     * @param classDefinition new class definition
+     * @throws IOException error working with classDefinition
+     */
     public static boolean refreshClassAndCheckReload(ClassLoader appClassLoader, String basePackage, String clazzName, byte[] classDefinition) throws IOException {
         ClassPathBeanDefinitionScannerAgent scannerAgent = getInstance(basePackage);
         if (scannerAgent == null) {
@@ -104,7 +150,15 @@ public class ClassPathBeanDefinitionScannerAgent {
         return scannerAgent.createBeanDefinitionAndCheckReload(appClassLoader, clazzName, classDefinition);
     }
 
-
+    /**
+     * create beanDefinition if it is new bean. If it is need refresh, return true;
+     *
+     * @param appClassLoader
+     * @param clazzName
+     * @param classDefinition
+     * @return
+     * @throws IOException
+     */
     boolean createBeanDefinitionAndCheckReload(ClassLoader appClassLoader, String clazzName, byte[] classDefinition) throws IOException {
         DefaultListableBeanFactory defaultListableBeanFactory = RegistryUtils.maybeRegistryToBeanFactory(registry);
         if (doProcessWhenBeanExist(defaultListableBeanFactory, appClassLoader, clazzName, classDefinition)) {
@@ -117,7 +171,7 @@ public class ClassPathBeanDefinitionScannerAgent {
             return false;
         }
         String beanName = this.beanNameGenerator.generateBeanName(beanDefinition, registry);
-
+        // check if bean is already registered
         if (registry.containsBeanDefinition(beanName)) {
             LOGGER.debug("Bean definition '{}' already exists", beanName);
             return false;
@@ -187,16 +241,22 @@ public class ClassPathBeanDefinitionScannerAgent {
             String realClassName = clazzName.replaceAll("/", ".");
             return appClassLoader.loadClass(realClassName);
         } catch (ClassNotFoundException e) {
-
+            // ignore
         } catch (NoClassDefFoundError e) {
-
+            // ignore
         }
         return null;
     }
 
-
+    /**
+     * Resolve candidate to a bean definition and (re)load in Spring.
+     * Synchronize to avoid parallel bean definition - usually on reload the beans are interrelated
+     * and parallel load will cause concurrent modification exception.
+     *
+     * @param candidate the candidate to reload
+     */
     public BeanDefinitionHolder defineBean(BeanDefinition candidate) {
-        synchronized (getClass()) {
+        synchronized (getClass()) { // TODO sychronize on DefaultListableFactory.beanDefinitionMap?
 
             ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
             candidate.setScope(scopeMetadata.getScopeName());
@@ -213,7 +273,14 @@ public class ClassPathBeanDefinitionScannerAgent {
 
     }
 
-
+    /**
+     * Resolve bean definition from class definition if applicable.
+     *
+     * @param appClassLoader the class loader - container or application class loader.
+     * @param bytes          class definition.
+     * @return the definition or null if not a spring bean
+     * @throws IOException
+     */
     private BeanDefinition resolveBeanDefinition(ClassLoader appClassLoader, byte[] bytes) throws IOException {
         Resource resource = new ByteArrayResource(bytes);
         resetCachingMetadataReaderFactoryCache();
@@ -250,7 +317,7 @@ public class ClassPathBeanDefinitionScannerAgent {
         return (MetadataReaderFactory) ReflectionHelper.get(scanner, "metadataReaderFactory");
     }
 
-
+    // metadataReader contains cache of loaded classes, reset this cache before BeanDefinition is resolved
     private void resetCachingMetadataReaderFactoryCache() {
         if (getMetadataReaderFactory() instanceof CachingMetadataReaderFactory) {
             Map metadataReaderCache = (Map) ReflectionHelper.getNoException(getMetadataReaderFactory(),
@@ -270,9 +337,9 @@ public class ClassPathBeanDefinitionScannerAgent {
     }
 
 
-
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    // Access private / protected members
+    ////////////////////////////////////////////////////////////////////////////////////////////
 
     private BeanDefinitionHolder applyScopedProxyMode(
             ScopeMetadata metadata, BeanDefinitionHolder definition, BeanDefinitionRegistry registry) {

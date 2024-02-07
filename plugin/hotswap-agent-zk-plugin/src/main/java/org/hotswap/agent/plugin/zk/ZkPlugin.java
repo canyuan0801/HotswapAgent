@@ -15,16 +15,30 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-
+/**
+ * ZK framework - http://www.zkoss.org/.
+ * <p/>
+ * <p>Plugin:<ul>
+ * <li>Plugin initialization is triggered after DHtmlLayoutServlet.init() method in servlet classloader</li>
+ * <li>Change default value for library properties of ZK caches
+ * (org.zkoss.web.classWebResource.cache=false, org.zkoss.zk.WPD.cache=false, org.zkoss.zk.WCS.cache=false,
+ * zk-dl.annotation.cache=false). App can override this setting by explicitly set value to true in zk.xml</li>
+ * <li>Clear Labels cache after change of any .properties file</li>
+ * <li>Clear org.zkoss.zel.BeanELResolver caches after any class change</li>
+ * </ul>
+ * <p/>All is invoked via reflection, no ZK lib direct dependency.
+ *
+ * @author Jiri Bubnik
+ */
 @Plugin(name = "ZK",
-        description = "ZK Framework (http:
+        description = "ZK Framework (http://www.zkoss.org/). Change library properties default values to disable" +
                 "caches, maintains Label cache and bean resolver cache.",
         testedVersions = {"6.5.2"},
         expectedVersions = {"5x", "6x", "7x?"})
 public class ZkPlugin {
     private static AgentLogger LOGGER = AgentLogger.getLogger(ZkPlugin.class);
 
-    
+    // clear labels cache
     ReflectionCommand refreshLabels = new ReflectionCommand(this, "org.zkoss.util.resource.Labels", "reset");
 
     @Init
@@ -34,7 +48,9 @@ public class ZkPlugin {
     ClassLoader appClassLoader;
 
 
-    
+    /**
+     * Initialize the plugin after DHtmlLayoutServlet.init() method.
+     */
     @OnClassLoadEvent(classNameRegexp = "org.zkoss.zk.ui.http.DHtmlLayoutServlet")
     public static void layoutServletCallInitialized(CtClass ctClass) throws NotFoundException, CannotCompileException {
         CtMethod init = ctClass.getDeclaredMethod("init");
@@ -42,18 +58,22 @@ public class ZkPlugin {
         LOGGER.debug("org.zkoss.zk.ui.http.DHtmlLayoutServlet enahnced with plugin initialization.");
     }
 
-    
+    /**
+     * Default values of caches in development mode.
+     * <p/>
+     * Note, that this is a little bit aggressive, but the user may override this by providing explicit value in zk.xml
+     */
     @OnClassLoadEvent(classNameRegexp = "org.zkoss.lang.Library")
     public static void defaultDisableCaches(ClassPool classPool, CtClass ctClass) throws NotFoundException, CannotCompileException {
         LOGGER.debug("org.zkoss.lang.Library enhanced to replace property '*.cache' default value to 'false'.");
         CtMethod m = ctClass.getDeclaredMethod("getProperty", new CtClass[]{classPool.get("java.lang.String")});
 
-        
+        // see http://books.zkoss.org/wiki/ZK%20Configuration%20Reference/zk.xml/The%20Library%20Properties
         defaultLibraryPropertyFalse(m, "org.zkoss.web.classWebResource.cache");
         defaultLibraryPropertyFalse(m, "org.zkoss.zk.WPD.cache");
         defaultLibraryPropertyFalse(m, "org.zkoss.zk.WCS.cache");
 
-        
+        // see. http://zk.datalite.cz/wiki/-/wiki/Main/DLComposer++-+MVC+Controller#section-DLComposer++-+MVC+Controller-ImplementationDetails
         defaultLibraryPropertyFalse(m, "zk-dl.annotation.cache");
     }
 
@@ -63,12 +83,14 @@ public class ZkPlugin {
 
     @OnResourceFileEvent(path = "/", filter = ".*.properties")
     public void refreshProperties() {
-        
-        
+        // unable to tell if properties are ZK labels or not for custom label locator.
+        // however Label refresh is very cheep, do it for any properties.
         scheduler.scheduleCommand(refreshLabels);
     }
 
-    
+    /**
+     * BeanELResolver contains reflection cache (bean properites).
+     */
     @OnClassLoadEvent(classNameRegexp = "org.zkoss.zel.BeanELResolver")
     public static void beanELResolverRegisterVariable(CtClass ctClass) throws CannotCompileException {
         String registerThis = PluginManagerInvoker.buildCallPluginMethod(ZkPlugin.class, "registerBeanELResolver",
@@ -90,7 +112,9 @@ public class ZkPlugin {
         registeredBeanELResolvers.add(beanELResolver);
     }
 
-    
+    /**
+     * BeanELResolver contains reflection cache (bean properites).
+     */
     @OnClassLoadEvent(classNameRegexp = "org.zkoss.bind.impl.BinderImpl")
     public static void binderImplRegisterVariable(CtClass ctClass) throws CannotCompileException {
         String registerThis = PluginManagerInvoker.buildCallPluginMethod(ZkPlugin.class, "registerBinderImpl",
@@ -114,13 +138,13 @@ public class ZkPlugin {
         registerBinderImpls.add(binderImpl);
     }
 
-    
+    // invalidate BeanELResolver caches after any class reload (it is cheap to rebuild from reflection)
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
     public void invalidateClassCache() throws Exception {
         scheduler.scheduleCommand(invalidateClassCache);
     }
 
-    
+    // schedule refresh in case of multiple class redefinition to merge command executions
     private Command invalidateClassCache = new Command() {
         @Override
         public void executeCommand() {

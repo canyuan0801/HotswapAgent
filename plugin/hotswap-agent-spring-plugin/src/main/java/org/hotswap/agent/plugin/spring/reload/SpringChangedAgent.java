@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.spring.reload;
 
 import java.net.URL;
@@ -108,18 +125,18 @@ public class SpringChangedAgent implements SpringListener<SpringEvent<?>>, Compa
 
     public static void reload(long changeTimeStamps) {
         int reloadCount = waitingReloadCount.incrementAndGet();
-
+        // avoid reload too much times, allow 2 tasks into waiting queue
         if (reloadCount > 2) {
             LOGGER.trace("Spring reload is already scheduled, skip this time:{}", changeTimeStamps);
             waitingReloadCount.decrementAndGet();
             return;
         }
         try {
-
+            // sore the list by beanFactory order, make sure the parent beanFactory reload first
             List<SpringChangedAgent> changedAgentList = new ArrayList<>(springChangeAgents.values());
             Collections.sort(changedAgentList);
             for (SpringChangedAgent springChangedAgent : changedAgentList) {
-
+                // ensure reload only once, there is one lock.
                 springChangedAgent.reloadAll(changeTimeStamps);
             }
         } finally {
@@ -127,7 +144,11 @@ public class SpringChangedAgent implements SpringListener<SpringEvent<?>>, Compa
         }
     }
 
-
+    /**
+     * unit test
+     *
+     * @param beanFactory
+     */
     public static void destroyBeanFactory(AbstractAutowireCapableBeanFactory beanFactory) {
         if (!(beanFactory instanceof DefaultListableBeanFactory)) {
             return;
@@ -211,7 +232,13 @@ public class SpringChangedAgent implements SpringListener<SpringEvent<?>>, Compa
         }
     }
 
-
+    /**
+     * calculate the order by beanFactory.
+     * If the beanFactory is root, return 1, else return 1 + parentBeanFactory's order
+     *
+     * @param beanFactory
+     * @return
+     */
     private int orderByParentBeanFactory(AbstractBeanFactory beanFactory) {
         if (beanFactory == null) {
             return 0;

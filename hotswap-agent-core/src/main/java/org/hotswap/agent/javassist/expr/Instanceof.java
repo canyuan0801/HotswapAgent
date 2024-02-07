@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.expr;
 
@@ -21,31 +35,52 @@ import org.hotswap.agent.javassist.compiler.JvstTypeChecker;
 import org.hotswap.agent.javassist.compiler.ProceedHandler;
 import org.hotswap.agent.javassist.compiler.ast.ASTList;
 
-
+/**
+ * Instanceof operator.
+ */
 public class Instanceof extends Expr {
-
+    /**
+     * Undocumented constructor.  Do not use; internal-use only.
+     */
     protected Instanceof(int pos, CodeIterator i, CtClass declaring,
                          MethodInfo m) {
         super(pos, i, declaring, m);
     }
 
-
+    /**
+     * Returns the method or constructor containing the instanceof
+     * expression represented by this object.
+     */
     @Override
     public CtBehavior where() { return super.where(); }
 
-
+    /**
+     * Returns the line number of the source line containing the
+     * instanceof expression.
+     *
+     * @return -1       if this information is not available.
+     */
     @Override
     public int getLineNumber() {
         return super.getLineNumber();
     }
 
-
+    /**
+     * Returns the source file containing the
+     * instanceof expression.
+     *
+     * @return null     if this information is not available.
+     */
     @Override
     public String getFileName() {
         return super.getFileName();
     }
 
-
+    /**
+     * Returns the <code>CtClass</code> object representing
+     * the type name on the right hand side
+     * of the instanceof operator.
+     */
     public CtClass getType() throws NotFoundException {
         ConstPool cp = getConstPool();
         int pos = currentPos;
@@ -54,16 +89,28 @@ public class Instanceof extends Expr {
         return thisClass.getClassPool().getCtClass(name);
     }
 
-
+    /**
+     * Returns the list of exceptions that the expression may throw.
+     * This list includes both the exceptions that the try-catch statements
+     * including the expression can catch and the exceptions that
+     * the throws declaration allows the method to throw.
+     */
     @Override
     public CtClass[] mayThrow() {
         return super.mayThrow();
     }
 
-
+    /**
+     * Replaces the instanceof operator with the bytecode derived from
+     * the given source text.
+     *
+     * <p>$0 is available but the value is <code>null</code>.
+     *
+     * @param statement         a Java statement except try-catch.
+     */
     @Override
     public void replace(String statement) throws CannotCompileException {
-        thisClass.getClassFile();
+        thisClass.getClassFile();   // to call checkModify().
         @SuppressWarnings("unused")
         ConstPool constPool = getConstPool();
         int pos = currentPos;
@@ -84,10 +131,11 @@ public class Instanceof extends Expr {
             int retVar = jc.recordReturnType(retType, true);
             jc.recordProceed(new ProceedForInstanceof(index));
 
-
+            // because $type is not the return type...
             jc.recordType(getType());
 
-
+            /* Is $_ included in the source code?
+             */
             checkResultValue(retType, statement);
 
             Bytecode bytecode = jc.getBytecode();
@@ -95,7 +143,7 @@ public class Instanceof extends Expr {
             jc.recordLocalVariables(ca, pos);
 
             bytecode.addConstZero(retType);
-            bytecode.addStore(retVar, retType);
+            bytecode.addStore(retVar, retType);     // initialize $_
 
             jc.compileStmnt(statement);
             bytecode.addLoad(retVar, retType);
@@ -109,7 +157,8 @@ public class Instanceof extends Expr {
         }
     }
 
-
+    /* boolean $proceed(Object obj)
+     */
     static class ProceedForInstanceof implements ProceedHandler {
         int index;
 

@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.jdk;
 
 import static org.junit.Assert.assertTrue;
@@ -19,12 +36,20 @@ import org.hotswap.agent.plugin.jdk.JdkPlugin;
 import org.hotswap.agent.util.test.WaitHelper;
 import org.junit.Test;
 
-
+/**
+ * Jdk plugin test
+ *
+ * See maven setup for javaagent and autohotswap settings.
+ *
+ * @author Vladimir Dvorak
+ */
 public class JdkPluginTest {
 
 
-
-
+    /**
+     * Switch method implementation (using bean definition or interface).
+     */
+//    @Test
     public void introspectorTest() throws Exception {
         BeanInfo beanInfo1 = Introspector.getBeanInfo(TestBean1.class);
         assertTrue(containsMethod(beanInfo1, "helloWorld1"));
@@ -35,8 +60,10 @@ public class JdkPluginTest {
         swapClasses(TestBean1.class, TestBean1.class.getName());
     }
 
-
-
+    /**
+     * Switch method implementation (using bean definition or interface).
+     */
+//    @Test
     public void serializationTest() throws Exception {
         Serialization1 testSerial1 = new Serialization1();
         byte bytes[] = writeObject(testSerial1);
@@ -80,7 +107,7 @@ public class JdkPluginTest {
             }
         }));
 
-
+        // TODO do not know why sleep is needed, maybe a separate thread in weld refresh?
         Thread.sleep(100);
     }
 }

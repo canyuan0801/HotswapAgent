@@ -1,18 +1,34 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.compiler.ast;
 
 import org.hotswap.agent.javassist.compiler.CompileError;
 import org.hotswap.agent.javassist.compiler.TokenId;
 
-
+/**
+ * Variable declarator.
+ */
 public class Declarator extends ASTList implements TokenId {
-
+    /** default serialVersionUID */
     private static final long serialVersionUID = 1L;
     protected int varType;
     protected int arrayDim;
     protected int localVar;
-    protected String qualifiedClass;
+    protected String qualifiedClass;    // JVM-internal representation
 
     public Declarator(int type, int dim) {
         super(null);
@@ -30,7 +46,8 @@ public class Declarator extends ASTList implements TokenId {
         qualifiedClass = astToClassName(className, '/');
     }
 
-
+    /* For declaring a pre-defined? local variable.
+     */
     public Declarator(int type, String jvmClassName, int dim,
                       int var, Symbol sym) {
         super(null);
@@ -39,7 +56,7 @@ public class Declarator extends ASTList implements TokenId {
         localVar = var;
         qualifiedClass = jvmClassName;
         setLeft(sym);
-        append(this, null);
+        append(this, null);     // initializer
     }
 
     public Declarator make(Symbol sym, int dim, ASTree init) {
@@ -50,7 +67,9 @@ public class Declarator extends ASTList implements TokenId {
         return d;
     }
 
-
+    /* Returns CLASS, BOOLEAN, BYTE, CHAR, SHORT, INT, LONG, FLOAT,
+     * or DOUBLE (or VOID)
+     */
     public int getType() { return varType; }
 
     public int getArrayDim() { return arrayDim; }

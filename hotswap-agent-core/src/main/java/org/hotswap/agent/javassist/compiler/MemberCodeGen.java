@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.compiler;
 
@@ -33,7 +47,8 @@ import org.hotswap.agent.javassist.compiler.ast.Pair;
 import org.hotswap.agent.javassist.compiler.ast.Stmnt;
 import org.hotswap.agent.javassist.compiler.ast.Symbol;
 
-
+/* Code generator methods depending on javassist.* classes.
+ */
 public class MemberCodeGen extends CodeGen {
     protected MemberResolver resolver;
     protected CtClass   thisClass;
@@ -48,15 +63,20 @@ public class MemberCodeGen extends CodeGen {
         thisMethod = null;
     }
 
-    
+    /**
+     * Returns the major version of the class file
+     * targeted by this compilation.
+     */
     public int getMajorVersion() {
         ClassFile cf = thisClass.getClassFile2();
         if (cf == null)
-            return ClassFile.MAJOR_VERSION;     
+            return ClassFile.MAJOR_VERSION;     // JDK 1.3
         return cf.getMajorVersion();
     }
 
-    
+    /**
+     * Records the currently compiled method.
+     */
     public void setThisMethod(CtMethod m) {
         thisMethod = m.getMethodInfo2();
         if (typeChecker != null)
@@ -65,13 +85,17 @@ public class MemberCodeGen extends CodeGen {
 
     public CtClass getThisClass() { return thisClass; }
 
-    
+    /**
+     * Returns the JVM-internal representation of this class name.
+     */
     @Override
     protected String getThisName() {
         return MemberResolver.javaToJvmName(thisClass.getName());
     }
 
-    
+    /**
+     * Returns the JVM-internal representation of this super class name.
+     */
     @Override
     protected String getSuperName() throws CompileError {
         return MemberResolver.javaToJvmName(
@@ -216,13 +240,13 @@ public class MemberCodeGen extends CodeGen {
         if (tryNotReturn) {
             bc.addOpcode(Opcode.GOTO);
             gotoList.add(bc.currentPc());
-            bc.addIndex(0);   
+            bc.addIndex(0);   // correct later
         }
 
         int var = getMaxLocals();
         incMaxLocals(1);
         while (catchList != null) {
-            
+            // catch clause
             Pair p = (Pair)catchList.head();
             catchList = catchList.tail();
             Declarator decl = (Declarator)p.getLeft();
@@ -242,14 +266,14 @@ public class MemberCodeGen extends CodeGen {
             if (!hasReturned) {
                 bc.addOpcode(Opcode.GOTO);
                 gotoList.add(bc.currentPc());
-                bc.addIndex(0);   
+                bc.addIndex(0);   // correct later
                 tryNotReturn = true;
             }
         }
 
         if (finallyBlock != null) {
             jsrHook.remove(this);
-            
+            // catch (any) clause
             int pcAnyCatch = bc.currentPc();
             bc.addExceptionHandler(start, pcAnyCatch, pcAnyCatch, 0);
             bc.growStack(1);
@@ -273,7 +297,9 @@ public class MemberCodeGen extends CodeGen {
         }
     }
 
-    
+    /**
+     * Adds a finally clause for earch return statement.
+     */
     private void addFinally(List<int[]> returnList, Stmnt finallyBlock)
         throws CompileError
     {
@@ -430,7 +456,7 @@ public class MemberCodeGen extends CodeGen {
         for (count = 0; size != null; size = size.tail()) {
             ASTree s = size.head();
             if (s == null)
-                break;          
+                break;          // int[][][] a = new int[3][4][];
 
             ++count;
             s.accept(this);
@@ -466,19 +492,19 @@ public class MemberCodeGen extends CodeGen {
             mname = ((Member)method).get();
             targetClass = thisClass;
             if (inStaticMethod || (cached != null && cached.isStatic()))
-                isStatic = true;            
+                isStatic = true;            // should be static
             else {
                 aload0pos = bytecode.currentPc();
-                bytecode.addAload(0);       
+                bytecode.addAload(0);       // this
             }
         }
-        else if (method instanceof Keyword) {   
+        else if (method instanceof Keyword) {   // constructor
             isSpecial = true;
-            mname = MethodInfo.nameInit;        
+            mname = MethodInfo.nameInit;        // <init>
             targetClass = thisClass;
             if (inStaticMethod)
                 throw new CompileError("a constructor cannot be static");
-            bytecode.addAload(0);   
+            bytecode.addAload(0);   // this
 
             if (((Keyword)method).get() == SUPER)
                 targetClass = MemberResolver.getSuperclass(targetClass);
@@ -487,7 +513,7 @@ public class MemberCodeGen extends CodeGen {
             Expr e = (Expr)method;
             mname = ((Symbol)e.oprand2()).get();
             int op = e.getOperator();
-            if (op == MEMBER) {                 
+            if (op == MEMBER) {                 // static method
                 targetClass
                     = resolver.lookupClass(((Symbol)e.oprand1()).get(), false);
                 isStatic = true;
@@ -500,10 +526,10 @@ public class MemberCodeGen extends CodeGen {
                     targetClass = MemberResolver.getSuperInterface(thisClass,
                                                         classFollowedByDotSuper);
                     if (inStaticMethod || (cached != null && cached.isStatic()))
-                        isStatic = true;            
+                        isStatic = true;            // should be static
                     else {
                         aload0pos = bytecode.currentPc();
-                        bytecode.addAload(0);       
+                        bytecode.addAload(0);       // this
                     }
                 }
                 else {
@@ -518,16 +544,16 @@ public class MemberCodeGen extends CodeGen {
                         if (nfe.getExpr() != target)
                             throw nfe;
 
-                        
+                        // it should be a static method.
                         exprType = CLASS;
                         arrayDim = 0;
-                        className = nfe.getField(); 
+                        className = nfe.getField(); // JVM-internal
                         isStatic = true;
                     }
 
                     if (arrayDim > 0)
                         targetClass = resolver.lookupClass(javaLangObject, true);
-                    else if (exprType == CLASS )
+                    else if (exprType == CLASS /* && arrayDim == 0 */)
                         targetClass = resolver.lookupClassByJvmName(className);
                     else
                         badMethod();
@@ -547,7 +573,12 @@ public class MemberCodeGen extends CodeGen {
         throw new CompileError("bad method");
     }
 
-    
+    /*
+     * atMethodCallCore() is also called by doit() in NewExpr.ProceedForNew
+     *
+     * @param targetClass       the class at which method lookup starts.
+     * @param found         not null if the method look has been already done.
+     */
     public void atMethodCallCore(CtClass targetClass, String mname,
                         ASTList args, boolean isStatic, boolean isSpecial,
                         int aload0pos, MemberResolver.Method found)
@@ -566,7 +597,7 @@ public class MemberCodeGen extends CodeGen {
         @SuppressWarnings("unused")
         int stack = bytecode.getStackDepth();
 
-        
+        // generate code for evaluating arguments.
         atMethodArgs(args, types, dims, cnames);
 
         if (found == null)
@@ -606,7 +637,7 @@ public class MemberCodeGen extends CodeGen {
 
             if (declClass != thisClass && AccessFlag.isPrivate(acc)) {
                 desc = getAccessibleConstructor(desc, declClass, minfo);
-                bytecode.addOpcode(Opcode.ACONST_NULL); 
+                bytecode.addOpcode(Opcode.ACONST_NULL); // the last parameter
             }
         }
         else if (AccessFlag.isPrivate(acc))
@@ -628,7 +659,11 @@ public class MemberCodeGen extends CodeGen {
         boolean popTarget = false;
         if ((acc & AccessFlag.STATIC) != 0) {
             if (!isStatic) {
-                
+                /* this method is static but the target object is
+                   on stack.  It must be popped out.  If aload0pos >= 0,
+                   then the target object was pushed by aload_0.  It is
+                   overwritten by NOP.
+                */
                 isStatic = true;
                 if (aload0pos >= 0)
                     bytecode.write(aload0pos, NOP);
@@ -638,7 +673,7 @@ public class MemberCodeGen extends CodeGen {
 
             bytecode.addInvokestatic(declClass, mname, desc);
         }
-        else if (isSpecial)    
+        else if (isSpecial)    // if (isSpecial && notStatic(acc))
             bytecode.addInvokespecial(targetClass, mname, desc);
         else {
             if (!Modifier.isPublic(declClass.getModifiers())
@@ -659,7 +694,13 @@ public class MemberCodeGen extends CodeGen {
         setReturnType(desc, isStatic, popTarget);
     }
 
-    
+    /*
+     * Finds (or adds if necessary) a hidden accessor if the method
+     * is in an enclosing class.
+     *
+     * @param desc          the descriptor of the method.
+     * @param declClass     the class declaring the method.
+     */
     protected String getAccessiblePrivate(String methodName, String desc,
                                           String newDesc, MethodInfo minfo,
                                           CtClass declClass)
@@ -676,7 +717,15 @@ public class MemberCodeGen extends CodeGen {
                                + " is private");
     }
 
-    
+    /*
+     * Finds (or adds if necessary) a hidden constructor if the given
+     * constructor is in an enclosing class.
+     *
+     * @param desc          the descriptor of the constructor.
+     * @param declClass     the class declaring the constructor.
+     * @param minfo         the method info of the constructor.
+     * @return the descriptor of the hidden constructor.
+     */
     protected String getAccessibleConstructor(String desc, CtClass declClass,
                                               MethodInfo minfo)
         throws CompileError
@@ -813,7 +862,8 @@ public class MemberCodeGen extends CodeGen {
         className = cname;
     }
 
-    
+    /* If fi == 0, the field must be a private field in an enclosing class.
+     */
     private void atFieldAssignCore(CtField f, boolean is_static, int fi,
                                    boolean is2byte) throws CompileError {
         if (fi != 0) {
@@ -831,7 +881,7 @@ public class MemberCodeGen extends CodeGen {
         else {
             CtClass declClass = f.getDeclaringClass();
             AccessorMaker maker = declClass.getAccessorMaker();
-            
+            // make should be non null.
             FieldInfo finfo = f.getFieldInfo2();
             MethodInfo minfo = maker.getFieldSetter(finfo, is_static);
             bytecode.addInvokestatic(declClass, minfo.getName(),
@@ -839,7 +889,8 @@ public class MemberCodeGen extends CodeGen {
         }
     }
 
-    
+    /* overwritten in JvstCodeGen.
+     */
     @Override
     public void atMember(Member mem) throws CompileError {
         atFieldRead(mem);
@@ -873,7 +924,11 @@ public class MemberCodeGen extends CodeGen {
         arrayDim = 0;
     }
 
-    
+    /**
+     * Generates bytecode for reading a field value.
+     * It returns a fieldref_info index or zero if the field is a private
+     * one declared in an enclosing class. 
+     */
     private int atFieldRead(CtField f, boolean isStatic) throws CompileError {
         FieldInfo finfo = f.getFieldInfo2();
         boolean is2byte = setFieldType(finfo);
@@ -898,7 +953,11 @@ public class MemberCodeGen extends CodeGen {
         return fi;
     }
 
-    
+    /**
+     * Returns null if the field is accessible.  Otherwise, it throws
+     * an exception or it returns AccessorMaker if the field is a private
+     * one declared in an enclosing class.
+     */
     private AccessorMaker isAccessibleField(CtField f, FieldInfo finfo)
         throws CompileError
     {
@@ -914,10 +973,14 @@ public class MemberCodeGen extends CodeGen {
                                    + declClass.getName() + " is private.");
         }
 
-        return null;    
+        return null;    // accessible field
     }
 
-    
+    /**
+     * Sets exprType, arrayDim, and className.
+     *
+     * @return true if the field type is long or double. 
+     */
     private boolean setFieldType(FieldInfo finfo) throws CompileError {
         String type = finfo.getDescriptor();
 
@@ -982,7 +1045,10 @@ public class MemberCodeGen extends CodeGen {
         atFieldAssignCore(f, is_static, fi, is2w);
     }
 
-    
+    /* This method also returns a value in resultStatic.
+     *
+     * @param acceptLength      true if array length is acceptable
+     */
     protected CtField fieldAccess(ASTree expr, boolean acceptLength)
             throws CompileError
     {
@@ -993,7 +1059,7 @@ public class MemberCodeGen extends CodeGen {
                 f = thisClass.getField(name);
             }
             catch (NotFoundException e) {
-                
+                // EXPR might be part of a static member access?
                 throw new NoFieldException(name, expr);
             }
 
@@ -1003,7 +1069,7 @@ public class MemberCodeGen extends CodeGen {
                     throw new CompileError(
                                 "not available in a static method: " + name);
                 else
-                    bytecode.addAload(0);       
+                    bytecode.addAload(0);       // this
 
             resultStatic = is_static;
             return f;
@@ -1012,7 +1078,10 @@ public class MemberCodeGen extends CodeGen {
             Expr e = (Expr)expr;
             int op = e.getOperator();
             if (op == MEMBER) {
-                
+                /* static member by # (extension by Javassist)
+                 * For example, if int.class is parsed, the resulting tree
+                 * is (# "java.lang.Integer" "TYPE"). 
+                 */
                 CtField f = resolver.lookupField(((Symbol)e.oprand1()).get(),
                                          (Symbol)e.oprand2());
                 resultStatic = true;
@@ -1022,13 +1091,16 @@ public class MemberCodeGen extends CodeGen {
                 CtField f = null;
                 try {
                     e.oprand1().accept(this);
-                    
+                    /* Don't call lookupFieldByJvmName2().
+                     * The left operand of . is not a class name but
+                     * a normal expression.
+                     */
                     if (exprType == CLASS && arrayDim == 0)
                         f = resolver.lookupFieldByJvmName(className,
                                                     (Symbol)e.oprand2());
                     else if (acceptLength && arrayDim > 0
                              && ((Symbol)e.oprand2()).get().equals("length"))
-                        return null;    
+                        return null;    // expr is an array length.
                     else
                         badLvalue();
 
@@ -1043,7 +1115,10 @@ public class MemberCodeGen extends CodeGen {
                     if (nfe.getExpr() != e.oprand1())
                         throw nfe;
 
-                    
+                    /* EXPR should be a static field.
+                     * If EXPR might be part of a qualified class name,
+                     * lookupFieldByJvmName2() throws NoFieldException.
+                     */
                     Symbol fname = (Symbol)e.oprand2();
                     String cname = nfe.getField();
                     f = resolver.lookupFieldByJvmName2(cname, fname, expr);
@@ -1058,7 +1133,7 @@ public class MemberCodeGen extends CodeGen {
             badLvalue();
 
         resultStatic = false;
-        return null;    
+        return null;    // never reach
     }
 
     private static void badLvalue() throws CompileError {
@@ -1097,13 +1172,19 @@ public class MemberCodeGen extends CodeGen {
         return clist;
     }
 
-    
+    /* Converts a class name into a JVM-internal representation.
+     *
+     * It may also expand a simple class name to java.lang.*.
+     * For example, this converts Object into java/lang/Object.
+     */
     @Override
     protected String resolveClassName(ASTList name) throws CompileError {
         return resolver.resolveClassName(name);
     }
 
-    
+    /* Expands a simple class name to java.lang.*.
+     * For example, this converts Object into java/lang/Object.
+     */
     @Override
     protected String resolveClassName(String jvmName) throws CompileError {
         return resolver.resolveJvmClassName(jvmName);

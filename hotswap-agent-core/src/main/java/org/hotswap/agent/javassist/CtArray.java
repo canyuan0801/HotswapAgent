@@ -1,13 +1,29 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist;
 
-
+/**
+ * Array types.
+ */
 final class CtArray extends CtClass
 {
     protected ClassPool pool;
 
-
+    // the name of array type ends with "[]".
     CtArray(String name, ClassPool cp)
     {
         super(name);
@@ -45,8 +61,8 @@ final class CtArray extends CtClass
     {
         if (interfaces == null) {
             Class<?>[] intfs = Object[].class.getInterfaces();
-
-
+            // java.lang.Cloneable and java.io.Serializable.
+            // If the JVM is CLDC, intfs is empty.
             interfaces = new CtClass[intfs.length];
             for (int i = 0; i < intfs.length; i++)
                 interfaces[i] = pool.get(intfs[i].getName());

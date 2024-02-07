@@ -1,4 +1,26 @@
-
+/*
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ *
+ */
 package org.hotswap.agent.plugin.proxy;
 
 import java.util.Map;
@@ -15,9 +37,13 @@ import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.RemappingAnnotationAdapter;
 import org.objectweb.asm.commons.RemappingMethodAdapter;
 
-
+/**
+ * @author Ivan Dubrov
+ */
 public class TestClassAdapter extends ClassRemapper {
-
+    /**
+     * This suffix is automatically removed from the method.
+     */
     private final static String METHOD_SUFFIX = "___";
 
     private boolean isObject;
@@ -36,7 +62,7 @@ public class TestClassAdapter extends ClassRemapper {
     @Override
     public void visit(int version, int access, String name, String signature,
             String superName, String[] interfaces) {
-
+        // For java/lang/Object redefinition
         String newName = remapper.mapType(name);
         if (newName.equals("java/lang/Object")) {
             superName = null;
@@ -52,7 +78,11 @@ public class TestClassAdapter extends ClassRemapper {
                 signature, exceptions);
     }
 
-
+    /**
+     * Get renamed class name.
+     *
+     * @return
+     */
     public String getClassName() {
         return remapper.mapType(className);
     }

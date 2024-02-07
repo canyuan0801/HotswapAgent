@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.deltaspike.command;
 
 import java.lang.reflect.InvocationHandler;
@@ -13,7 +30,11 @@ import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.plugin.deltaspike.DeltaspikeClassSignatureHelper;
 import org.hotswap.agent.util.ReflectionHelper;
 
-
+/**
+ * The Class PartialBeanClassRefreshAgent.
+ *
+ * @author Vladimir Dvorak
+ */
 public class PartialBeanClassRefreshAgent {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(PartialBeanClassRefreshAgent.class);
@@ -38,12 +59,12 @@ public class PartialBeanClassRefreshAgent {
                 Class<?> targetClass = (Class) ReflectionHelper.get(lifecycle, "targetClass");
                 PartialBeanProxyFactory proxyFactory = PartialBeanProxyFactory.getInstance();
                 try {
-
+                    // Deltaspike 1.5
                     Method m3 = PartialBeanProxyFactory.class.getMethod("getProxyClass", new Class[] { BeanManager.class, Class.class, Class.class} );
                     Class<? extends InvocationHandler> delegateInvocationHandlerClass = (Class) ReflectionHelper.get(lifecycle, "delegateInvocationHandlerClass");
                     m3.invoke(proxyFactory, new Object[] {BeanManagerProvider.getInstance().getBeanManager(), targetClass, delegateInvocationHandlerClass} );
                 } catch (NoSuchMethodException e) {
-
+                    // Deltaspike 1.7
                     Method m2 = PartialBeanProxyFactory.class.getMethod("getProxyClass", new Class[] { BeanManager.class, Class.class } );
                     m2.invoke(proxyFactory, new Object[] {BeanManagerProvider.getInstance().getBeanManager(), targetClass} );
                 }

@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.bytecode.stackmap;
 
@@ -10,12 +24,18 @@ import org.hotswap.agent.javassist.bytecode.MethodInfo;
 
 public class TypedBlock extends BasicBlock {
     public int stackTop, numLocals;
-
-
+    // localsTypes is set to non-null when this block is first visited by a MapMaker.
+    // see alreadySet().
     public TypeData[] localsTypes;
     public TypeData[] stackTypes;
 
-
+    /**
+     * Divides the method body into basic blocks.
+     * The type information of the first block is initialized.
+     *
+     * @param optimize       if it is true and the method does not include
+     *                      branches, this method returns null.
+     */
     public static TypedBlock[] makeBlocks(MethodInfo minfo, CodeAttribute ca,
                                           boolean optimize)
         throws BadBytecode
@@ -75,7 +95,9 @@ public class TypedBlock extends BasicBlock {
         localsTypes = locals;
     }
 
-
+    /*
+     * Computes the correct value of numLocals.
+     */
     public void resetNumLocals() {
         if (localsTypes != null) {
             int nl = localsTypes.length;
@@ -104,7 +126,16 @@ public class TypedBlock extends BasicBlock {
         }
     }
 
-
+    /**
+     * Initializes the first block by the given method descriptor.
+     *
+     * @param block             the first basic block that this method initializes.
+     * @param className         a dot-separated fully qualified class name.
+     *                          For example, <code>javassist.bytecode.stackmap.BasicBlock</code>.
+     * @param methodDesc        method descriptor.
+     * @param isStatic          true if the method is a static method.
+     * @param isConstructor     true if the method is a constructor.
+     */
     void initFirstBlock(int maxStack, int maxLocals, String className,
                         String methodDesc, boolean isStatic, boolean isConstructor)
         throws BadBytecode

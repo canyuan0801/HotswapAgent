@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.proxy;
 
 import java.io.ByteArrayOutputStream;
@@ -11,12 +28,21 @@ import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.javassist.LoaderClassPath;
 import org.hotswap.agent.logging.AgentLogger;
 
-
+/**
+ *
+ * @author Erki Ehtla
+ *
+ */
 public class ProxyTransformationUtils {
     private static AgentLogger LOGGER = AgentLogger.getLogger(ProxyTransformationUtils.class);
     private static Map<ClassLoader, ClassPool> classPoolMap = new WeakHashMap<>(3);
 
-    
+    /**
+     * Creates one ClassPool per ClassLoader and caches it
+     *
+     * @param classLoader
+     * @return
+     */
     public static ClassPool getClassPool(ClassLoader classLoader) {
         ClassPool classPool = classPoolMap.get(classLoader);
         if (classPool == null) {
@@ -31,7 +57,12 @@ public class ProxyTransformationUtils {
         return classPool;
     }
 
-    
+    /**
+     * Creates a ClassPool with supplied ClassLoader
+     *
+     * @param classLoader
+     * @return
+     */
     public static ClassPool createClassPool(final ClassLoader classLoader) {
         ClassPool cp = new ClassPool() {
             @Override

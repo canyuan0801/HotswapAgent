@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.proxy.hscglib;
 
 import java.lang.ref.WeakReference;
@@ -14,12 +31,23 @@ import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.classloader.ClassLoaderHelper;
 
-
+/**
+ * Inits plugin and adds bytecode generation call parameter recording
+ *
+ * @author Erki Ehtla
+ *
+ */
 public class GeneratorParametersTransformer {
     private static AgentLogger LOGGER = AgentLogger.getLogger(GeneratorParametersTransformer.class);
     private static Map<ClassLoader, WeakReference<Map<String, Object>>> classLoaderMaps = new WeakHashMap<ClassLoader, WeakReference<Map<String, Object>>>();
 
-
+    /**
+     * Adds bytecode generation call parameter recording
+     *
+     * @param cc
+     * @return
+     * @throws Exception
+     */
     public static CtClass transform(CtClass cc) throws Exception {
         if (isGeneratorStrategy(cc)) {
             for (CtMethod method : cc.getDeclaredMethods()) {
@@ -33,12 +61,17 @@ public class GeneratorParametersTransformer {
         return cc;
     }
 
-
+    /**
+     * Determines if a Class is a Cglib GeneratorStrategy subclass
+     *
+     * @param cc
+     * @return
+     */
     private static boolean isGeneratorStrategy(CtClass cc) {
         String[] interfaces = cc.getClassFile2().getInterfaces();
         for (String interfaceName : interfaces) {
-
-
+            // We use class name strings because some libraries repackage cglib to a different namespace to avoid
+            // conflicts.
             if (interfaceName.endsWith(".GeneratorStrategy")) {
                 List<MethodInfo> methodInfos = cc.getClassFile2().getMethods();
                 for (MethodInfo method : methodInfos) {
@@ -51,7 +84,12 @@ public class GeneratorParametersTransformer {
         return false;
     }
 
-
+    /**
+     * Retrieves GeneratorParams Map from within a ClassLoader
+     *
+     * @param loader
+     * @return Map of Class names and parameters used for Proxy creation
+     */
     @SuppressWarnings("unchecked")
     private static Map<String, Object> getGeneratorParamsMap(ClassLoader loader) {
         try {
@@ -80,7 +118,14 @@ public class GeneratorParametersTransformer {
         }
     }
 
-
+    /**
+     * Retrieves GeneratorParams from within a ClassLoader
+     *
+     * @param loader
+     * @param name
+     *            Class name
+     * @return GeneratorParams instance in this ClassLoader
+     */
     public static GeneratorParams getGeneratorParams(ClassLoader loader, String name) {
         Object generatorParams = getGeneratorParamsMap(loader).get(name);
         if (generatorParams != null) {

@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.jbossmodules;
 
 import org.hotswap.agent.annotation.Init;
@@ -12,7 +29,11 @@ import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.PluginManagerInvoker;
 
-
+/**
+ * JBossModulesPlugin
+ *
+ * @author Vladimir Dvorak
+ */
 @Plugin(name = "JBossModules",
         description = "JBossModules - Jboss modular class loading implementation. ",
         testedVersions = {"1.4.4, 1.5.1, 1.6.x, 1.7.x, 1.8.x, 1.9.x, 1.10.x"},
@@ -23,7 +44,7 @@ public class JBossModulesPlugin {
 
     protected static AgentLogger LOGGER = AgentLogger.getLogger(JBossModulesPlugin.class);
 
-
+    // TODO : Skip system packages, it should be in config file
     private static final String SKIP_MODULES_REGEXP = "sun\\.jdk.*|ibm\\.jdk.*|javax\\..*|org\\.jboss\\..*";
     private static final String USE_MODULES_REGEXP = "deployment\\..*";
 

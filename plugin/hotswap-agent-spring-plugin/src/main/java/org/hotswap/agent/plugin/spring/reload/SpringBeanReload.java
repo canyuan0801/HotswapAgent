@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.spring.reload;
 
 import org.hotswap.agent.logging.AgentLogger;
@@ -31,20 +48,22 @@ import java.util.function.Consumer;
 import static org.hotswap.agent.plugin.spring.utils.RegistryUtils.maybeRegistryToBeanFactory;
 import static org.hotswap.agent.util.ReflectionHelper.get;
 
-
+/**
+ * Reload spring beans.
+ */
 public class SpringBeanReload {
     private static AgentLogger LOGGER = AgentLogger.getLogger(SpringBeanReload.class);
 
     private AtomicBoolean isReloading = new AtomicBoolean(false);
 
-
+    // it is synchronized set because it is used synchronized block
     private Set<Class<?>> classes = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
+    // it is synchronized set because it is used synchronized block
     private Set<URL> properties = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private Set<URL> yamls = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
+    // it is synchronized set because it is used synchronized block
     private Set<URL> xmls = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
+    // it is synchronized set because it is used synchronized block
     private Set<BeanDefinitionHolder> newScanBeanDefinitions = new HashSet<>();
     private Set<String> changedBeanNames = new HashSet<>();
     Set<String> newBeanNames = new HashSet<>();
@@ -250,47 +269,47 @@ public class SpringBeanReload {
     }
 
     private void doReload() {
-
+        // when there are changes, it will rerun the while loop
         while (true) {
-
+            // 1. clear cache
             clearSpringCache();
-
+            // 2. properties reload
             boolean propertiesChanged = refreshProperties();
-
+            // 3. reload xmls: the beans will be destroyed
             reloadXmlBeanDefinitions(propertiesChanged);
-
+            // 4. add changed classes and changed beans into recreate beans
             refreshChangedClassesAndBeans();
 
-
+            // 5. load new beans from scanning. The newBeanNames is used to print the suitable log.
             refreshNewBean();
-
+            // 6. destroy bean including factory bean
             destroyBeans();
-
+            // rerun the while loop if it has changes
             if (checkHasChange() && printReloadLog()) {
                 continue;
             }
-
+            //beanDefinition enhanced: BeanFactoryPostProcessor
             ProxyReplacer.clearAllProxies();
 
-
-
+            // 7. invoke the Bean lifecycle steps
+            // 7.1 invoke BeanFactoryPostProcessor
             invokeBeanFactoryPostProcessors(beanFactory);
             addBeanPostProcessors(beanFactory);
-
+            // 7.2 process @Value and @Autowired of singleton beans excluding destroyed beans
             processAutowiredAnnotationBeans();
-
+            // 7.3 process @Configuration
             processConfigBeanDefinitions();
-
+            // 8. skip the while loop if no change
             if (!checkHasChange()) {
                 break;
             }
         }
 
-
+        // 9 invoke getBean to instantiate singleton beans
         preInstantiateSingleton();
-
+        // 10 reset mvc initialized, it will update the mapping of url and handler
         refreshRequestMapping();
-
+        // 11 clear all process cache
         clearLocalCache();
     }
 
@@ -298,14 +317,14 @@ public class SpringBeanReload {
         if (!checkHasChange()) {
             return false;
         }
-
+        // check the classes is bean of spring, if not remove it
         synchronized (classes) {
             if (!classes.isEmpty()) {
                 Iterator<Class<?>> iterator = classes.iterator();
                 while (iterator.hasNext()) {
                     Class<?> clazz = iterator.next();
                     String[] names = beanFactory.getBeanNamesForType(clazz);
-
+                    // if the class is not spring bean or Factory Class, remove it
                     if ((names == null || names.length == 0) && !isFactoryMethod(clazz)) {
                         LOGGER.trace("the class '{}' is not spring bean or factory class", clazz.getName());
                         iterator.remove();
@@ -349,14 +368,14 @@ public class SpringBeanReload {
         synchronized (properties) {
             if (!properties.isEmpty()) {
                 beansToProcess.addAll(beanFactoryAssistant.placeHolderXmlMapping.keySet());
-
+                // clear properties
                 properties.clear();
                 propertiesChanged = true;
             }
         }
         synchronized (yamls) {
             if (!yamls.isEmpty()) {
-
+                // clear
                 yamls.clear();
                 propertiesChanged = true;
             }
@@ -380,13 +399,13 @@ public class SpringBeanReload {
         LOGGER.debug("refresh changed classes and beans of {}, classes:{}, changedBeans:{}",
                 ObjectUtils.identityToString(beanFactory), classes, changedBeanNames);
         Set<String> configurationBeansToReload = new HashSet<>();
-
-
-
+        // we should refresh changed classes before refresh changed beans.
+        // after refresh class, maybe we will add some changed beans into changedBeanNames
+        // 1. refresh changed classes
         refreshChangedClass(configurationBeansToReload::addAll);
-
+        // 2. refresh changed beans
         refreshChangedBeans(configurationBeansToReload::addAll);
-
+        // 3 when the bean is factory bean, it should be recreated.
         resetConfigurationBeanDefinition(configurationBeansToReload);
         LOGGER.trace("clear class cache of {}", ObjectUtils.identityToString(beanFactory));
     }
@@ -403,9 +422,9 @@ public class SpringBeanReload {
             if (names != null && names.length > 0) {
                 LOGGER.trace("the bean of class {} has the bean names {}", clazz.getName(), Arrays.asList(names));
                 beansToProcess.addAll(Arrays.asList(names));
-
+                // 3.1 when the bean is @Configuration, it should be recreated.
                 reloadBeans.accept(reloadAnnotatedBeanDefinitions(clazz, names));
-
+                // notify the class is changed
                 SpringEventSource.INSTANCE.fireEvent(new ClassChangeEvent(clazz, beanFactory));
             } else {
                 LOGGER.debug("the bean of class {} not found", clazz.getName());
@@ -421,7 +440,7 @@ public class SpringBeanReload {
         }
         for (String beanName : beanNamesToProcess) {
             beansToProcess.add(beanName);
-
+            // maybe this bean is not exist, or it belongs to other beanFactory
             if (!beanFactory.containsBeanDefinition(beanName)) {
                 continue;
             }
@@ -481,7 +500,7 @@ public class SpringBeanReload {
     }
 
     private void refreshRequestMapping() {
-
+        // reset mvc initialized, it will update the mapping of url and handler
         LOGGER.debug("refreshRequestMapping of {}", ObjectUtils.identityToString(beanFactory));
         ResetRequestMappingCaches.reset(beanFactory);
     }
@@ -497,15 +516,15 @@ public class SpringBeanReload {
     }
 
     private void clearSpringCache() {
-
-
+        // spring won't rebuild dependency map if injectionMetadataCache is not cleared
+        // which lead to singletons depend on beans in xml won't be destroy and recreate, may be a spring bug?
         ResetSpringStaticCaches.reset();
         ResetBeanPostProcessorCaches.reset(beanFactory);
         ResetTransactionAttributeCaches.reset(beanFactory);
         ResetBeanFactoryPostProcessorCaches.reset(beanFactory);
         ProxyReplacer.clearAllProxies();
-
-
+        // fixme temperately disable it
+//        ResetBeanFactoryCaches.reset(beanFactory);
         ConfigurationClassPostProcessorEnhance.getInstance(beanFactory).resetConfigurationClassPostProcessor(beanFactory);
         ResetAnnotationCache.resetAnnotationScanner(beanFactory);
     }
@@ -530,13 +549,13 @@ public class SpringBeanReload {
                     && beanDefinition.getAttribute("org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass") != null) {
                 configurationBeansToReload.add(beanName);
                 String generateBeanName = beanNameGenerator.generateBeanName(beanDefinition, beanFactory);
-
+                // the beanName is not the same as generateBeanName, it should register a new bean definition and remove the old one.
                 if (!beanName.equals(generateBeanName)) {
                     beanFactory.removeBeanDefinition(beanName);
                     BeanDefinition newBeanDefinition = new AnnotatedGenericBeanDefinition(realClass);
                     beanFactory.registerBeanDefinition(generateBeanName, newBeanDefinition);
                 } else {
-
+                    // remove the attribute, and it will recreate the bean
                     ((AbstractBeanDefinition) beanDefinition).setBeanClass(realClass);
                     beanDefinition.removeAttribute("org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass");
                 }
@@ -549,14 +568,14 @@ public class SpringBeanReload {
         for (String beanName : new ArrayList<>(beansToProcess)) {
             destroyBean(beanName);
         }
-
+        // destroy factory bean
         for (String beanName : beanFactory.getBeanDefinitionNames()) {
             BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanName);
             if (isFactoryMethodAndNeedReload(beanName, beanDefinition)) {
                 destroyBean(beanName);
             }
         }
-
+        // clear destroy cache
         processedBeans.clear();
         destroyClasses.clear();
     }
@@ -578,7 +597,7 @@ public class SpringBeanReload {
     }
 
     private void destroyBean(String beanName) {
-
+        // FactoryBean case
         if (beanName != null && beanName.startsWith("&") && !beanFactory.containsBeanDefinition(beanName)) {
             beanName = beanName.substring(1);
         }
@@ -591,14 +610,14 @@ public class SpringBeanReload {
     }
 
     private void doDestroyBean(String beanName) {
-
+//        dependentBeanMap.remove(beanName);
         processedBeans.add(beanName);
         Object singletonObject = beanFactory.getSingleton(beanName);
         if (singletonObject != null) {
             destroyClasses.add(ClassUtils.getUserClass(singletonObject).getName());
         }
         BeanFactoryProcessor.destroySingleton(beanFactory, beanName);
-
+//        dependentBeanMap.put(beanName, new HashSet<>(Arrays.asList(dependentBeans)));
     }
 
     private boolean containBeanDependencyAtConstruct(Constructor<?> constructor) {

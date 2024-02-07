@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.spring.boot.properties;
 
 import org.hotswap.agent.plugin.spring.boot.BaseTestUtil;
@@ -49,7 +66,7 @@ public class PropertySourceTest {
                 "ps-yaml-l3", "base-properties-l4", "base-yaml-l5");
         Assert.assertTrue(propertiesChangeMockListener.newValueMap().isEmpty());
         Assert.assertTrue(propertiesChangeMockListener.oldValueMap().isEmpty());
-
+        // swap test.properties
         modifyFile("ps/hotswap/test-bak.properties", "ps/test.properties");
         Assert.assertTrue(WaitHelper.waitForCommand(new WaitHelper.Command() {
             @Override
@@ -76,7 +93,7 @@ public class PropertySourceTest {
                 "properties.l10.l12", "test-properties-l12", "test-properties-l12-v2");
         propertiesChangeMockListener.clear();
 
-
+        // swap app.properties
         modifyFile("ps/hotswap/app-bak.properties", "ps/app.properties");
         Assert.assertTrue(WaitHelper.waitForCommand(new WaitHelper.Command() {
             @Override
@@ -96,7 +113,7 @@ public class PropertySourceTest {
         assertChangeCount(2);
         propertiesChangeMockListener.clear();
 
-
+        // swap application.yaml and application.properties
         modifyFile("ps/hotswap/application-bak.properties", "application.properties");
         modifyFile("ps/hotswap/application-bak.yaml", "application.yaml");
         Assert.assertTrue(WaitHelper.waitForCommand(new WaitHelper.Command() {
@@ -118,7 +135,7 @@ public class PropertySourceTest {
         propertiesChangeMockListener.clear();
 
 
-
+        // swap application-ps.yaml and application-ps.properties
         modifyFile("ps/hotswap/application-ps-bak.properties", "application-ps.properties");
         modifyFile("ps/hotswap/application-ps-bak.yaml", "application-ps.yaml");
         Assert.assertTrue(WaitHelper.waitForCommand(new WaitHelper.Command() {

@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.mybatis.transformers;
 
 import org.apache.ibatis.javassist.bytecode.AccessFlag;
@@ -17,7 +34,11 @@ import org.hotswap.agent.plugin.mybatis.proxy.ConfigurationProxy;
 import org.hotswap.agent.plugin.mybatis.proxy.SpringMybatisConfigurationProxy;
 import org.hotswap.agent.util.PluginManagerInvoker;
 
-
+/**
+ * Static transformers for MyBatis plugin.
+ *
+ * @author Vladimir Dvorak
+ */
 public class MyBatisTransformers {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(MyBatisTransformers.class);
@@ -111,7 +132,7 @@ public class MyBatisTransformers {
 
     @OnClassLoadEvent(classNameRegexp = "org.apache.ibatis.session.SqlSessionFactoryBuilder")
     public static void patchSqlSessionFactoryBuilder(CtClass ctClass, ClassPool classPool) throws NotFoundException, CannotCompileException {
-
+        // add $$ha$factoryBean field
         CtClass objClass = classPool.get("java.lang.Object");
         CtField factoryBeanField = new CtField(objClass, FACTORYBEAN_FIELD, ctClass);
         ctClass.addField(factoryBeanField);
@@ -135,7 +156,7 @@ public class MyBatisTransformers {
 
     @OnClassLoadEvent(classNameRegexp = "org.mybatis.spring.SqlSessionFactoryBean")
     public static void patchSqlSessionFactoryBean(CtClass ctClass, ClassPool classPool) throws NotFoundException, CannotCompileException {
-
+        // add $$ha$initialized field
         CtClass booleanClass = classPool.get(boolean.class.getName());
         CtField sourceFileField = new CtField(booleanClass, INITIALIZED_FIELD, ctClass);
         ctClass.addField(sourceFileField);

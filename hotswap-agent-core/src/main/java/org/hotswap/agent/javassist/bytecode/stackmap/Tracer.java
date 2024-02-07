@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.bytecode.stackmap;
 
@@ -9,12 +23,15 @@ import org.hotswap.agent.javassist.bytecode.ConstPool;
 import org.hotswap.agent.javassist.bytecode.Descriptor;
 import org.hotswap.agent.javassist.bytecode.Opcode;
 
-
+/*
+ * A class for performing abstract interpretation.
+ * See also MapMaker class. 
+ */
 
 public abstract class Tracer implements TypeTag {
     protected ClassPool classPool;
     protected ConstPool cpool;
-    protected String returnType;
+    protected String returnType;    // used as the type of ARETURN
 
     protected int stackTop;
     protected TypeData[] stackTypes;
@@ -39,7 +56,16 @@ public abstract class Tracer implements TypeTag {
         localsTypes = TypeData.make(t.localsTypes.length);
     }
 
-
+    /**
+     * Does abstract interpretation on the given bytecode instruction.
+     * It records whether or not a local variable (i.e. register) is accessed.
+     * If the instruction requires that a local variable or
+     * a stack element has a more specific type, this method updates the
+     * type of it.
+     *
+     * @param pos         the position of the instruction.
+     * @return      the size of the instruction at POS.
+     */
     protected int doOpcode(int pos, byte[] code) throws BadBytecode {
         try {
             int op = code[pos] & 0xff;
@@ -61,20 +87,43 @@ public abstract class Tracer implements TypeTag {
     protected void visitReturn(int pos, byte[] code) throws BadBytecode {}
     protected void visitThrow(int pos, byte[] code) throws BadBytecode {}
 
-
+    /**
+     * @param pos           the position of TABLESWITCH
+     * @param code          bytecode
+     * @param n             the number of case labels
+     * @param offsetPos     the position of the branch-target table.
+     * @param defaultOffset     the offset to the default branch target.
+     */
     protected void visitTableSwitch(int pos, byte[] code, int n,
                 int offsetPos, int defaultOffset) throws BadBytecode {}
 
-
+    /**
+     * @param pos           the position of LOOKUPSWITCH
+     * @param code          bytecode
+     * @param n             the number of case labels
+     * @param pairsPos      the position of the table of pairs of a value and a branch target.
+     * @param defaultOffset     the offset to the default branch target.
+     */
     protected void visitLookupSwitch(int pos, byte[] code, int n,
                 int pairsPos, int defaultOffset) throws BadBytecode {}
 
-
+    /**
+     * Invoked when the visited instruction is jsr.
+     * Java6 or later does not allow using RET.
+     */
     protected void visitJSR(int pos, byte[] code) throws BadBytecode {
-
+        /* Since JSR pushes a return address onto the operand stack,
+         * the stack map at the entry point of a subroutine is
+         * stackTypes resulting after executing the following code:
+         *
+         *     stackTypes[stackTop++] = TOP;
+         */
     }
 
-
+    /**
+     * Invoked when the visited instruction is ret or wide ret.
+     * Java6 or later does not allow using RET.
+     */
     protected void visitRET(int pos, byte[] code) throws BadBytecode {}
 
     private int doOpcode0_53(int pos, byte[] code, int op) throws BadBytecode {
@@ -369,7 +418,7 @@ public abstract class Tracer implements TypeTag {
 
     private int doASTORE(int index) {
         stackTop--;
-
+        // implicit upcast might be done.
         localsTypes[index] = stackTypes[stackTop];
         return 2;
     }
@@ -385,14 +434,14 @@ public abstract class Tracer implements TypeTag {
     }
 
     private int doOpcode96_147(int pos, byte[] code, int op) {
-        if (op <= Opcode.LXOR) {
+        if (op <= Opcode.LXOR) {    // IADD...LXOR
             stackTop += Opcode.STACK_GROW[op];
             return 1;
         }
 
         switch (op) {
         case Opcode.IINC :
-
+            // this does not call writeLocal().
             return 3;
         case Opcode.I2L :
             stackTypes[stackTop - 1] = LONG;
@@ -470,7 +519,7 @@ public abstract class Tracer implements TypeTag {
         case Opcode.IFGE :
         case Opcode.IFGT :
         case Opcode.IFLE :
-            stackTop--;
+            stackTop--;     // branch
             visitBranch(pos, code, ByteArray.readS16bit(code, pos + 1));
             return 3;
         case Opcode.IF_ICMPEQ :
@@ -481,20 +530,20 @@ public abstract class Tracer implements TypeTag {
         case Opcode.IF_ICMPLE :
         case Opcode.IF_ACMPEQ :
         case Opcode.IF_ACMPNE :
-            stackTop -= 2;
+            stackTop -= 2;  // branch
             visitBranch(pos, code, ByteArray.readS16bit(code, pos + 1));
             return 3;
         case Opcode.GOTO :
             visitGoto(pos, code, ByteArray.readS16bit(code, pos + 1));
-            return 3;
+            return 3;       // branch
         case Opcode.JSR :
             visitJSR(pos, code);
-            return 3;
+            return 3;       // branch
         case Opcode.RET :
             visitRET(pos, code);
             return 2;
         case Opcode.TABLESWITCH : {
-            stackTop--;
+            stackTop--;     // branch
             int pos2 = (pos & ~3) + 8;
             int low = ByteArray.read32bit(code, pos2);
             int high = ByteArray.read32bit(code, pos2 + 4);
@@ -502,7 +551,7 @@ public abstract class Tracer implements TypeTag {
             visitTableSwitch(pos, code, n, pos2 + 8, ByteArray.read32bit(code, pos2 - 4));
             return n * 4 + 16 - (pos & 3); }
         case Opcode.LOOKUPSWITCH : {
-            stackTop--;
+            stackTop--;     // branch
             int pos2 = (pos & ~3) + 8;
             int n = ByteArray.read32bit(code, pos2);
             visitLookupSwitch(pos, code, n, pos2 + 4, ByteArray.read32bit(code, pos2 - 4));
@@ -574,22 +623,22 @@ public abstract class Tracer implements TypeTag {
             visitThrow(pos, code);
             break;
         case Opcode.CHECKCAST : {
-
+            // TypeData.setType(stackTypes[stackTop - 1], "java.lang.Object", classPool);
             int i = ByteArray.readU16bit(code, pos + 1);
             String type = cpool.getClassInfo(i);
             if (type.charAt(0) == '[')
-                type = type.replace('.', '/');
+                type = type.replace('.', '/');  // getClassInfo() may return "[java.lang.Object;".
 
             stackTypes[stackTop - 1] = new TypeData.ClassName(type);
             return 3; }
         case Opcode.INSTANCEOF :
-
+            // TypeData.setType(stackTypes[stackTop - 1], "java.lang.Object", classPool);
             stackTypes[stackTop - 1] = INTEGER;
             return 3;
         case Opcode.MONITORENTER :
         case Opcode.MONITOREXIT :
             stackTop--;
-
+            // TypeData.setType(stackTypes[stackTop], "java.lang.Object", classPool);
             break;
         case Opcode.WIDE :
             return doWIDE(pos, code);
@@ -597,12 +646,12 @@ public abstract class Tracer implements TypeTag {
             return doMultiANewArray(pos, code);
         case Opcode.IFNULL :
         case Opcode.IFNONNULL :
-            stackTop--;
+            stackTop--;         // branch
             visitBranch(pos, code, ByteArray.readS16bit(code, pos + 1));
             return 3;
         case Opcode.GOTO_W :
             visitGoto(pos, code, ByteArray.read32bit(code, pos + 1));
-            return 5;
+            return 5;           // branch
         case Opcode.JSR_W :
             visitJSR(pos, code);
             return 5;
@@ -646,7 +695,7 @@ public abstract class Tracer implements TypeTag {
             doASTORE(index);
             break; }
         case Opcode.IINC :
-
+            // this does not call writeLocal().
             return 6;
         case Opcode.RET :
             visitRET(pos, code);
@@ -762,7 +811,11 @@ public abstract class Tracer implements TypeTag {
         return 3;
     }
 
-
+    /* This is a constructor call on an uninitialized object.
+     * Sets flags of other references to that object.
+     *
+     * @param offset        the offset where the object has been created.
+     */
     private void constructorCalled(TypeData target, int offset) {
         target.constructorCalled(offset);
         for (int i = 0; i < stackTop; i++)
@@ -787,8 +840,11 @@ public abstract class Tracer implements TypeTag {
         String desc = cpool.getInvokeDynamicType(i);
         checkParamTypes(desc, 1);
 
-
-
+     // assume CosntPool#REF_invokeStatic
+     /* TypeData target = stackTypes[--stackTop];
+        if (target instanceof TypeData.UninitTypeVar && target.isUninit())
+            constructorCalled((TypeData.UninitTypeVar)target);
+      */
 
         pushMemberType(desc);
         return 5;
@@ -827,7 +883,7 @@ public abstract class Tracer implements TypeTag {
             return;
         case 'V' :
             return;
-        default :
+        default : // C, B, S, I, Z
             types[index] = INTEGER;
             break;
         }

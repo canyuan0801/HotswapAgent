@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.convert;
 
@@ -15,7 +29,7 @@ final public class TransformFieldAccess extends Transformer {
     private CtClass fieldClass;
     private boolean isPrivate;
 
-
+    /* cache */
     private int newIndex;
     private ConstPool constPool;
 
@@ -37,7 +51,12 @@ final public class TransformFieldAccess extends Transformer {
             newIndex = 0;
     }
 
-
+    /**
+     * Modify GETFIELD, GETSTATIC, PUTFIELD, and PUTSTATIC so that
+     * a different field is accessed.  The new field must be declared
+     * in a superclass of the class in which the original field is
+     * declared.
+     */
     @Override
     public int transform(CtClass clazz, int pos,
                          CodeIterator iterator, ConstPool cp)

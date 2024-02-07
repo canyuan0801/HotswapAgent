@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.owb_jakarta.transformer;
 
 import org.hotswap.agent.annotation.OnClassLoadEvent;
@@ -13,7 +30,12 @@ import org.hotswap.agent.plugin.cdi.HaCdiCommons;
 import org.hotswap.agent.plugin.owb_jakarta.beans.ContextualReloadHelper;
 import org.hotswap.agent.plugin.owb_jakarta.beans.OwbHotswapContext;
 
-
+/**
+ * The Class CdiContextsTransformer.
+ *
+ * @author alpapad@gmail.com
+ * @author Vladimir Dvorak
+ */
 public class CdiContextsTransformer {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(CdiContextsTransformer.class);
@@ -68,12 +90,33 @@ public class CdiContextsTransformer {
                 "return $_;"
         );
 
-
+        //addDestroyMethod(clazz, classPool);
 
         LOGGER.debug("Class '{}' patched with hot-swapping support", clazz.getName() );
     }
 
-
+    /*
+    static void addDestroyMethod(CtClass clazz, ClassPool classPool) {
+        CtMethod destroy = null;
+        try {
+            destroy = clazz.getDeclaredMethod("destroy", new CtClass[] {classPool.get("jakarta.enterprise.context.spi.Contextual")});
+        } catch (NotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        if(destroy == null) {
+            try {
+                clazz.addMethod(CtMethod.make(//
+                        "public void destroy(jakarta.enterprise.context.spi.Contextual c) {\n"+//
+                         ContextualReloadHelper.class.getName() +".reinitialize(this, c);\n"+
+                        "}\n", clazz));
+            } catch (CannotCompileException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
+    */
 
     @OnClassLoadEvent(classNameRegexp = "org.apache.webbeans.context.AbstractContext")
     public static void transformAbstractContext(ClassPool classPool, CtClass ctClass) throws NotFoundException, CannotCompileException {

@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.config;
 
 import java.io.File;
@@ -20,30 +37,38 @@ import org.hotswap.agent.util.HotswapProperties;
 import org.hotswap.agent.util.classloader.HotswapAgentClassLoaderExt;
 import org.hotswap.agent.util.classloader.URLClassPathHelper;
 
-
+/**
+ * Plugin configuration.
+ * <p/>
+ * Single instance exists for each classloader.
+ *
+ * @author Jiri Bubnik
+ */
 public class PluginConfiguration {
     private static AgentLogger LOGGER = AgentLogger.getLogger(PluginConfiguration.class);
 
     private static final String PLUGIN_CONFIGURATION = "hotswap-agent.properties";
 
-
+    /**
+     * The Constant INCLUDED_CLASS_LOADERS_KEY. allowed list
+     */
     private static final String INCLUDED_CLASS_LOADERS_KEY = "includedClassLoaderPatterns";
 
-
+    /** The Constant EXCLUDED_CLASS_LOADERS_KEY. blocked list */
     private static final String EXCLUDED_CLASS_LOADERS_KEY = "excludedClassLoaderPatterns";
 
     Properties properties = new HotswapProperties();
 
-
+    // if the property is not defined in this classloader, look for parent classloader and it's configuration
     PluginConfiguration parent;
 
-
+    // this configuration adheres to this classloader
     final ClassLoader classLoader;
 
-
+    // the hotswap-agent.properties file (or null if not defined for this classloader)
     URL configurationURL;
 
-
+    // is property file defined directly in this classloader?
     boolean containsPropertyFileDirectly = false;
 
 
@@ -92,7 +117,7 @@ public class PluginConfiguration {
 
                 }
 
-
+                // Add logging properties defined in jvm argument like -DLOGGER=warning
                 System.getProperties().forEach((key, value) -> properties.put(key, value));
 
             } catch (Exception e) {
@@ -100,8 +125,8 @@ public class PluginConfiguration {
             }
 
         } else {
-
-
+            // search for resources not known by parent classloader (defined in THIS classloader exclusively)
+            // this is necessary in case of parent classloader precedence
             try {
                 Enumeration<URL> urls = null;
 
@@ -156,7 +181,9 @@ public class PluginConfiguration {
     }
 
 
-
+    /**
+     * Initialize the configuration.
+     */
     protected void init() {
         LogConfigurationHelper.configureLog(properties);
         initPluginPackage();
@@ -167,7 +194,7 @@ public class PluginConfiguration {
     }
 
     private void initPluginPackage() {
-
+        // only for self property (not parent)
         if (properties.containsKey("pluginPackages")) {
             String pluginPackages = properties.getProperty("pluginPackages");
 
@@ -217,7 +244,7 @@ public class PluginConfiguration {
             for (String pattern : properties.getProperty(EXCLUDED_CLASS_LOADERS_KEY).split(",")) {
                 excludedClassLoaderPatterns.add(Pattern.compile(pattern));
             }
-
+            // FIXME: this is wrong since there is single HotswapTransformer versus multiple PluginConfigurations.
             PluginManager.getInstance().getHotswapTransformer()
                     .setExcludedClassLoaderPatterns(excludedClassLoaderPatterns);
         }
@@ -243,7 +270,12 @@ public class PluginConfiguration {
         return false;
     }
 
-
+    /**
+     * Get configuration property value
+     *
+     * @param property property name
+     * @return the property value or null if not defined
+     */
     public String getProperty(String property) {
         if (properties.containsKey(property))
             return properties.getProperty(property);
@@ -253,13 +285,24 @@ public class PluginConfiguration {
             return null;
     }
 
-
+    /**
+     * Get configuration property value
+     *
+     * @param property property name
+     * @param defaultValue value to return if property not defined
+     * @return the property value or null if not defined
+     */
     public String getProperty(String property, String defaultValue) {
         String value = getProperty(property);
         return value != null ? value : defaultValue;
     }
 
-
+    /**
+     * Convenience method to get property as a boolean value using Boolean.valueOf().
+     *
+     * @param property property name
+     * @return the property value or null if not defined
+     */
     public boolean getPropertyBoolean(String property) {
         if (properties.containsKey(property))
             return Boolean.valueOf(properties.getProperty(property));
@@ -269,17 +312,25 @@ public class PluginConfiguration {
             return false;
     }
 
-
+    /**
+     * Get extraClasspath property as URL[].
+     *
+     * @return extraClasspath or empty array (never null)
+     */
     public URL[] getExtraClasspath() {
         return convertToURL(getProperty("extraClasspath"));
     }
 
-
+    /**
+     * Converts watchResources property to URL array. Invalid URLs will be skipped and logged as error.
+     */
     public URL[] getWatchResources() {
         return convertToURL(getProperty("watchResources"));
     }
 
-
+    /**
+     * Converts watchResources property to URL array. Invalid URLs will be skipped and logged as error.
+     */
     public String[] getBasePackagePrefixes() {
         String basePackagePrefix = getProperty("spring.basePackagePrefix");
         if (basePackagePrefix != null) {
@@ -288,12 +339,16 @@ public class PluginConfiguration {
         return null;
     }
 
-
+    /**
+     * Return configuration property webappDir as URL.
+     */
     public URL[] getWebappDir() {
         return convertToURL(getProperty("webappDir"));
     }
 
-
+    /**
+     * List of disabled plugin names
+     */
     public List<String> getDisabledPlugins() {
         List<String> ret = new ArrayList<>();
         for (String disabledPlugin : getProperty("disabledPlugins", "").split(",")) {
@@ -302,12 +357,16 @@ public class PluginConfiguration {
         return ret;
     }
 
-
+    /**
+     * Check if the plugin is disabled (in this classloader)
+     */
     public boolean isDisabledPlugin(String pluginName) {
         return HotswapAgent.isPluginDisabled(pluginName) || getDisabledPlugins().contains(pluginName);
     }
 
-
+    /**
+     * Check if the plugin is disabled (in this classloader)
+     */
     public boolean isDisabledPlugin(Class<?> pluginClass) {
         Plugin pluginAnnotation = pluginClass.getAnnotation(Plugin.class);
         return isDisabledPlugin(pluginAnnotation.name());
@@ -335,10 +394,10 @@ public class PluginConfiguration {
 
     private static URL resourceNameToURL(String resource) throws Exception {
         try {
-
+            // Try to format as a URL?
             return new URL(resource);
         } catch (MalformedURLException e) {
-
+            // try to locate a file
             if (resource.startsWith("./"))
                 resource = resource.substring(2);
 
@@ -347,12 +406,20 @@ public class PluginConfiguration {
         }
     }
 
-
+    /**
+     * Returns classloader associated with this configuration (i.e. it was initiated from).
+     *
+     * @return the classloader
+     */
     public ClassLoader getClassLoader() {
         return classLoader;
     }
 
-
+    /**
+     * Does this classloader contain the property file directly, or is it acquired through parent classloader.
+     *
+     * @return if this contains directly the property file
+     */
     public boolean containsPropertyFile() {
         return containsPropertyFileDirectly;
     }

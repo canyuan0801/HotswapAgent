@@ -14,13 +14,21 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-
+/**
+ * Generate plugin info and documentation into target/html.
+ *
+ * FIXME - if generated via maven, resources are inside JAR and generation fails with URI is not hierarchical exception
+ *      need to resolve path inside JAR. Currently it can be launched from the IDE.
+ */
 public class PluginDocs {
 
     public static final String TARGET_DIR = "/target/web-sources/";
     MarkdownProcessor markdownProcessor = new MarkdownProcessor();
 
-
+    /**
+     * Generate the docs.
+     * @param args no arguments necessary.
+     */
     public static void main(String[] args) {
         try {
             new PluginDocs().scan();
@@ -29,16 +37,24 @@ public class PluginDocs {
         }
     }
 
-
+    /**
+     * From a class definition resolve base URL common for all files in a maven project (project base directory).
+     *
+     * @param clazz class to use
+     * @return base path (e.g. file:/J:/HotswapAgent/HibernatePlugin)
+     */
     public static String getBaseURL(Class clazz) {
         String clazzUrl = clazz.getResource(clazz.getSimpleName() + ".class").toString();
 
-
+        // strip path to the plugin from maven root directory
         String classPath = clazz.getName().replace(".", "/");
         return clazzUrl.replace("/target/classes/" + classPath, "").replace(".class", "");
     }
 
-
+    /**
+     *
+     * @throws Exception
+     */
     public void scan() throws Exception {
         StringBuilder html = new StringBuilder();
         addHtmlHeader(html);
@@ -73,24 +89,24 @@ public class PluginDocs {
     private void writeMainReadme(String mainReadme) throws MalformedURLException {
         writeHtml(new URL(getBaseURL(getClass()) + TARGET_DIR + "README.html"), mainReadme);
 
-
+        // each <h1> section
         for (String section : mainReadme.split("\\<h1\\>")) {
             if (section.isEmpty())
                 continue;
 
-
+            // create label as content between <h1> and </h1>
             int h1EndIndex = section.indexOf("</h1>");
             if (h1EndIndex > 0) {
                 String label = section.substring(0, h1EndIndex);
-
+                // strip off header, the web page already contains it
                 String content = section.substring(h1EndIndex+5);
 
-
+                // make user-friendly valid file name
                 label = label.replaceAll("\\s", "-");
                 label = label.replaceAll("[^A-Za-z0-9-]", "");
                 label = label.toLowerCase();
 
-
+                // name file after section name
                 writeHtml(new URL(getBaseURL(getClass()) + TARGET_DIR + "section/" + label + ".html"), content);
             }
         }
@@ -151,7 +167,9 @@ public class PluginDocs {
         }
     }
 
-
+    /**
+     * Create all required directories in path for a file
+     */
     public static void assertDirExists(URL targetFile) {
         File parent = null;
         try {

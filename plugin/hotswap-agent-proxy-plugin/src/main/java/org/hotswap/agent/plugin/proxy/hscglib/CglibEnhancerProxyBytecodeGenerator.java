@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.proxy.hscglib;
 
 import java.lang.reflect.Field;
@@ -9,7 +26,13 @@ import java.util.Collection;
 import org.hotswap.agent.plugin.proxy.api.ProxyBytecodeGenerator;
 import org.hotswap.agent.util.ReflectionHelper;
 
-
+/**
+ * Creates new bytecode for a Cglib Enhancer proxy. Uses Classes loaded with a
+ * new instance of a ParentLastClassLoader.
+ *
+ * @author Erki Ehtla
+ *
+ */
 
 public class CglibEnhancerProxyBytecodeGenerator
         implements ProxyBytecodeGenerator {
@@ -20,7 +43,13 @@ public class CglibEnhancerProxyBytecodeGenerator
     private Object generator;
     private Class<?> abstractGeneratorClass;
 
-
+    /**
+     *
+     * @param param
+     *            Parameters of the previous bytecode generation call
+     * @param classLoader
+     *            Enhancer classloader
+     */
     public CglibEnhancerProxyBytecodeGenerator(GeneratorParams param,
             ClassLoader classLoader) {
         this.param = param;
@@ -40,7 +69,12 @@ public class CglibEnhancerProxyBytecodeGenerator
         private Object fieldValue;
     }
 
-
+    /**
+     * Generates bytecode for the proxy class
+     *
+     * @return bytecode of the new proxy class
+     * @throws Exception
+     */
     @Override
     public byte[] generate() throws Exception {
         Collection<FieldState> oldClassValues = getFieldValuesWithClasses();
@@ -68,7 +102,10 @@ public class CglibEnhancerProxyBytecodeGenerator
         }
     }
 
-
+    /**
+     *
+     * @return ClassGenerator interface Class instance
+     */
     private Class<?> getGeneratorInterfaceClass() {
         Class<?>[] interfaces = abstractGeneratorClass.getInterfaces();
         for (Class<?> iClass : interfaces) {
@@ -85,7 +122,14 @@ public class CglibEnhancerProxyBytecodeGenerator
         }
     }
 
-
+    /**
+     * replaces fields with Class values with new classes loaded by a
+     * ParentLastClassLoader
+     *
+     * @param fieldStates
+     * @throws IllegalAccessException
+     * @throws ClassNotFoundException
+     */
     private void setFieldValuesWithNewLoadedClasses(
             Collection<FieldState> fieldStates)
             throws IllegalAccessException, ClassNotFoundException {
@@ -112,7 +156,13 @@ public class CglibEnhancerProxyBytecodeGenerator
         return classValueFields;
     }
 
-
+    /**
+     * Load classes from ParentLastClassLoader
+     *
+     * @param fieldState
+     * @return
+     * @throws ClassNotFoundException
+     */
     private Object loadFromClassloader(Object fieldState)
             throws ClassNotFoundException {
         if (fieldState instanceof Class[]) {

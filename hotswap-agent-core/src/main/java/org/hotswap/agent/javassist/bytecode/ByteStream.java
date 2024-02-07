@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.bytecode;
 
@@ -110,9 +124,9 @@ final class ByteStream extends OutputStream {
         for (int i = offset; i < sLen; i++) {
             int c = s.charAt(i);
             if (c > 0x7ff)
-                size += 2;
+                size += 2;  // 3 bytes code
             else if (c == 0 || c > 0x7f)
-                ++size;
+                ++size;     // 2 bytes code
         }
 
         if (size > 65535)

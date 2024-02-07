@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.annotation.handler;
 
 import org.hotswap.agent.config.ClassLoaderInitListener;
@@ -17,7 +34,15 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * Annotation handler - handle @Init annotation on fields/methods.
+ * <p/>
+ * The {org.hotswap.agent.annotation.Init} annotation can be set on field or method and static or non static.
+ * See the annotation description for usage info.
+ *
+ * @author Jiri Bubnik
+ * @see org.hotswap.agent.annotation.Init
+ */
 public class InitHandler implements PluginHandler<Init> {
     private static AgentLogger LOGGER = AgentLogger.getLogger(InitHandler.class);
 
@@ -31,7 +56,7 @@ public class InitHandler implements PluginHandler<Init> {
     public boolean initField(PluginAnnotation pluginAnnotation) {
         Field field = pluginAnnotation.getField();
 
-
+        // if plugin not set, it is static method on plugin registration, use agent classloader
         ClassLoader appClassLoader = pluginAnnotation.getPlugin() == null ? getClass().getClassLoader() :
                 pluginManager.getPluginRegistry().getAppClassLoader(pluginAnnotation.getPlugin());
 
@@ -48,14 +73,14 @@ public class InitHandler implements PluginHandler<Init> {
         return true;
     }
 
-
-
+    // Main plugin initialization via @Init method.
+    // If static, just register callback, otherwise the method is immediately invoked.
     @Override
     public boolean initMethod(PluginAnnotation pluginAnnotation) {
         Object plugin = pluginAnnotation.getPlugin();
 
         if (plugin == null) {
-
+            // special case - static method - register callback
             if (Modifier.isStatic(pluginAnnotation.getMethod().getModifiers()))
                 return registerClassLoaderInit(pluginAnnotation);
             else
@@ -69,7 +94,7 @@ public class InitHandler implements PluginHandler<Init> {
         }
     }
 
-
+    // resolve all method parameter types to actual values and invoke the plugin method (both static and non static)
     private boolean invokeInitMethod(PluginAnnotation pluginAnnotation, Object plugin, ClassLoader classLoader) {
         List<Object> args = new ArrayList<>();
         for (Class type : pluginAnnotation.getMethod().getParameterTypes()) {
@@ -87,13 +112,18 @@ public class InitHandler implements PluginHandler<Init> {
         }
     }
 
-
+    /**
+     * Register on classloader init event - call the @Init static method.
+     *
+     * @param pluginAnnotation description of plugin method to call
+     * @return true if ok
+     */
     protected boolean registerClassLoaderInit(final PluginAnnotation pluginAnnotation) {
         LOGGER.debug("Registering ClassLoaderInitListener on {}", pluginAnnotation.getPluginClass());
         pluginManager.registerClassLoaderInitListener(new ClassLoaderInitListener() {
             @Override
             public void onInit(ClassLoader classLoader) {
-
+                // call the init method
                 LOGGER.debug("Init plugin {} at classloader {}.", pluginAnnotation.getPluginClass(), classLoader);
                 invokeInitMethod(pluginAnnotation, null, classLoader);
             }
@@ -101,7 +131,14 @@ public class InitHandler implements PluginHandler<Init> {
         return true;
     }
 
-
+    /**
+     * Support for autowiring of agent services - resolve instance by class.
+     *
+     * @param classLoader application classloader
+     * @param pluginClass used only for debugging messages
+     * @param type        requested type
+     * @return resolved instance or null (error is logged)
+     */
     @SuppressWarnings("unchecked")
     protected Object resolveType(ClassLoader classLoader, Class pluginClass, Class type) {
 

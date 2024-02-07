@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.spring.files;
 
 import org.hotswap.agent.logging.AgentLogger;
@@ -30,7 +47,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.hotswap.agent.plugin.spring.utils.ResourceUtils.convertToClasspathURL;
 
-
+/**
+ * IMPORTANT: DON'T REFER TO THIS CLASS IN OTHER CLASS!!
+ */
 public class XmlBeanDefinitionScannerAgent {
     private static final AgentLogger LOGGER = AgentLogger.getLogger(XmlBeanDefinitionScannerAgent.class);
 
@@ -41,19 +60,23 @@ public class XmlBeanDefinitionScannerAgent {
     private static Map<String, XmlBeanDefinitionScannerAgent> pathToAgent = new HashMap<>();
     private static boolean basePackageInited = false;
 
-
+    // xmlReader for corresponding url
     private BeanDefinitionReader reader;
 
-
+    // XML's URL the current XmlBeanDefinitionScannerAgent is responsible for
     private URL url;
 
-
+    // Beans defined in the XML file (beanName -> beanClassName)
     private Map<String, String> beansRegistered = new HashMap<>();
 
-
+    // PropertyResourceConfigurer's locations defined in the XML file
     private Set<String> propertyLocations = new HashSet<>();
 
-
+    /**
+     * Flag to check reload status.
+     * In unit test we need to wait for reload finish before the test can continue. Set flag to true
+     * in the test class and wait until the flag is false again.
+     */
     public static boolean reloadFlag = false;
 
     public static void registerBean(String beanName, BeanDefinition beanDefinition) {
@@ -67,7 +90,10 @@ public class XmlBeanDefinitionScannerAgent {
         registerPropertyLocations(agent, beanDefinition);
     }
 
-
+    /**
+     * need to ensure that when method is invoked first time , this class is not loaded,
+     * so this class is will be loaded by appClassLoader
+     */
     public static void registerXmlBeanDefinitionScannerAgent(XmlBeanDefinitionReader reader, Resource resource) {
         LOGGER.trace("registerXmlBeanDefinitionScannerAgent, reader: {}, resource: {}, beanFactory:{}", reader,
                 resource, ObjectUtils.identityToString(reader.getBeanFactory()));
@@ -91,7 +117,7 @@ public class XmlBeanDefinitionScannerAgent {
                 xmlResourcePaths.addAll(placeHolderXmlRelation.values());
             }
             Set<String> result = XmlBeanDefinitionScannerAgent.reloadXmls(beanFactory, xmls, xmlResourcePaths);
-
+            // clear the xmls after the beanDefinition is refreshed.
             xmls.clear();
             return result;
         }
@@ -107,7 +133,7 @@ public class XmlBeanDefinitionScannerAgent {
         try {
             resourceUrl = resource.getURL();
         } catch (IOException e) {
-
+            // ignore
         }
 
         if (!instances.containsKey(path)) {
@@ -271,8 +297,8 @@ public class XmlBeanDefinitionScannerAgent {
     void reloadDefinition() {
 
         LOGGER.info("Reloading XML file '{}' of {} ", url, ObjectUtils.identityToString(this.reader.getRegistry()));
-
-
+        // this will call registerBeanDefinition which in turn call resetBeanDefinition to destroy singleton
+        // maybe should use watchResourceClassLoader.getResource?
         this.reader.loadBeanDefinitions(new FileSystemResource(url.getPath()));
 
         reloadFlag = false;

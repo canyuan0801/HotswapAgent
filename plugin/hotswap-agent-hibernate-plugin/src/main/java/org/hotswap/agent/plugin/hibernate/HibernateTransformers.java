@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.hibernate;
 
 import org.hotswap.agent.annotation.OnClassLoadEvent;
@@ -14,7 +31,9 @@ import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.plugin.hibernate.proxy.SessionFactoryProxy;
 import org.hotswap.agent.util.PluginManagerInvoker;
 
-
+/**
+ * Static transformers for Hibernate plugin.
+ */
 public class HibernateTransformers {
     private static AgentLogger LOGGER = AgentLogger.getLogger(HibernateTransformers.class);
 
@@ -32,7 +51,15 @@ public class HibernateTransformers {
         return isJavax;
     }
 
-
+    /**
+     * Override HibernatePersistence.createContainerEntityManagerFactory() to return EntityManagerFactory proxy object.
+     * {@link org.hotswap.agent.plugin.hibernate.proxy.EntityManagerFactoryProxy} holds reference to all proxied factories
+     * and on refresh command replaces internal factory with fresh instance.
+     * <p/>
+     * Two variants covered - createContainerEntityManagerFactory and createEntityManagerFactory.
+     * <p/>
+     * After the entity manager factory and it's proxy are instantiated, plugin init method is invoked.
+     */
     @OnClassLoadEvent(classNameRegexp = "(org.hibernate.ejb.HibernatePersistence)|(org.hibernate.jpa.HibernatePersistenceProvider)|(org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider)|(org.springframework.orm.jpa.vendor.SpringHibernateEjbPersistenceProvider)")
     public static void proxyHibernatePersistence(ClassPool classPool, CtClass clazz) throws Exception {
         if (!isJavax(classPool)) {
@@ -68,7 +95,10 @@ public class HibernateTransformers {
         }
     }
 
-
+    /**
+     * Remove final flag from SessionFactoryImpl - we need to create a proxy on session factory and cannot
+     * use SessionFactory interface, because hibernate makes type cast to impl.
+     */
     @OnClassLoadEvent(classNameRegexp = "org.hibernate.internal.SessionFactoryImpl")
     public static void removeSessionFactoryImplFinalFlag(ClassPool classPool, CtClass clazz) throws Exception {
         if (!isJavax(classPool)) {
@@ -83,7 +113,7 @@ public class HibernateTransformers {
             return;
         }
 
-
+        // proceed only if EJB not available by the classloader
         if (checkHibernateEjb(classLoader))
             return;
 
@@ -101,7 +131,7 @@ public class HibernateTransformers {
         clazz.addMethod(newMethod);
     }
 
-
+    // check if plain Hibernate or EJB mode.
     private static boolean checkHibernateEjb(ClassLoader classLoader) {
         try {
             classLoader.loadClass("org.hibernate.ejb.HibernatePersistence");
@@ -155,7 +185,7 @@ public class HibernateTransformers {
                   + "   this.configuredBeans.clear(); " + "}",
                     ctClass));
         } catch (org.hotswap.agent.javassist.NotFoundException e) {
-
+            // Ignore, newer Hibernate versions have no cache
             ctClass.addMethod(CtNewMethod.make(
                     "public void $$ha$resetCache() {"
                   + "}",

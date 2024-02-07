@@ -8,7 +8,9 @@ import org.hotswap.agent.plugin.cdi.HaCdiCommons;
 import org.hotswap.agent.plugin.cdi.HaCdiExtraContext;
 import org.hotswap.agent.util.ReflectionHelper;
 
-
+/**
+ * The Class HaCdiExtraCxfContext.
+ */
 public class HaCdiExtraCxfContext implements HaCdiExtraContext {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(HaCdiExtraCxfContext.class);

@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.deltaspike.command;
 
 import java.lang.reflect.InvocationTargetException;
@@ -9,7 +26,11 @@ import org.hotswap.agent.command.MergeableCommand;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.plugin.deltaspike.transformer.RepositoryTransformer;
 
-
+/**
+ * The Class RepositoryRefreshCommand.
+ *
+ * @author Vladimir Dvorak
+ */
 public class RepositoryRefreshCommand  extends MergeableCommand  {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(RepositoryRefreshCommand.class);
@@ -40,7 +61,7 @@ public class RepositoryRefreshCommand  extends MergeableCommand  {
         }
     }
 
-
+    // ds<1.9
     private void refreshRepository1() {
         try {
             Method reinitializeMethod = resolveClass("org.apache.deltaspike.data.impl.meta.RepositoryComponent")
@@ -57,7 +78,7 @@ public class RepositoryRefreshCommand  extends MergeableCommand  {
         return Class.forName(name, true, appClassLoader);
     }
 
-
+    // ds>=1.9
     private void refreshRepository2() {
         try {
             LOGGER.debug( "Executing RepositoryRefreshAgent.refreshHandler('{}')", repoClassName);

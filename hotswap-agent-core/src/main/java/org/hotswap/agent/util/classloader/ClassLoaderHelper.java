@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.util.classloader;
 
 import java.lang.reflect.Method;
@@ -6,7 +23,9 @@ import java.lang.reflect.Method;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.ReflectionHelper;
 
-
+/**
+ * Utility method for classloaders.
+ */
 public class ClassLoaderHelper {
     private static AgentLogger LOGGER = AgentLogger.getLogger(ClassLoaderHelper.class);
 
@@ -22,7 +41,14 @@ public class ClassLoaderHelper {
     }
 
 
-
+    /**
+     * Check if the class was already loaded by the classloader. It does not try to load the class
+     * (opposite to Class.forName()).
+     *
+     * @param classLoader classLoader to check
+     * @param className fully qualified class name
+     * @return true if the class was loaded
+     */
     public static boolean isClassLoaded(ClassLoader classLoader, String className) {
         try {
             return findLoadedClass.invoke(classLoader, className) != null;
@@ -32,12 +58,17 @@ public class ClassLoaderHelper {
         }
     }
 
-
+    /**
+     * Some class loader has activity state. e.g. WebappClassLoader must be started before it can be used
+     *
+     * @param classLoader the class loader
+     * @return true, if is class loader active
+     */
     public static boolean isClassLoderStarted(ClassLoader classLoader) {
 
         String classLoaderClassName = (classLoader != null) ? classLoader.getClass().getName() : null;
 
-
+        // TODO: use interface instead of this hack
         if ("org.glassfish.web.loader.WebappClassLoader".equals(classLoaderClassName)||
             "org.apache.catalina.loader.WebappClassLoader".equals(classLoaderClassName) ||
             "org.apache.catalina.loader.ParallelWebappClassLoader".equals(classLoaderClassName) ||

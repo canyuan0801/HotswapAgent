@@ -7,7 +7,10 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 @ComponentScan
 @PropertySource(value = "classpath:annotation-configuration/configuration-item.properties")
 public class Annotation1Configuration {
-    
+    /**
+     * prior to spring 4.1, this bean is required to resolve ${...} placeholders within @Value annotations and <context:property-placeholder/> configuration.
+     * @return
+     */
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
         return new PropertySourcesPlaceholderConfigurer();

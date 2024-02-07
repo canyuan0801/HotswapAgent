@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.tools.rmi;
 
@@ -19,7 +33,25 @@ import org.hotswap.agent.javassist.Modifier;
 import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.javassist.Translator;
 
-
+/**
+ * A stub-code generator.  It is used for producing a proxy class.
+ *
+ * <p>The proxy class for class A is as follows:
+ *
+ * <pre>public class A implements Proxy, Serializable {
+ *   private ObjectImporter importer;
+ *   private int objectId;
+ *   public int _getObjectId() { return objectId; }
+ *   public A(ObjectImporter oi, int id) {
+ *     importer = oi; objectId = id;
+ *   }
+ *
+ *   ... the same methods that the original class A declares ...
+ * }</pre>
+ *
+ * <p>Instances of the proxy class is created by an
+ * <code>ObjectImporter</code> object.
+ */
 public class StubGenerator implements Translator {
     private static final String fieldImporter = "importer";
     private static final String fieldObjectId = "objectId";
@@ -35,12 +67,19 @@ public class StubGenerator implements Translator {
     private CtClass[] interfacesForProxy;
     private CtClass[] exceptionForProxy;
 
-
+    /**
+     * Constructs a stub-code generator.
+     */
     public StubGenerator() {
         proxyClasses = new Hashtable<String,CtClass>();
     }
 
-
+    /**
+     * Initializes the object.
+     * This is a method declared in javassist.Translator.
+     *
+     * @see javassist.Translator#start(ClassPool)
+     */
     @Override
     public void start(ClassPool pool) throws NotFoundException {
         classPool = pool;
@@ -58,16 +97,33 @@ public class StubGenerator implements Translator {
             = new CtClass[] { pool.get("org.hotswap.agent.javassist.tools.rmi.RemoteException") };
     }
 
-
+    /**
+     * Does nothing.
+     * This is a method declared in javassist.Translator.
+     * @see javassist.Translator#onLoad(ClassPool,String)
+     */
     @Override
     public void onLoad(ClassPool pool, String classname) {}
 
-
+    /**
+     * Returns <code>true</code> if the specified class is a proxy class
+     * recorded by <code>makeProxyClass()</code>.
+     *
+     * @param name              a fully-qualified class name
+     */
     public boolean isProxyClass(String name) {
         return proxyClasses.get(name) != null;
     }
 
-
+    /**
+     * Makes a proxy class.  The produced class is substituted
+     * for the original class.
+     *
+     * @param clazz             the class referenced
+     *                          through the proxy class.
+     * @return          <code>false</code> if the proxy class
+     *                  has been already produced.
+     */
     public synchronized boolean makeProxyClass(Class<?> clazz)
         throws CannotCompileException, NotFoundException
     {
@@ -148,7 +204,9 @@ public class StubGenerator implements Translator {
         return ctclasses;
     }
 
-
+    /* ms must not be an array of CtMethod.  To invoke a method ms[i]
+     * on a server, a client must send i to the server.
+     */
     private void addMethods(CtClass proxy, Method[] ms)
         throws CannotCompileException, NotFoundException
     {
@@ -178,13 +236,15 @@ public class StubGenerator implements Translator {
                 }
                 else if (!Modifier.isProtected(mod)
                          && !Modifier.isPrivate(mod))
-
+                    // if package method
                     throw new CannotCompileException(
                         "the methods must be public, protected, or private.");
         }
     }
 
-
+    /**
+     * Adds a default constructor to the super classes.
+     */
     private void modifySuperclass(CtClass orgclass)
         throws CannotCompileException, NotFoundException
     {
@@ -196,7 +256,7 @@ public class StubGenerator implements Translator {
 
             try {
                 superclazz.getDeclaredConstructor(null);
-                break;
+                break;  // the constructor with no arguments is found.
             }
             catch (NotFoundException e) {
             }

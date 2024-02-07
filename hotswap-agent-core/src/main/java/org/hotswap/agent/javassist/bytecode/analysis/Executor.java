@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 package org.hotswap.agent.javassist.bytecode.analysis;
 
 import org.hotswap.agent.javassist.ClassPool;
@@ -11,7 +25,11 @@ import org.hotswap.agent.javassist.bytecode.Descriptor;
 import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.javassist.bytecode.Opcode;
 
-
+/**
+ * Executor is responsible for modeling the effects of a JVM instruction on a frame.
+ *
+ * @author Jason T. Greene
+ */
 public class Executor implements Opcode {
     private final ConstPool constPool;
     private final ClassPool classPool;
@@ -34,13 +52,24 @@ public class Executor implements Opcode {
     }
 
 
-
+    /**
+     * Execute the instruction, modeling the effects on the specified frame and subroutine.
+     * If a subroutine is passed, the access flags will be modified if this instruction accesses
+     * the local variable table.
+     *
+     * @param method the method containing the instruction
+     * @param pos the position of the instruction in the method
+     * @param iter the code iterator used to find the instruction
+     * @param frame the frame to modify to represent the result of the instruction
+     * @param subroutine the optional subroutine this instruction belongs to.
+     * @throws BadBytecode if the bytecode violates the jvm spec
+     */
     public void execute(MethodInfo method, int pos, CodeIterator iter, Frame frame, Subroutine subroutine) throws BadBytecode {
         this.lastPos = pos;
         int opcode = iter.byteAt(pos);
 
 
-
+        // Declared opcode in order
         switch (opcode) {
             case NOP:
                 break;
@@ -274,7 +303,7 @@ public class Executor implements Opcode {
                 break;
             }
 
-
+            // Math
             case IADD:
                 evalBinaryMath(Type.INTEGER, frame);
                 break;
@@ -336,7 +365,7 @@ public class Executor implements Opcode {
                 evalBinaryMath(Type.DOUBLE, frame);
                 break;
 
-
+            // Unary
             case INEG:
                 verifyAssignable(Type.INTEGER, simplePeek(frame));
                 break;
@@ -350,7 +379,7 @@ public class Executor implements Opcode {
                 verifyAssignable(Type.DOUBLE, simplePeek(frame));
                 break;
 
-
+            // Shifts
             case ISHL:
                 evalShift(Type.INTEGER, frame);
                 break;
@@ -370,7 +399,7 @@ public class Executor implements Opcode {
                 evalShift(Type.LONG, frame);
                 break;
 
-
+            // Bitwise Math
             case IAND:
                 evalBinaryMath(Type.INTEGER, frame);
                 break;
@@ -397,7 +426,7 @@ public class Executor implements Opcode {
                 break;
             }
 
-
+            // Conversion
             case I2L:
                 verifyAssignable(Type.INTEGER, simplePop(frame));
                 simplePush(Type.LONG, frame);
@@ -469,7 +498,7 @@ public class Executor implements Opcode {
                 frame.push(Type.INTEGER);
                 break;
 
-
+            // Control flow
             case IFEQ:
             case IFNE:
             case IFLT:
@@ -607,8 +636,8 @@ public class Executor implements Opcode {
         Type index = frame.pop();
         Type array = frame.pop();
 
-
-
+        // Special case, an array defined by aconst_null
+        // TODO - we might need to be more inteligent about this
         if (array == Type.UNINIT) {
             verifyAssignable(Type.INTEGER, index);
             if (expectedComponent == Type.OBJECT) {
@@ -651,12 +680,12 @@ public class Executor implements Opcode {
         verifyAssignable(expectedComponent, component);
         verifyAssignable(Type.INTEGER, index);
 
-
-
-
-
-
-
+        // This intentionally only checks for Object on aastore
+        // downconverting of an array (no casts)
+        // e.g. Object[] blah = new String[];
+        //      blah[2] = (Object) "test";
+        //      blah[3] = new Integer(); // compiler doesnt catch it (has legal bytecode),
+        //                               // but will throw arraystoreexception
         if (expectedComponent == Type.OBJECT) {
             verifyAssignable(expectedComponent, value);
         } else {
@@ -728,7 +757,7 @@ public class Executor implements Opcode {
         while (i > 0)
             verifyAssignable(zeroExtend(types[--i]), simplePop(frame));
 
-
+        // simplePop(frame);    // assume CosntPool#REF_invokeStatic
 
         Type returnType = returnTypeFromDesc(desc);
         if (returnType != Type.VOID)
@@ -811,7 +840,7 @@ public class Executor implements Opcode {
     }
 
     private void evalNewObjectArray(int pos, CodeIterator iter, Frame frame) throws BadBytecode {
-
+        // Convert to x[] format
         Type type = resolveClassInfo(constPool.getClassInfo(iter.u16bitAt(pos + 1)));
         String name = type.getCtClass().getName();
         int opcode = iter.byteAt(pos);
@@ -855,7 +884,7 @@ public class Executor implements Opcode {
     private void evalStore(Type expected, int index, Frame frame, Subroutine subroutine) throws BadBytecode {
         Type type = simplePop(frame);
 
-
+        // RETURN_ADDRESS is allowed by ASTORE
         if (! (expected == Type.OBJECT && type == Type.RETURN_ADDRESS))
             verifyAssignable(expected, type);
         simpleSetLocal(index, type, frame);

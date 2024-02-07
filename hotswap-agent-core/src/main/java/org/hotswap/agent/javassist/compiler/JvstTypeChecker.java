@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.compiler;
 
@@ -14,7 +28,8 @@ import org.hotswap.agent.javassist.compiler.ast.Expr;
 import org.hotswap.agent.javassist.compiler.ast.Member;
 import org.hotswap.agent.javassist.compiler.ast.Symbol;
 
-
+/* Type checker accepting extended Java syntax for Javassist.
+ */
 
 public class JvstTypeChecker extends TypeChecker {
     private JvstCodeGen codeGen;
@@ -24,7 +39,9 @@ public class JvstTypeChecker extends TypeChecker {
         codeGen = gen;
     }
 
-
+    /* If the type of the expression compiled last is void,
+     * add ACONST_NULL and change exprType, arrayDim, className.
+     */
     public void addNullIfVoid() {
         if (exprType == VOID) {
             exprType = CLASS;
@@ -33,7 +50,9 @@ public class JvstTypeChecker extends TypeChecker {
         }
     }
 
-
+    /* To support $args, $sig, and $type.
+     * $args is an array of parameter list.
+     */
     @Override
     public void atMember(Member mem) throws CompileError {
         String name = mem.get();
@@ -97,7 +116,10 @@ public class JvstTypeChecker extends TypeChecker {
         super.atCastExpr(expr);
     }
 
-
+    /**
+     * Inserts a cast operator to the return type.
+     * If the return type is void, this does nothing.
+     */
     protected void atCastToRtype(CastExpr expr) throws CompileError {
         CtClass returnType = codeGen.returnType;
         expr.getOprand().accept(this);
@@ -115,7 +137,7 @@ public class JvstTypeChecker extends TypeChecker {
     protected void atCastToWrapper(CastExpr expr) throws CompileError {
         expr.getOprand().accept(this);
         if (CodeGen.isRefType(exprType) || arrayDim > 0)
-            return;
+            return;     // Object type.  do nothing.
 
         CtClass clazz = resolver.lookupClass(exprType, arrayDim, className);
         if (clazz instanceof CtPrimitiveType) {
@@ -125,7 +147,9 @@ public class JvstTypeChecker extends TypeChecker {
         }
     }
 
-
+    /* Delegates to a ProcHandler object if the method call is
+     * $proceed().  It may process $cflow().
+     */
     @Override
     public void atCallExpr(CallExpr expr) throws CompileError {
         ASTree method = expr.oprand1();
@@ -146,14 +170,17 @@ public class JvstTypeChecker extends TypeChecker {
         super.atCallExpr(expr);
     }
 
-
+    /* To support $cflow().
+     */
     protected void atCflow(ASTList cname) throws CompileError {
         exprType = INT;
         arrayDim = 0;
         className = null;
     }
 
-
+    /* To support $$.  ($$) is equivalent to ($1, ..., $n).
+     * It can be used only as a parameter list of method call.
+     */
     public boolean isParamListName(ASTList args) {
         if (codeGen.paramTypeList != null
             && args != null && args.tail() == null) {
@@ -216,7 +243,8 @@ public class JvstTypeChecker extends TypeChecker {
         }
     }
 
-
+    /* called by Javac#recordSpecialProceed().
+     */
     void compileInvokeSpecial(ASTree target, String classname,
                               String methodname, String descriptor,
                               ASTList args)
@@ -238,7 +266,9 @@ public class JvstTypeChecker extends TypeChecker {
             setType(type);
     }
 
-
+    /* Sets exprType, arrayDim, and className;
+     * If type is void, then this method does nothing.
+     */
     public void setType(CtClass type) throws CompileError {
         setType(type, 0);
     }

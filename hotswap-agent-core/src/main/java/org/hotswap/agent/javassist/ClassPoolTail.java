@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist;
 
@@ -97,7 +111,7 @@ final class JarDirClassPath implements ClassPath {
                     return is;
             }
 
-        return null;
+        return null;    // not found
     }
 
     @Override
@@ -109,7 +123,7 @@ final class JarDirClassPath implements ClassPath {
                     return url;
             }
 
-        return null;
+        return null;    // not found
     }
 }
 
@@ -164,7 +178,7 @@ final class JarClassPath implements ClassPath {
                 return new URL(String.format("jar:%s!/%s", jarfileURL, jarname));
             }
             catch (MalformedURLException e) {}
-        return null;
+        return null;            // not found
     }
 
     @Override
@@ -266,7 +280,9 @@ final class ClassPoolTail {
         return new DirClassPath(pathname);
     }
 
-
+    /**
+     * This method does not close the output stream.
+     */
     void writeClassfile(String classname, OutputStream out)
         throws NotFoundException, IOException, CannotCompileException
     {
@@ -282,10 +298,33 @@ final class ClassPoolTail {
         }
     }
 
+    /*
+    -- faster version --
+    void checkClassName(String classname) throws NotFoundException {
+        if (find(classname) == null)
+            throw new NotFoundException(classname);
+    }
+
+    -- slower version --
+
+    void checkClassName(String classname) throws NotFoundException {
+        InputStream fin = openClassfile(classname);
+        try {
+            fin.close();
+        }
+        catch (IOException e) {}
+    }
+    */
 
 
-
-
+    /**
+     * Opens the class file for the class specified by
+     * <code>classname</code>.
+     *
+     * @param classname             a fully-qualified class name
+     * @return null                 if the file has not been found.
+     * @throws NotFoundException    if any error is reported by ClassPath.
+     */
     InputStream openClassfile(String classname)
         throws NotFoundException
     {
@@ -309,10 +348,17 @@ final class ClassPoolTail {
 
         if (error != null)
             throw error;
-        return null;
+        return null;    // not found
     }
 
-
+    /**
+     * Searches the class path to obtain the URL of the class file
+     * specified by classname.  It is also used to determine whether
+     * the class file exists.
+     *
+     * @param classname     a fully-qualified class name.
+     * @return null if the class file could not be found.
+     */
     public URL find(String classname) {
         ClassPathList list = pathList;
         URL url = null;
@@ -327,7 +373,11 @@ final class ClassPoolTail {
         return null;
     }
 
-
+    /**
+     * Reads from an input stream until it reaches the end.
+     *
+     * @return          the contents of that input stream
+     */
     public static byte[] readStream(InputStream fin) throws IOException {
         byte[][] bufs = new byte[8][];
         int bufsize = 4096;
@@ -358,7 +408,11 @@ final class ClassPoolTail {
         throw new IOException("too much data");
     }
 
-
+    /**
+     * Reads from an input stream and write to an output stream
+     * until it reaches the end.  This method does not close the
+     * streams.
+     */
     public static void copyStream(InputStream fin, OutputStream fout)
         throws IOException
     {

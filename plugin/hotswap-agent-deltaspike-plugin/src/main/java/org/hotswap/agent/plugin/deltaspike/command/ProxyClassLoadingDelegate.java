@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.deltaspike.command;
 
 import java.security.ProtectionDomain;
@@ -9,7 +26,11 @@ import org.hotswap.agent.config.PluginManager;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.ReflectionHelper;
 
-
+/**
+ * Delegates proxy loading to AsmProxyClassGenerator or PluginManager.getInstance()
+ *
+ * @author Vladimir Dvorak
+ */
 public class ProxyClassLoadingDelegate {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(ProxyClassLoadingDelegate.class);
@@ -29,7 +50,7 @@ public class ProxyClassLoadingDelegate {
         MAGIC_IN_PROGRESS.remove();
     }
 
-
+    // Deltaspike 1.7
     public static Class<?> tryToLoadClassForName(String proxyClassName, Class<?> targetClass, ClassLoader classLoader) {
         if (MAGIC_IN_PROGRESS.get()) {
             return null;
@@ -39,7 +60,7 @@ public class ProxyClassLoadingDelegate {
                 proxyClassName, targetClass, classLoader);
     }
 
-
+    // Deltaspike 1.5
     public static Class<?> tryToLoadClassForName(String proxyClassName, Class<?> targetClass) {
         if (MAGIC_IN_PROGRESS.get()) {
             return null;
@@ -60,17 +81,17 @@ public class ProxyClassLoadingDelegate {
                     throw new RuntimeException(e);
                 }
             } catch (ClassNotFoundException e) {
-
+                //it has not actually been loaded yet
             }
         }
         try {
             Class<?> proxyClassGeneratorClass = null;
             try {
-
+                // proxy generator from ds1.9
                 proxyClassGeneratorClass = loader.loadClass("org.apache.deltaspike.proxy.impl.AsmDeltaSpikeProxyClassGenerator");
             } catch (ClassNotFoundException e1) {
                 try {
-
+                // proxy generator from ds<1.9
                     proxyClassGeneratorClass = loader.loadClass("org.apache.deltaspike.proxy.impl.AsmProxyClassGenerator");
                 } catch (ClassNotFoundException e2) {
                     LOGGER.error("DeltaspikeProxyClassGenerator class not found!");
@@ -87,7 +108,7 @@ public class ProxyClassLoadingDelegate {
         return null;
     }
 
-
+    // for DS >= 1.9.6
     public static Class<?> defineClass(ClassLoader loader, String className, byte[] bytes, Class<?> originalClass, ProtectionDomain protectionDomain) {
         if (MAGIC_IN_PROGRESS.get()) {
             try {
@@ -101,13 +122,13 @@ public class ProxyClassLoadingDelegate {
                     throw new RuntimeException(e);
                 }
             } catch (ClassNotFoundException e) {
-
+                //it has not actually been loaded yet
             }
         }
         try {
             Class<?> classDefiner = null;
             try {
-
+                // ClassDefiner introduced in ds 1.9.6
                 classDefiner = loader.loadClass("org.apache.deltaspike.proxy.impl.ClassDefiner");
             } catch (ClassNotFoundException e1) {
                 LOGGER.error("ClassDefiner class not found!");

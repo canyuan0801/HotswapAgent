@@ -46,14 +46,14 @@ public class TransactionalTest {
     @Ignore
     public void transactionalTest() throws Exception {
         System.out.println("TransactionalTest.transactionalTest." + beanFactory);
-
+        //create table
         studentService.createTable();
 
-
+        //insert data
         String name1 = "name1";
         Assert.assertEquals(1, studentService.insertOriginalData(name1));
 
-
+        //1.change name1 to name2, but expect rollback to name1 because an IOException was thrown
         String name2 = "name2";
         try {
             studentTransactionalService.changeName(name1, name2, new IOException());
@@ -61,11 +61,11 @@ public class TransactionalTest {
         }
         Assert.assertEquals(name1, studentService.findName(name1));
 
-
+        //swap "rollbackFor = IOException.class" to "rollbackFor = ParseException.class"
         int reloadTimes = 1;
         swappingRule.swapClasses(StudentTransactionalService1.class, StudentTransactionalService2.class, reloadTimes++);
 
-
+        //2.change name1 to name2 and expect not rollback because rollbackFor=ParseException.class but throw IOException
         try {
             studentTransactionalService.changeName(name1, name2, new IOException());
         } catch (Exception ignored) {

@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.weld_jakarta.command;
 
 import java.lang.reflect.InvocationTargetException;
@@ -14,7 +31,15 @@ import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.plugin.weld_jakarta.BeanReloadStrategy;
 import org.hotswap.agent.watch.WatchFileEvent;
 
-
+/**
+ * BeanClassRefreshCommand. Collect all classes definitions/redefinitions for single archive
+ *
+ * 1. Merge all commands (definition, redefinition) for single archive to single command.
+ * 2. Call proxy redefinitions in BeanClassRefreshAgent for all merged commands
+ * 3. Call bean class reload in BeanDepoymentArchiveAgent for all merged commands
+ *
+ * @author Vladimir Dvorak
+ */
 public class BeanClassRefreshCommand extends MergeableCommand {
     private static AgentLogger LOGGER = AgentLogger.getLogger(BeanClassRefreshCommand.class);
 
@@ -36,7 +61,7 @@ public class BeanClassRefreshCommand extends MergeableCommand {
 
     Map<Object, Object> registeredProxiedBeans;
 
-
+    // either event or classDefinition is set by constructor (watcher or transformer)
     WatchFileEvent event;
 
     public BeanClassRefreshCommand(ClassLoader classLoader, String archivePath, Map<Object, Object> registeredProxiedBeans,
@@ -56,11 +81,11 @@ public class BeanClassRefreshCommand extends MergeableCommand {
         this.archivePath = normalizedArchivePath;
         this.event = event;
 
-
+        // strip from URI prefix up to basePackage and .class suffix.
         String classFullPath = event.getURI().getPath();
         int index = classFullPath.indexOf(normalizedArchivePath);
         if (index == 0) {
-
+            // Strip archive path from beginning and .class from the end to get class name from full path to class file
             String classPath = classFullPath.substring(normalizedArchivePath.length());
             classPath = classPath.substring(0, classPath.indexOf(".class"));
             if (classPath.startsWith("/")) {
@@ -182,7 +207,7 @@ public class BeanClassRefreshCommand extends MergeableCommand {
                         className,
                         oldFullSignatures,
                         oldSignatures,
-                        strBeanReloadStrategy
+                        strBeanReloadStrategy // passed as String since BeanClassRefreshAgent has different classloader
                 );
             } catch (NoSuchMethodException e) {
                 throw new IllegalStateException("Plugin error, method not found", e);
@@ -196,7 +221,11 @@ public class BeanClassRefreshCommand extends MergeableCommand {
         }
     }
 
-
+    /**
+     * Check all merged events with same className for delete and create events. If delete without create is found, than assume
+     * file was deleted.
+     * @param mergedCommands
+     */
     private boolean isDeleteEvent(List<Command> mergedCommands) {
         boolean createFound = false;
         boolean deleteFound = false;

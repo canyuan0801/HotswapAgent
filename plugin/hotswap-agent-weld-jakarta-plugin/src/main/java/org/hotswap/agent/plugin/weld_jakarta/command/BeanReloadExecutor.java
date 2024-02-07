@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.weld_jakarta.command;
 
 import java.lang.annotation.Annotation;
@@ -37,7 +54,7 @@ import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.bean.AbstractClassBean;
 import org.jboss.weld.bean.ManagedBean;
 import org.jboss.weld.bean.attributes.BeanAttributesFactory;
-
+// import org.jboss.weld.context.ContextNotActiveException;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.manager.api.WeldManager;
 import org.jboss.weld.metadata.TypeStore;
@@ -51,13 +68,21 @@ public class BeanReloadExecutor {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(BeanReloadExecutor.class);
 
-
+    /**
+     * Reload bean in existing bean manager.
+     *
+     * @param bdaId the Bean Deployment Archive ID
+     * @param beanClass the bean class
+     * @param oldFullSignatures the old full signatures
+     * @param oldSignatures the old signatures
+     * @param strReloadStrategy the str reload strategy
+     */
     public static void reloadBean(String bdaId, Class<?> beanClass, Map<String, String> oldFullSignatures,
             Map<String, String> oldSignatures, String strReloadStrategy) {
 
         BeanReloadStrategy reloadStrategy;
 
-
+        // check if it is Object descendant (not interface)
         if (!Object.class.isAssignableFrom(beanClass)) {
             return;
         }
@@ -86,7 +111,7 @@ public class BeanReloadExecutor {
             beanManager = (BeanManagerImpl) bm;
         }
 
-
+        // TODO: check if archive is excluded
 
         Set<Bean<?>> beans = beanManager.getBeans(beanClass, new AnnotationLiteral<Any>() {});
 
@@ -101,7 +126,7 @@ public class BeanReloadExecutor {
                 }
                 if (bean instanceof AbstractClassBean) {
                     EnhancedAnnotatedType eat = createAnnotatedTypeForExistingBeanClass(bdaId, bean);
-                    if (!eat.isAbstract() || !eat.getJavaClass().isInterface()) {
+                    if (!eat.isAbstract() || !eat.getJavaClass().isInterface()) { // injectionTargetCannotBeCreatedForInterface
                         ((AbstractClassBean)bean).setProducer(beanManager.getLocalInjectionTargetFactory(eat).createInjectionTarget(eat, bean, false));
                         if (isReinjectingContext(bean) || HaCdiCommons.isInExtraScope(bean)) {
                             doReloadAbstractClassBean(beanManager, (AbstractClassBean) bean, oldSignatures, reloadStrategy);
@@ -151,10 +176,10 @@ public class BeanReloadExecutor {
                 reloadStrategy == BeanReloadStrategy.CLASS_CHANGE ||
                 (reloadStrategy != BeanReloadStrategy.NEVER && signatureByStrategy != null && !signatureByStrategy.equals(oldSignature)))
                 ) {
-
+            // Reload bean in contexts - invalidates existing instances
             doReloadBeanInBeanContexts(beanManager, (ManagedBean<?>) bean);
         } else {
-
+            // Reinjects bean instances in aproperiate contexts
             doReinjectBean(beanManager, bean);
         }
     }
@@ -196,7 +221,7 @@ public class BeanReloadExecutor {
     @SuppressWarnings("unchecked")
     private static void doCallInject(BeanManagerImpl beanManager, AbstractClassBean bean, Object instance) {
 
-
+        // In whatever reason, we have to use reflection call for beanManager.createCreationalContext() in weld>=3.0
         Method m = null;
         try {
             m = beanManager.getClass().getMethod("createCreationalContext", Contextual.class);
@@ -251,7 +276,7 @@ public class BeanReloadExecutor {
         if(ContextualReloadHelper.addToReloadSet(context, managedBean)) {
             LOGGER.debug("Bean {}, added to reload set in context '{}'", managedBean, context.getClass());
         } else {
-
+            // fallback for not patched contexts
             doReinjectBean(beanManager, managedBean);
         }
     }
@@ -273,7 +298,7 @@ public class BeanReloadExecutor {
                 bean.initializeAfterBeanDiscovery();
                 LOGGER.debug("Bean defined '{}'", beanClass.getName());
             } else {
-
+                // TODO : define session bean
                 LOGGER.warning("Bean NOT? defined '{}', session bean?", beanClass.getName());
             }
         } catch (Exception e) {

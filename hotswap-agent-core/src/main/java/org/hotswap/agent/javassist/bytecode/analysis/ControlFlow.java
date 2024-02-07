@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.bytecode.analysis;
 
@@ -11,19 +25,42 @@ import org.hotswap.agent.javassist.bytecode.BadBytecode;
 import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.javassist.bytecode.stackmap.BasicBlock;
 
-
+/**
+ * Represents the control flow graph of a given method.
+ *
+ * <p>To obtain the control flow graph, do the following:</p>
+ *
+ * <pre>CtMethod m = ...
+ * ControlFlow cf = new ControlFlow(m);
+ * Block[] blocks = cf.basicBlocks();
+ * </pre>
+ *
+ * <p><code>blocks</code> is an array of basic blocks in
+ * that method body.</p>
+ *
+ * @see javassist.CtMethod
+ * @see Block
+ * @see Frame
+ * @see Analyzer
+ * @author Shigeru Chiba
+ * @since 3.16
+ */
 public class ControlFlow {
     private CtClass clazz;
     private MethodInfo methodInfo;
     private Block[] basicBlocks;
     private Frame[] frames;
 
-
+    /**
+     * Constructs a control-flow analyzer for the given method.
+     */
     public ControlFlow(CtMethod method) throws BadBytecode {
         this(method.getDeclaringClass(), method.getMethodInfo2());
     }
 
-
+    /**
+     * Constructs a control-flow analyzer.
+     */
     public ControlFlow(CtClass ctclazz, MethodInfo minfo) throws BadBytecode {
         clazz = ctclazz;
         methodInfo = minfo;
@@ -64,12 +101,24 @@ public class ControlFlow {
         }
     }
 
-
+    /**
+     * Returns all the basic blocks in the method body.
+     *
+     * @return an array of basic blocks, the array has length 0 if
+     * the method doesn't have code.
+     */
     public Block[] basicBlocks() {
         return basicBlocks;
     }
 
-
+    /**
+     * Returns the types of the local variables and stack frame entries
+     * available at the given position.  If the byte at the position is
+     * not the first byte of an instruction, then this method returns
+     * null.
+     *
+     * @param pos       the position.
+     */
     public Frame frameAt(int pos) throws BadBytecode {
         if (frames == null)
             frames = new Analyzer().analyze(clazz, methodInfo);
@@ -77,7 +126,26 @@ public class ControlFlow {
         return frames[pos];
     }
 
-
+    /**
+     * Constructs a dominator tree.  This method returns an array of
+     * the tree nodes.  The first element of the array is the root
+     * of the tree.
+     * 
+     * <p> The order of the elements is the same as that
+     * of the elements in the <code>Block</code> array returned
+     * by the <code>basicBlocks</code>
+     * method.  If a <code>Block</code> object is at the i-th position
+     * in the <code>Block</code> array, then  
+     * the <code>Node</code> object referring to that
+     * <code>Block</code> object is at the i-th position in the
+     * array returned by this method.
+     * For every array element <code>node</code>, its index in the
+     * array is equivalent to <code>node.block().index()</code>. 
+     *
+     * @return an array of the tree nodes, or null if the method doesn't have code.
+     * @see Node#block()
+     * @see Block#index()
+     */
     public Node[] dominatorTree() {
         int size = basicBlocks.length;
         if (size == 0)
@@ -106,7 +174,26 @@ public class ControlFlow {
         return nodes;
     }
 
-
+    /**
+     * Constructs a post dominator tree.  This method returns an array of
+     * the tree nodes.  Note that the tree has multiple roots.
+     * The parent of the root nodes is null.
+     * 
+     * <p> The order of the elements is the same as that
+     * of the elements in the <code>Block</code> array returned
+     * by the <code>basicBlocks</code>
+     * method.  If a <code>Block</code> object is at the i-th position
+     * in the <code>Block</code> array, then  
+     * the <code>Node</code> object referring to that
+     * <code>Block</code> object is at the i-th position in the
+     * array returned by this method.
+     * For every array element <code>node</code>, its index in the
+     * array is equivalent to <code>node.block().index()</code>.
+     *
+     * @return an array of the tree nodes, or null if the method doesn't have code.
+     * @see Node#block()
+     * @see Block#index()
+     */
     public Node[] postDominatorTree() {
         int size = basicBlocks.length;
         if (size == 0)
@@ -148,9 +235,20 @@ public class ControlFlow {
         return nodes;
     }
 
-
+    /**
+     * Basic block.
+     * It is a sequence of contiguous instructions that do not contain
+     * jump/branch instructions except the last one.
+     * Since Java6 or later does not allow <code>JSR</code>,
+     * we deal with <code>JSR</code> as a non-branch instruction.
+     */
     public static class Block extends BasicBlock {
-
+        /**
+         * A field that can be freely used for storing extra data.
+         * A client program of this control-flow analyzer can append
+         * an additional attribute to a <code>Block</code> object.
+         * The Javassist library never accesses this field.
+         */
         public Object clientData = null;
 
         int index;
@@ -174,30 +272,56 @@ public class ControlFlow {
 
         BasicBlock[] getExit() { return exit; }
 
-
+        /**
+         * Returns the position of this block in the array of
+         * basic blocks that the <code>basicBlocks</code> method
+         * returns.
+         *
+         * @see #basicBlocks()
+         */
         public int index() { return index; }
 
-
+        /**
+         * Returns the position of the first instruction
+         * in this block.
+         */
         public int position() { return position; }
 
-
+        /**
+         * Returns the length of this block.
+         */
         public int length() { return length; }
 
-
+        /**
+         * Returns the number of the control paths entering this block.
+         */
         public int incomings() { return incoming; }
 
-
+        /**
+         * Returns the block that the control may jump into this block from.
+         */
         public Block incoming(int n) {
             return entrances[n];
         }
 
-
+        /**
+         * Return the number of the blocks that may be executed
+         * after this block.
+         */
         public int exits() { return exit == null ? 0 : exit.length; }
 
-
+        /**
+         * Returns the n-th block that may be executed after this
+         * block.
+         *
+         * @param n     an index in the array of exit blocks.
+         */
         public Block exit(int n) { return (Block)exit[n]; }
 
-
+        /**
+         * Returns catch clauses that will catch an exception thrown
+         * in this block. 
+         */
         public Catcher[] catchers() {
             List<Catcher> catchers = new ArrayList<Catcher>();
             BasicBlock.Catch c = toCatch;
@@ -218,7 +342,9 @@ public class ControlFlow {
         abstract BasicBlock[] entrances(Node n);
     }
 
-
+    /**
+     * A node of (post) dominator trees. 
+     */
     public static class Node {
         private Block block;
         private Node parent;
@@ -229,7 +355,9 @@ public class ControlFlow {
             parent = null;
         }
 
-
+        /**
+         * Returns a <code>String</code> representation.
+         */
         @Override
         public String toString() {
             StringBuffer sbuf = new StringBuffer();
@@ -244,19 +372,33 @@ public class ControlFlow {
             return sbuf.toString();
         }
 
-
+        /**
+         * Returns the basic block indicated by this node.
+         */
         public Block block() { return block; }
 
-
+        /**
+         * Returns the parent of this node.
+         */
         public Node parent() { return parent; }
 
-
+        /**
+         * Returns the number of the children of this node.
+         */
         public int children() { return children.length; }
 
-
+        /**
+         * Returns the n-th child of this node.
+         *  
+         * @param n     an index in the array of children.
+         */
         public Node child(int n) { return children[n]; }
 
-
+        /*
+         * After executing this method, distance[] represents the post order of the tree nodes.
+         * It also represents distances from the root; a bigger number represents a shorter
+         * distance.  parent is set to its parent in the depth first spanning tree.
+         */
         int makeDepth1stTree(Node caller, boolean[] visited, int counter, int[] distance, Access access) {
             int index = block.index;
             if (visited[index])
@@ -346,7 +488,9 @@ public class ControlFlow {
         }
     }
 
-
+    /**
+     * Represents a catch clause.
+     */
     public static class Catcher {
         private Block node;
         private int typeIndex;
@@ -356,10 +500,15 @@ public class ControlFlow {
             typeIndex = c.typeIndex;
         }
 
-
+        /**
+         * Returns the first block of the catch clause. 
+         */
         public Block block() { return node; }
 
-
+        /**
+         * Returns the name of the exception type that
+         * this catch clause catches.
+         */
         public String type() {
             if (typeIndex == 0)
                 return "java.lang.Throwable";

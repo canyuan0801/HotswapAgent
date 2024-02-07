@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.spring.getbean;
 
 import org.hotswap.agent.javassist.*;
@@ -11,7 +28,13 @@ import java.security.ProtectionDomain;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-
+/**
+ * Creates a Cglib proxy instance along with the neccessary Callback classes. Uses either the repackaged version of
+ * Cglib (Spring >= 3.2) or the stand-alone version (Spring < 3.2).
+ *
+ * @author Erki Ehtla
+ *
+ */
 public class EnhancerProxyCreater {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(EnhancerProxyCreater.class);
@@ -49,7 +72,20 @@ public class EnhancerProxyCreater {
         return beanClassName.contains("$$EnhancerBySpringCGLIB") || beanClassName.contains("$$EnhancerByCGLIB");
     }
 
-
+    /**
+     * Creates a Cglib proxy instance along with the neccessary Callback classes, if those have not been created
+     * already. Uses either the repackaged version of Cglib (Spring >= 3.2) or the stand-alone version (Spring < 3.2).
+     *
+     * @param beanFactry Spring beanFactory
+     * @param bean Spring bean
+     * @param paramClasses
+     *            Parameter Classes of the Spring beanFactory method which returned the bean. The method is named
+     *            ProxyReplacer.FACTORY_METHOD_NAME
+     * @param paramValues
+     *            Parameter values of the Spring beanFactory method which returned the bean. The method is named
+     *            ProxyReplacer.FACTORY_METHOD_NAME
+     * @return
+     */
     public static Object createProxy(Object beanFactry, Object bean, Class<?>[] paramClasses, Object[] paramValues) {
         if (INSTANCE == null) {
             INSTANCE = new EnhancerProxyCreater(bean.getClass().getClassLoader(), bean.getClass().getProtectionDomain());
@@ -72,9 +108,9 @@ public class EnhancerProxyCreater {
             }
         }
 
-
-
-
+        // in case of HA proxy set the target. It might be cleared by clearProxies
+        //   but the underlying bean did not change. We need this to resolve target bean
+        //   in org.hotswap.agent.plugin.spring.getbean.DetachableBeanHolder.getBean()
         if (proxyBean instanceof SpringHotswapAgentProxy) {
             ((SpringHotswapAgentProxy) proxyBean).$$ha$setTarget(bean);
         }
@@ -134,7 +170,20 @@ public class EnhancerProxyCreater {
         }
     }
 
-
+    /**
+     * Builds a class that has a single public static method create(Object beanFactry, Object bean, Class[] classes,
+     * Object[] params). The method of the created class returns a Cglib Enhancer created proxy of the parameter bean.
+     * The proxy has single callback, whish is a subclass of DetachableBeanHolder. Classname prefix for created proxies
+     * will be HOTSWAPAGENT_
+     *
+     * @param cglibPackage  Cglib Package name
+     * @param callback  Callback class used for Enhancer
+     * @param namingPolicy  NamingPolicy class used for Enhancer
+     * @param cp
+     * @return Class that creates proxies via method "public static Object create(Object beanFactry, Object bean,
+     *         Class[] classes, Object[] params)"
+     * @throws CannotCompileException
+     */
     private Class<?> buildProxyCreaterClass(String cglibPackage, Class<?> callback, Class<?> namingPolicy, ClassPool cp)
             throws CannotCompileException {
         CtClass ct = cp.makeClass("HotswapAgentSpringBeanProxy" + getClassSuffix(cglibPackage));
@@ -169,18 +218,18 @@ public class EnhancerProxyCreater {
         return ct.toClass(loader, pd);
     }
 
-
-
-
-
-
-
+    // Spring 4: CGLIB-based proxy classes no longer require a default constructor. Support is provided
+    // via the objenesis library which is repackaged inline and distributed as part of the Spring Framework.
+    // With this strategy, no constructor at all is being invoked for proxy instances anymore.
+    // http://blog.codeleak.pl/2014/07/spring-4-cglib-based-proxy-classes-with-no-default-ctor.html
+    //
+    // If objenesis is not available (pre Spring 4), only beans with default constructor may by proxied
     private String tryObjenesisProxyCreation(ClassPool cp) {
         if (cp.find("org.springframework.objenesis.SpringObjenesis") == null) {
             return "";
         }
 
-
+        // do not know why 4.2.6 AND 4.3.0 does not work, probably cglib version and cache problem
         if (SpringVersion.getVersion().startsWith("4.2.6") ||
                 SpringVersion.getVersion().startsWith("4.3.0")) {
             return "";
@@ -189,17 +238,27 @@ public class EnhancerProxyCreater {
         return
                 "org.springframework.objenesis.SpringObjenesis objenesis = new org.springframework.objenesis.SpringObjenesis();" +
                     "if (objenesis.isWorthTrying()) {" +
-
+//                      "try {" +
                             "Class proxyClass = e.createClass();" +
                             "Object proxyInstance = objenesis.newInstance(proxyClass, false);" +
                             "((org.springframework.cglib.proxy.Factory) proxyInstance).setCallbacks(new org.springframework.cglib.proxy.Callback[] {handler});" +
                             "return proxyInstance;" +
-
-
+//                      "}" +
+//                      "catch (Throwable ex) {}" +
                     "}";
     }
 
-
+    /**
+     * Creates a NamingPolicy for usage in buildProxyCreaterClass. Eventually a instance of this class will be used as
+     * an argument for an Enhancer instances setNamingPolicy method. Classname prefix for proxies will be HOTSWAPAGENT_
+     *
+     * @param cglibPackage
+     *            Cglib Package name
+     * @param cp
+     * @return DefaultNamingPolicy sublass
+     * @throws CannotCompileException
+     * @throws NotFoundException
+     */
     private Class<?> buildNamingPolicyClass(String cglibPackage, ClassPool cp) throws CannotCompileException, NotFoundException {
         CtClass ct = cp.makeClass("HotswapAgentSpringNamingPolicy" + getClassSuffix(cglibPackage));
         String core = cglibPackage + "core.";
@@ -221,7 +280,15 @@ public class EnhancerProxyCreater {
         return String.valueOf(cglibPackage.hashCode()).replace("-", "_");
     }
 
-
+    /**
+     * Creates a Cglib Callback which is a subclass of DetachableBeanHolder
+     *
+     * @param cglibPackage  Cglib Package name
+     * @param cp
+     * @return Class of the Enhancer Proxy callback
+     * @throws CannotCompileException
+     * @throws NotFoundException
+     */
     private Class<?> buildProxyCallbackClass(String cglibPackage, ClassPool cp) throws CannotCompileException,
             NotFoundException {
         String proxyPackage = cglibPackage + "proxy.";

@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 package org.hotswap.agent.javassist.convert;
 
 import org.hotswap.agent.javassist.CannotCompileException;
@@ -13,7 +27,13 @@ import org.hotswap.agent.javassist.bytecode.MethodInfo;
 import org.hotswap.agent.javassist.bytecode.analysis.Analyzer;
 import org.hotswap.agent.javassist.bytecode.analysis.Frame;
 
-
+/**
+ * A transformer which replaces array access with static method invocations.
+ *
+ * @author <a href="kabir.khan@jboss.com">Kabir Khan</a>
+ * @author Jason T. Greene
+ * @version $Revision: 1.8 $
+ */
 public final class TransformAccessArrayField extends Transformer {
     private final String methodClassname;
     private final ArrayAccessReplacementMethodNames names;
@@ -30,7 +50,16 @@ public final class TransformAccessArrayField extends Transformer {
 
     @Override
     public void initialize(ConstPool cp, CtClass clazz, MethodInfo minfo) throws CannotCompileException {
-
+        /*
+         * This transformer must be isolated from other transformers, since some
+         * of them affect the local variable and stack maximums without updating
+         * the code attribute to reflect the changes. This screws up the
+         * data-flow analyzer, since it relies on consistent code state. Even
+         * if the attribute values were updated correctly, we would have to
+         * detect it, and redo analysis, which is not cheap. Instead, we are
+         * better off doing all changes in initialize() before everyone else has
+         * a chance to muck things up.
+         */
         CodeIterator iterator = minfo.getCodeAttribute().iterator();
         while (iterator.hasNext()) {
             try {
@@ -65,18 +94,18 @@ public final class TransformAccessArrayField extends Transformer {
     @Override
     public int transform(CtClass tclazz, int pos, CodeIterator iterator,
             ConstPool cp) throws BadBytecode {
-
+        // Do nothing, see above comment
         return pos;
     }
 
     private Frame getFrame(int pos) throws BadBytecode {
-        return frames[pos - offset];
+        return frames[pos - offset]; // Adjust pos
     }
 
     private void initFrames(CtClass clazz, MethodInfo minfo) throws BadBytecode {
         if (frames == null) {
             frames = ((new Analyzer())).analyze(clazz, minfo);
-            offset = 0;
+            offset = 0; // start tracking changes
         }
     }
 
@@ -101,20 +130,20 @@ public final class TransformAccessArrayField extends Transformer {
         String castType = null;
         String methodName = getMethodName(opcode);
         if (methodName != null) {
-
+            // See if the object must be cast
             if (opcode == AALOAD) {
                 castType = getTopType(iterator.lookAhead());
-
-
-
+                // Do not replace an AALOAD instruction that we do not have a type for
+                // This happens when the state is guaranteed to be null (Type.UNINIT)
+                // So we don't really care about this case.
                 if (castType == null)
                     return pos;
                 if ("java/lang/Object".equals(castType))
                     castType = null;
             }
 
-
-
+            // The gap may include extra padding
+            // Write a nop in case the padding pushes the instruction forward
             iterator.writeByte(NOP, pos);
             CodeIterator.Gap gap
                 = iterator.insertGapAt(pos, castType != null ? 5 : 2, false);

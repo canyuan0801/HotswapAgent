@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.undertow;
 
 import java.io.File;
@@ -16,7 +33,12 @@ import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.PluginManagerInvoker;
 import org.hotswap.agent.util.ReflectionHelper;
 
-
+/**
+ * Undertow plugin (http://undertow.io/)
+ *
+ * @author Vladimir Dvorak
+ *
+ */
 @Plugin(name = "Undertow", description = "Undertow plugin.",
         testedVersions = {"2.0.19"},
         expectedVersions = {"2.0"},
@@ -25,21 +47,25 @@ import org.hotswap.agent.util.ReflectionHelper;
 public class UndertowPlugin {
     private static AgentLogger LOGGER = AgentLogger.getLogger(UndertowPlugin.class);
 
-
+    // Undertow resource manager object to a application classloader
     static Map<Object, ClassLoader> registeredResourceManagersMap = new HashMap<>();
 
-
+    // For each app classloader map of undertow repository name to associated watch resource classloader
     private static Map<ClassLoader, Map<String, ClassLoader>> extraRepositories = new HashMap<>();
 
     String undertowVersion = "";
 
-
+    /**
+     * Init the plugin during DeploymentManagerImpl.deploy lifecycle. This method is invoked before the plugin is initialized.
+     * @param appClassLoader main web deplyment classloader.
+     * @param resourceManager undertow resource manager associated to deployment
+     */
     public static void init(ClassLoader appClassLoader, Object resourceManager) {
 
         String version = resolveUndertowVersion(appClassLoader);
         registeredResourceManagersMap.put(resourceManager, appClassLoader);
 
-
+        // create plugin configuration in advance to get extraClasspath and watchResources properties
         PluginConfiguration pluginConfiguration = new PluginConfiguration(appClassLoader);
 
         List<File> extraResources = new ArrayList<>();
@@ -75,13 +101,22 @@ public class UndertowPlugin {
         }
     }
 
-
+    /**
+     * Init plugin and resolve  version.
+     *
+     * @param undertowVersion the undertow version
+     * @param appClassLoader the app class loader
+     */
     private void init(String undertowVersion, ClassLoader appClassLoader ) {
         LOGGER.info("Undertow plugin initialized - Undertow version '{}'", undertowVersion);
         this.undertowVersion = undertowVersion;
     }
 
-
+    /**
+     * Close plugin
+     *
+     * @param classLoader the class loader
+     */
     public static void close(ClassLoader classLoader) {
         Map<String, ClassLoader> registerMap = extraRepositories.remove(classLoader);
         if (registerMap != null) {
@@ -91,7 +126,11 @@ public class UndertowPlugin {
         }
     }
 
-
+    /**
+     * Resolve the server version from Version class.
+     * @param appClassLoader application classloader
+     * @return the server version
+     */
     private static String resolveUndertowVersion(ClassLoader appClassLoader) {
         try {
             Class version = appClassLoader.loadClass("io.undertow.Version");

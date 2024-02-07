@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.spring.boot.env.v2;
 
 import org.hotswap.agent.logging.AgentLogger;
@@ -27,7 +44,11 @@ public class PropertiesPropertySourceLoader extends BasePropertiesPropertySource
         this.resource = resource;
     }
 
-    
+    /**
+     * spring boot 2.x higher version
+     *
+     * @return
+     */
     protected List<Map<String, ?>> doLoad() {
         return (List<Map<String, ?>>) ReflectionHelper.invoke(propertiesPropertySourceLoader, org.springframework.boot.env.PropertiesPropertySourceLoader.class,
                 "loadProperties", new Class[]{Resource.class}, resource);

@@ -3,7 +3,7 @@ package org.hotswap.agent.plugin.mojarra;
 public class MojarraConstants {
 
     private MojarraConstants() {
-
+        // prevent instantiation..
     }
 
     public static final String MANAGED_BEAN_ANNOTATION = "javax.faces.bean.ManagedBean";

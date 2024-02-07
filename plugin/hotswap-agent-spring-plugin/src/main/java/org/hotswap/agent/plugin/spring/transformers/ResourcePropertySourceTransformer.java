@@ -8,7 +8,14 @@ public class ResourcePropertySourceTransformer {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(ResourcePropertySourceTransformer.class);
 
-
+    /**
+     * Insert at the beginning of the method:
+     * <pre>public Set<BeanDefinition> findCandidateComponents(String basePackage)</pre>
+     * new code to initialize ClassPathBeanDefinøitionScannerAgent for a base class
+     * It would be better to override a more appropriate method
+     * org.springframework.context.annotation.ClassPathBeanDefinitionScanner.scan() directly,
+     * however there are issues with javassist and varargs parameters.
+     */
     @OnClassLoadEvent(classNameRegexp = "org.springframework.core.io.support.ResourcePropertySource")
     public static void transform(CtClass clazz, ClassPool classPool) throws NotFoundException, CannotCompileException {
         clazz.addInterface(classPool.get("org.hotswap.agent.plugin.spring.transformers.api.ReloadableResourcePropertySource"));

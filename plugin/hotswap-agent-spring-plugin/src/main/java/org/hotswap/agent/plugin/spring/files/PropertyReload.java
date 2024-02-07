@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.spring.files;
 
 import org.hotswap.agent.logging.AgentLogger;
@@ -41,9 +58,9 @@ public class PropertyReload {
         ConfigurableEnvironment environment = beanFactory.getBean(ConfigurableEnvironment.class);
         if (environment != null) {
             Map<String, String> oldValueMap = getPropertyOfPropertySource(environment);
-
+            // reload
             doReloadPropertySource(environment.getPropertySources());
-
+            // compare the old value and new value, and fire changed event
             processChangedValue(beanFactory, environment, oldValueMap);
         }
 
@@ -53,9 +70,9 @@ public class PropertyReload {
     private static Map<String, String> getPropertyOfPropertySource(ConfigurableEnvironment environment) {
         Set<String> canModifiedKey = new HashSet<>();
         Map<String, String> result = new HashMap<>();
-
+        // fetch the keys of modified property source
         processKeysOfPropertySource(environment.getPropertySources(), canModifiedKey::addAll);
-
+        // fetch the old value of modified property source
         for (String key : canModifiedKey) {
             result.put(key, environment.getProperty(key));
         }
@@ -116,24 +133,44 @@ public class PropertyReload {
         }
     }
 
-
+    /**
+     * refresh PropertySourcesPlaceholderConfigurer or PropertyPlaceholderConfigurer.
+     * The usual way is as following :
+     * 1. define PropertyPlaceholderConfigurer/PropertySourcesPlaceholderConfigurer bean
+     *
+     * @param beanFactory
+     * @param placeholderConfigurerSupport
+     * @Bean public static PropertySourcesPlaceholderConfigurer properties(){
+     * PropertySourcesPlaceholderConfigurer pspc
+     * = new PropertySourcesPlaceholderConfigurer();
+     * Resource[] resources = new ClassPathResource[ ]
+     * { new ClassPathResource( "foo.properties" ) };
+     * pspc.setLocations( resources );
+     * pspc.setIgnoreUnresolvablePlaceholders( true );
+     * return pspc;
+     * }
+     * 2. define PropertyPlaceholderConfigurer/PropertySourcesPlaceholderConfigurer bean in xml
+     * <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+     * <property name="locations" value="classpath:foo.properties" />
+     * </bean>
+     */
     private static void refreshSinglePlaceholderConfigurerSupport(DefaultListableBeanFactory beanFactory, PlaceholderConfigurerSupport placeholderConfigurerSupport) {
         if (placeholderConfigurerSupport instanceof PropertySourcesPlaceholderConfigurer) {
             PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer = (PropertySourcesPlaceholderConfigurer) placeholderConfigurerSupport;
-
-
+            // if placeholderConfigurerSupport is PropertySourcesPlaceholderConfigurer instance, it should clear and reload propertySources
+            // 1. get orig propertySources
             MutablePropertySources origPropertySources = getPropertySources(propertySourcesPlaceholderConfigurer);
-
+            // 2. clear propertySources, so it can be reinitialized
             origPropertySources.forEach(propertySource -> origPropertySources.remove(propertySource.getName()));
             ReflectionHelper.set(propertySourcesPlaceholderConfigurer, "propertySources", null);
-
+            // 3. reinitialize propertySources. It will generate new propertySources
             propertySourcesPlaceholderConfigurer.postProcessBeanFactory(beanFactory);
-
+            // 4. get new propertySources
             MutablePropertySources curPropertySources = getPropertySources(propertySourcesPlaceholderConfigurer);
-
+            // 5. add new propertySources elements to orig propertySources
             curPropertySources.forEach(propertySource -> origPropertySources.addLast(propertySource));
-
-
+            // 6 set orig propertySources to placeholderConfigurerSupport.
+            // we should keep origPropertySources, because it is used other objects, such as StringValueResolver.
             ReflectionHelper.set(propertySourcesPlaceholderConfigurer, "propertySources", origPropertySources);
         } else if (placeholderConfigurerSupport instanceof PropertyPlaceholderConfigurer) {
             PropertyPlaceholderConfigurer propertyPlaceholderConfigurer = (PropertyPlaceholderConfigurer) placeholderConfigurerSupport;
@@ -145,10 +182,17 @@ public class PropertyReload {
         return (MutablePropertySources) ReflectionHelper.getNoException(propertySourcesPlaceholderConfigurer, propertySourcesPlaceholderConfigurer.getClass(), "propertySources");
     }
 
-
+    /**
+     * Deal with the condition:
+     * 1. constructor contains @Value parameter
+     * 2. @Bean method contains @Value parameter
+     *
+     * @param beanFactory
+     * @return
+     */
     public static Set<String> getContainValueAnnotationBeans(DefaultListableBeanFactory beanFactory) {
         Set<String> needRecreateBeans = new HashSet<>();
-
+        // resolve constructor arguments
         for (String beanName : beanFactory.getBeanDefinitionNames()) {
             BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanName);
             if (beanDefinition instanceof AnnotatedBeanDefinition) {
@@ -186,7 +230,7 @@ public class PropertyReload {
                     }
                 }
             } else if (method.getParameterCount() != 0) {
-
+                // @Bean method contains @Value parameter
                 if (AnnotatedBeanDefinitionUtils.containValueAnnotation(method.getParameterAnnotations())) {
                     return true;
                 }

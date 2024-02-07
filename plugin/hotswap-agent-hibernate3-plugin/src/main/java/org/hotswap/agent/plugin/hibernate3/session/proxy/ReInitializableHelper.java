@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.hibernate3.session.proxy;
 
 import java.io.File;
@@ -10,13 +27,24 @@ import org.hibernate.cfg.Configuration;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.plugin.hibernate3.session.proxy.OverrideConfig.ConfiguredBy;
 
-
+/**
+ * Workaround for not being able to use java8 interfaces with default methods...
+ * Oh well...
+ *
+ * @author alpapad@gmail.com
+ *
+ */
 public class ReInitializableHelper {
 
-
+    /** The logger. */
     private static AgentLogger LOGGER = AgentLogger.getLogger(ReInitializableHelper.class);
 
-
+    /**
+     * Hot swap.
+     *
+     * @param r
+     *            the r
+     */
     public static void hotSwap(ReInitializable r) {
 
         OverrideConfig o = r.getOverrideConfig();
@@ -45,7 +73,17 @@ public class ReInitializableHelper {
         }
     }
 
-
+    /**
+     * Sets the property.
+     *
+     * @param r
+     *            the r
+     * @param propertyName
+     *            the property name
+     * @param value
+     *            the value
+     * @return the configuration
+     */
     public static Configuration setProperty(ReInitializable r, String propertyName, String value) {
         LOGGER.debug("setProperty..................... key:" + propertyName + ", value:" + value);
         r._setProperty(propertyName, value);
@@ -53,7 +91,17 @@ public class ReInitializableHelper {
         return (Configuration) r;
     }
 
-
+    /**
+     * Configure.
+     *
+     * @param r
+     *            the r
+     * @param resource
+     *            the resource
+     * @return the configuration
+     * @throws HibernateException
+     *             the hibernate exception
+     */
     public static Configuration configure(ReInitializable r, String resource) throws HibernateException {
         LOGGER.debug("Configuring....................." + resource);
         r._configure(resource);
@@ -63,7 +111,17 @@ public class ReInitializableHelper {
         return (Configuration) r;
     }
 
-
+    /**
+     * Configure.
+     *
+     * @param r
+     *            the r
+     * @param url
+     *            the url
+     * @return the configuration
+     * @throws HibernateException
+     *             the hibernate exception
+     */
     public static Configuration configure(ReInitializable r, java.net.URL url) throws HibernateException {
         LOGGER.debug("Configuring....................." + url);
         r._configure(url);
@@ -73,7 +131,17 @@ public class ReInitializableHelper {
         return (Configuration) r;
     }
 
-
+    /**
+     * Configure.
+     *
+     * @param r
+     *            the r
+     * @param configFile
+     *            the config file
+     * @return the configuration
+     * @throws HibernateException
+     *             the hibernate exception
+     */
     public static Configuration configure(ReInitializable r, java.io.File configFile) throws HibernateException {
         System.err.println("Configuring....................." + configFile);
         r._configure(configFile);
@@ -81,7 +149,17 @@ public class ReInitializableHelper {
         return (Configuration) r;
     }
 
-
+    /**
+     * Configure.
+     *
+     * @param r
+     *            the r
+     * @param document
+     *            the document
+     * @return the configuration
+     * @throws HibernateException
+     *             the hibernate exception
+     */
     public static Configuration configure(ReInitializable r, org.w3c.dom.Document document) throws HibernateException {
         LOGGER.debug("Configuring....................." + document);
         r._configure(document);
@@ -91,7 +169,15 @@ public class ReInitializableHelper {
         return (Configuration) r;
     }
 
-
+    /**
+     * Configure.
+     *
+     * @param r
+     *            the r
+     * @return the configuration
+     * @throws HibernateException
+     *             the hibernate exception
+     */
     public static Configuration configure(ReInitializable r) throws HibernateException {
         LOGGER.debug("Configuring..................... EMPTY..");
         r._configure();

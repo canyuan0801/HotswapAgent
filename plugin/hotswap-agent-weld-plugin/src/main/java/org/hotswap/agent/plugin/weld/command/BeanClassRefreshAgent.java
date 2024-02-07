@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.weld.command;
 
 import java.io.File;
@@ -22,12 +39,21 @@ import org.jboss.weld.bootstrap.spi.BeanDeploymentArchive;
 import org.jboss.weld.bootstrap.spi.BeansXml;
 import org.jboss.weld.manager.BeanManagerImpl;
 
-
+/**
+ * Handle definition and redefinition of bean classes in BeanManager. If the bean class already exists than, according reloading policy,
+ * either bean instance re-injection or bean context reloading is processed.
+ *
+ * @author Vladimir Dvorak
+ * @author alpapad@gmail.com
+ */
 public class BeanClassRefreshAgent {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(BeanClassRefreshAgent.class);
 
-    
+    /**
+     * Flag for checking reload status. It is used in unit tests for waiting for reload finish.
+     * Set flag to true in the unit test class and wait until the flag is false again.
+     */
     public static boolean reloadFlag = false;
 
     private BeanDeploymentArchive deploymentArchive;
@@ -36,7 +62,14 @@ public class BeanClassRefreshAgent {
 
     private boolean registered = false;
 
-    
+    /**
+     * Register bean archive into BdaAgentRegistry and into WeldPlugin. Current classLoader is  set to
+     * beanArchive classLoader.
+     *
+     * @param appClassLoader the class loader - container or application class loader.
+     * @param beanArchive the bean archive to be registered
+     * @param beanArchiveType the bean archive type
+     */
     public static void registerArchive(ClassLoader appClassLoader, BeanDeploymentArchive beanArchive, String beanArchiveType) {
         BeansXml beansXml = beanArchive.getBeansXml();
 
@@ -55,8 +88,8 @@ public class BeanClassRefreshAgent {
             BeanClassRefreshAgent bdaAgent = null;
             try {
                 LOGGER.debug("BeanClassRefreshAgent registerArchive bdaId='{}' archivePath='{}'.", beanArchive.getId(), archivePath);
-                
-                
+                // check that it is regular file
+                // toString() is weird and solves HiearchicalUriException for URI like "file:./src/resources/file.txt".
 
                 @SuppressWarnings("unused")
                 File path = new File(archivePath);
@@ -77,7 +110,7 @@ public class BeanClassRefreshAgent {
                 LOGGER.error("Register archive failed.", e.getMessage());
             }
         } else {
-            
+            // TODO:
         }
     }
 
@@ -89,7 +122,11 @@ public class BeanClassRefreshAgent {
         }
     }
 
-    
+    /**
+     * Gets the collection of registered BeanDeploymentArchive(s)
+     *
+     * @return the instances
+     */
     public static Collection<BeanClassRefreshAgent> getInstances() {
         return BdaAgentRegistry.values();
     }
@@ -99,22 +136,44 @@ public class BeanClassRefreshAgent {
         this.archivePath = archivePath;
     }
 
-    
+    /**
+     * Gets the Bean deployment ID - bdaId.
+     *
+     * @return the bdaId
+     */
     public String getBdaId() {
         return deploymentArchive.getId();
     }
 
-    
+    /**
+     * Gets the archive path.
+     *
+     * @return the archive path
+     */
     public String getArchivePath() {
         return archivePath;
     }
 
-    
+    /**
+     * Gets the deployment archive.
+     *
+     * @return the deployment archive
+     */
     public BeanDeploymentArchive getDeploymentArchive() {
         return deploymentArchive;
     }
 
-    
+    /**
+     * Reload bean according strategy, reinject bean instances. Called from BeanClassRefreshCommand.
+     *
+     * @param classLoader the class loader
+     * @param archivePath the archive path
+     * @param beanClassName the bean class name
+     * @param oldFullSignatures the old full signatures
+     * @param oldSignatures the map of className to old signature
+     * @param strReloadStrategy the str reload strategy
+     * @throws IOException error working with classDefinition
+     */
     public static void reloadBean(ClassLoader classLoader, String archivePath, String beanClassName, Map<String, String> oldFullSignatures,
             Map<String, String> oldSignatures, String strReloadStrategy) throws IOException {
 
@@ -130,8 +189,8 @@ public class BeanClassRefreshAgent {
         try {
             Thread.currentThread().setContextClassLoader(classLoader);
 
-            
-            
+            // BDA classLoader can be different then appClassLoader for Wildfly/EAR deployment
+            // therefore we use class loader from BdaAgent class which is classloader for BDA
             Class<?> beanClass = bdaAgent.getClass().getClassLoader().loadClass(beanClassName);
 
             BeanManagerImpl beanManager;
@@ -144,8 +203,8 @@ public class BeanClassRefreshAgent {
             ClassLoader beanManagerClassLoader = beanManager.getClass().getClassLoader();
             Class<?> bdaAgentClazz = Class.forName(BeanReloadExecutor.class.getName(), true, beanManagerClassLoader);
 
-            
-            
+            // Execute reload in BeanManagerClassLoader since reloading creates weld classes used for bean redefinition
+            // (like EnhancedAnnotatedType)
             ReflectionHelper.invoke(null, bdaAgentClazz, "reloadBean",
                     new Class[] {String.class, Class.class, Map.class, Map.class, String.class },
                     bdaAgent.getBdaId(), beanClass, oldFullSignatures, oldSignatures, strReloadStrategy
@@ -159,7 +218,16 @@ public class BeanClassRefreshAgent {
         }
     }
 
-    
+    /**
+     * Recreate proxy classes, Called from BeanClassRefreshCommand.
+     *
+     * @param classLoader the class loader
+     * @param archivePath the bean archive path
+     * @param registeredProxiedBeans the registered proxied beans
+     * @param beanClassName the bean class name
+     * @param oldSignatureForProxyCheck the old signature for proxy check
+     * @throws IOException error working with classDefinition
+     */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static void recreateProxy(ClassLoader classLoader, String archivePath, Map registeredProxiedBeans, String beanClassName,
             String oldSignatureForProxyCheck) throws IOException {
@@ -172,8 +240,8 @@ public class BeanClassRefreshAgent {
         }
 
         try {
-            
-            
+            // BDA classLoader can be different then appClassLoader for Wildfly/EAR deployment
+            // therefore we use class loader from BdaAgent class which is classloader for BDA
             Class<?> beanClass = bdaAgent.getClass().getClassLoader().loadClass(beanClassName);
             bdaAgent.doRecreateProxy(classLoader, registeredProxiedBeans, beanClass, oldSignatureForProxyCheck);
         } catch (ClassNotFoundException e) {

@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.convert;
 
@@ -17,7 +31,7 @@ public class TransformCall extends Transformer {
     protected String newClassname, newMethodname;
     protected boolean newMethodIsPrivate;
 
-    
+    /* cache */
     protected int newIndex;
     protected ConstPool constPool;
 
@@ -46,7 +60,13 @@ public class TransformCall extends Transformer {
             newIndex = 0;
     }
 
-    
+    /**
+     * Modify INVOKEINTERFACE, INVOKESPECIAL, INVOKESTATIC and INVOKEVIRTUAL
+     * so that a different method is invoked.  The class name in the operand
+     * of these instructions might be a subclass of the target class specified
+     * by <code>classname</code>.   This method transforms the instruction
+     * in that case unless the subclass overrides the target method.
+     */
     @Override
     public int transform(CtClass clazz, int pos, CodeIterator iterator,
                          ConstPool cp) throws BadBytecode
@@ -79,7 +99,7 @@ public class TransformCall extends Transformer {
                     return m.getDeclaringClass().getName().equals(classname);
                 }
                 catch (NotFoundException e) {
-                    
+                    // maybe the original method has been removed.
                     return true;
                 }
         }

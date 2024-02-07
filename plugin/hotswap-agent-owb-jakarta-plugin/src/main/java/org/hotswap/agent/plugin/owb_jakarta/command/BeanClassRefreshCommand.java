@@ -1,4 +1,21 @@
-
+/*
+ * Copyright 2013-2023 the HotswapAgent authors.
+ *
+ * This file is part of HotswapAgent.
+ *
+ * HotswapAgent is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * HotswapAgent is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with HotswapAgent. If not, see http://www.gnu.org/licenses/.
+ */
 package org.hotswap.agent.plugin.owb_jakarta.command;
 
 import java.lang.reflect.InvocationTargetException;
@@ -15,12 +32,23 @@ import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.plugin.owb_jakarta.BeanReloadStrategy;
 import org.hotswap.agent.watch.WatchFileEvent;
 
-
+/**
+ * BeanClassRefreshCommand. Collect all classes definitions/redefinitions for application
+ *
+ * 1. Merge all commands (definition, redefinition) for appClassLoader to single command.
+ * 2. Call proxy redefinitions in BeanArchiveAgent for all merged commands
+ * 3. Call bean class reload in BeanArchiveAgent for all merged commands
+ *
+ * @author Vladimir Dvorak
+ */
 public class BeanClassRefreshCommand extends MergeableCommand {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(BeanClassRefreshCommand.class);
 
-
+    /**
+     * Flag for checking reload status. It is used in unit tests for waiting for reload finish.
+     * Set flag to true in the unit test class and wait until the flag is false again.
+     */
     public static boolean reloadFlag = false;
 
     ClassLoader appClassLoader;
@@ -41,7 +69,17 @@ public class BeanClassRefreshCommand extends MergeableCommand {
 
     URL beanArchiveUrl;
 
-
+    /**
+     * Instantiates a new bean class refresh command.
+     *
+     * @param appClassLoader the application class loader
+     * @param className the class name
+     * @param oldFullSignature the old full signature
+     * @param oldSignatureForProxyCheck the old signature for proxy check
+     * @param oldSignatureByStrategy the old signature by strategy
+     * @param beanArchiveUrl the bean archive url
+     * @param beanReloadStrategy the bean reload strategy
+     */
     public BeanClassRefreshCommand(ClassLoader appClassLoader, String className, String oldFullSignature,
             String oldSignatureForProxyCheck, String oldSignatureByStrategy, URL beanArchiveUrl, BeanReloadStrategy beanReloadStrategy) {
         this.appClassLoader = appClassLoader;
@@ -53,7 +91,14 @@ public class BeanClassRefreshCommand extends MergeableCommand {
         this.strBeanReloadStrategy = beanReloadStrategy != null ? beanReloadStrategy.toString() : null;
     }
 
-
+    /**
+     * Instantiates a new bean class refresh command.
+     *
+     * @param appClassLoader the application class loader
+     * @param archivePath the archive path
+     * @param beanArchiveUrl the bean archive url
+     * @param event the class event
+     */
     public BeanClassRefreshCommand(ClassLoader appClassLoader, String archivePath,  URL beanArchiveUrl, WatchFileEvent event) {
 
         this.appClassLoader = appClassLoader;
@@ -63,7 +108,7 @@ public class BeanClassRefreshCommand extends MergeableCommand {
         String classFullPath = event.getURI().getPath();
         int index = classFullPath.indexOf(archivePath);
         if (index == 0) {
-
+            // Strip archive path from beginning and .class from the end to get class name from full path to class file
             String classPath = classFullPath.substring(archivePath.length());
             classPath = classPath.substring(0, classPath.indexOf(".class"));
             if (classPath.startsWith("/")) {
@@ -181,7 +226,7 @@ public class BeanClassRefreshCommand extends MergeableCommand {
                         className,
                         oldFullSignatures,
                         oldSignatures,
-                        strBeanReloadStrategy,
+                        strBeanReloadStrategy,            // passed as String since BeanArchiveAgent has different classloader
                         beanArchiveUrl
                 );
             } catch (NoSuchMethodException e) {
@@ -196,7 +241,11 @@ public class BeanClassRefreshCommand extends MergeableCommand {
         }
     }
 
-
+    /**
+     * Check all merged events with same className for delete and create events. If delete without create is found, than assume
+     * file was deleted.
+     * @param mergedCommands
+     */
     private boolean isDeleteEvent(List<Command> mergedCommands) {
         boolean createFound = false;
         boolean deleteFound = false;
@@ -216,7 +265,10 @@ public class BeanClassRefreshCommand extends MergeableCommand {
         return !createFound && deleteFound;
     }
 
-
+    /**
+     * Check all merged events with same className for create events.
+     * @param mergedCommands
+     */
     private boolean isCreateEvent(List<Command> mergedCommands) {
         boolean createFound = false;
         for (Command cmd : mergedCommands) {

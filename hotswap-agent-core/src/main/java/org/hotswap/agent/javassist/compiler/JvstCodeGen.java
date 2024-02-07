@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.compiler;
 
@@ -18,15 +32,16 @@ import org.hotswap.agent.javassist.compiler.ast.Member;
 import org.hotswap.agent.javassist.compiler.ast.Stmnt;
 import org.hotswap.agent.javassist.compiler.ast.Symbol;
 
-
+/* Code generator accepting extended Java syntax for Javassist.
+ */
 
 public class JvstCodeGen extends MemberCodeGen {
     String paramArrayName = null;
     String paramListName = null;
     CtClass[] paramTypeList = null;
-    private int paramVarBase = 0;
-    private boolean useParam0 = false;
-    private String param0Type = null;
+    private int paramVarBase = 0;       // variable index for $0 or $1.
+    private boolean useParam0 = false;  // true if $0 is used.
+    private String param0Type = null;   // JVM name
     public static final String sigName = "$sig";
     public static final String dollarTypeName = "$type";
     public static final String clazzName = "$class";
@@ -34,29 +49,36 @@ public class JvstCodeGen extends MemberCodeGen {
     CtClass returnType = null;
     String returnCastName = null;
     @SuppressWarnings("unused")
-    private String returnVarName = null;
+    private String returnVarName = null;        // null if $_ is not used.
     public static final String wrapperCastName = "$w";
     String proceedName = null;
     public static final String cflowName = "$cflow";
-    ProceedHandler procHandler = null;
+    ProceedHandler procHandler = null;  // null if not used.
 
     public JvstCodeGen(Bytecode b, CtClass cc, ClassPool cp) {
         super(b, cc, cp);
         setTypeChecker(new JvstTypeChecker(cc, cp, this));
     }
 
-
+    /* Index of $1.
+     */
     private int indexOfParam1() {
         return paramVarBase + (useParam0 ? 1 : 0);
     }
 
-
+    /* Records a ProceedHandler obejct.
+     *
+     * @param name      the name of the special method call.
+     *                  it is usually $proceed.
+     */
     public void setProceedHandler(ProceedHandler h, String name) {
         proceedName = name;
         procHandler = h;
     }
 
-
+    /* If the type of the expression compiled last is void,
+     * add ACONST_NULL and change exprType, arrayDim, className.
+     */
     public void addNullIfVoid() {
         if (exprType == VOID) {
             bytecode.addOpcode(ACONST_NULL);
@@ -66,7 +88,9 @@ public class JvstCodeGen extends MemberCodeGen {
         }
     }
 
-
+    /* To support $args, $sig, and $type.
+     * $args is an array of parameter list.
+     */
     @Override
     public void atMember(Member mem) throws CompileError {
         String name = mem.get();
@@ -170,7 +194,10 @@ public class JvstCodeGen extends MemberCodeGen {
         super.atCastExpr(expr);
     }
 
-
+    /**
+     * Inserts a cast operator to the return type.
+     * If the return type is void, this does nothing.
+     */
     protected void atCastToRtype(CastExpr expr) throws CompileError {
         expr.getOprand().accept(this);
         if (exprType == VOID || isRefType(exprType) || arrayDim > 0)
@@ -190,30 +217,32 @@ public class JvstCodeGen extends MemberCodeGen {
     protected void atCastToWrapper(CastExpr expr) throws CompileError {
         expr.getOprand().accept(this);
         if (isRefType(exprType) || arrayDim > 0)
-            return;
+            return;     // Object type.  do nothing.
 
         CtClass clazz = resolver.lookupClass(exprType, arrayDim, className);
         if (clazz instanceof CtPrimitiveType) {
             CtPrimitiveType pt = (CtPrimitiveType)clazz;
             String wrapper = pt.getWrapperName();
-            bytecode.addNew(wrapper);
-            bytecode.addOpcode(DUP);
+            bytecode.addNew(wrapper);           // new <wrapper>
+            bytecode.addOpcode(DUP);            // dup
             if (pt.getDataSize() > 1)
-                bytecode.addOpcode(DUP2_X2);
+                bytecode.addOpcode(DUP2_X2);    // dup2_x2
             else
-                bytecode.addOpcode(DUP2_X1);
+                bytecode.addOpcode(DUP2_X1);    // dup2_x1
 
-            bytecode.addOpcode(POP2);
+            bytecode.addOpcode(POP2);           // pop2
             bytecode.addInvokespecial(wrapper, "<init>",
                                       "(" + pt.getDescriptor() + ")V");
-
+                                                // invokespecial
             exprType = CLASS;
             arrayDim = 0;
             className = jvmJavaLangObject;
         }
     }
 
-
+    /* Delegates to a ProcHandler object if the method call is
+     * $proceed().  It may process $cflow().
+     */
     @Override
     public void atCallExpr(CallExpr expr) throws CompileError {
         ASTree method = expr.oprand1();
@@ -232,7 +261,8 @@ public class JvstCodeGen extends MemberCodeGen {
         super.atCallExpr(expr);
     }
 
-
+    /* To support $cflow().
+     */
     protected void atCflow(ASTList cname) throws CompileError {
         StringBuffer sbuf = new StringBuffer();
         if (cname == null || cname.tail() != null)
@@ -253,7 +283,11 @@ public class JvstCodeGen extends MemberCodeGen {
         className = null;
     }
 
-
+    /* Syntax:
+     *
+     * <cflow> : $cflow '(' <cflow name> ')'
+     * <cflow name> : <identifier> ('.' <identifier>)*
+     */
     private static void makeCflowName(StringBuffer sbuf, ASTree name)
         throws CompileError
     {
@@ -274,7 +308,9 @@ public class JvstCodeGen extends MemberCodeGen {
         throw new CompileError("bad " + cflowName);
     }
 
-
+    /* To support $$.  ($$) is equivalent to ($1, ..., $n).
+     * It can be used only as a parameter list of method call.
+     */
     public boolean isParamListName(ASTList args) {
         if (paramTypeList != null
             && args != null && args.tail() == null) {
@@ -285,7 +321,14 @@ public class JvstCodeGen extends MemberCodeGen {
         return false;
     }
 
+    /*
+    public int getMethodArgsLength(ASTList args) {
+        if (!isParamListName(args))
+            return super.getMethodArgsLength(args);
 
+        return paramTypeList.length;
+    }
+    */
 
     @Override
     public int getMethodArgsLength(ASTList args) {
@@ -341,9 +384,33 @@ public class JvstCodeGen extends MemberCodeGen {
         }
     }
 
+    /*
+    public void atMethodArgs(ASTList args, int[] types, int[] dims,
+                                String[] cnames) throws CompileError {
+        if (!isParamListName(args)) {
+            super.atMethodArgs(args, types, dims, cnames);
+            return;
+        }
 
+        CtClass[] params = paramTypeList;
+        if (params == null)
+            return;
 
+        int n = params.length;
+        int regno = indexOfParam1();
+        for (int i = 0; i < n; ++i) {
+            CtClass p = params[i];
+            regno += bytecode.addLoad(regno, p);
+            setType(p);
+            types[i] = exprType;
+            dims[i] = arrayDim;
+            cnames[i] = className;
+        }
+    }
+    */
 
+    /* called by Javac#recordSpecialProceed().
+     */
     void compileInvokeSpecial(ASTree target, int methodIndex,
                               String descriptor, ASTList args)
         throws CompileError
@@ -357,7 +424,9 @@ public class JvstCodeGen extends MemberCodeGen {
         addNullIfVoid();
     }
 
-
+    /*
+     * Makes it valid to write "return <expr>;" for a void method.
+     */
     @Override
     protected void atReturnStmnt(Stmnt st) throws CompileError {
         ASTree result = st.getLeft();
@@ -374,7 +443,16 @@ public class JvstCodeGen extends MemberCodeGen {
         atReturnStmnt2(result);
     }
 
-
+    /**
+     * Makes a cast to the return type ($r) available.
+     * It also enables $_.
+     *
+     * <p>If the return type is void, ($r) does nothing.
+     * The type of $_ is java.lang.Object.
+     *
+     * @param resultName        null if $_ is not used.
+     * @return          -1 or the variable index assigned to $_.
+     */
     public int recordReturnType(CtClass type, String castName,
                  String resultName, SymbolTable tbl) throws CompileError
     {
@@ -389,12 +467,18 @@ public class JvstCodeGen extends MemberCodeGen {
         return varNo;
     }
 
-
+    /**
+     * Makes $type available.
+     */
     public void recordType(CtClass t) {
         dollarType = t;
     }
 
-
+    /**
+     * Makes method parameters $0, $1, ..., $args, $$, and $class available.
+     * $0 is equivalent to THIS if the method is not static.  Otherwise,
+     * if the method is static, then $0 is not available.
+     */
     public int recordParams(CtClass[] params, boolean isStatic,
                              String prefix, String paramVarName,
                              String paramsName, SymbolTable tbl)
@@ -404,7 +488,24 @@ public class JvstCodeGen extends MemberCodeGen {
                             paramsName, !isStatic, 0, getThisName(), tbl);
     }
 
-
+    /**
+     * Makes method parameters $0, $1, ..., $args, $$, and $class available.
+     * $0 is available only if use0 is true.  It might not be equivalent
+     * to THIS.
+     *
+     * @param params    the parameter types (the types of $1, $2, ..)
+     * @param prefix    it must be "$" (the first letter of $0, $1, ...)
+     * @param paramVarName      it must be "$args"
+     * @param paramsName        it must be "$$"
+     * @param use0      true if $0 is used.
+     * @param paramBase the register number of $0 (use0 is true)
+     *                          or $1 (otherwise).
+     * @param target    the class of $0.  If use0 is false, target
+     *                  can be null.  The value of "target" is also used
+     *                  as the name of the type represented by $class.
+     * @param isStatic  true if the method in which the compiled bytecode
+     *                  is embedded is static.
+     */
     public int recordParams(CtClass[] params, boolean isStatic,
                             String prefix, String paramVarName,
                             String paramsName, boolean use0,
@@ -442,7 +543,12 @@ public class JvstCodeGen extends MemberCodeGen {
         return varNo;
     }
 
-
+    /**
+     * Makes the given variable name available.
+     *
+     * @param type      variable type
+     * @param varName   variable name
+     */
     public int recordVariable(CtClass type, String varName, SymbolTable tbl)
         throws CompileError
     {
@@ -472,7 +578,13 @@ public class JvstCodeGen extends MemberCodeGen {
         return is2word(exprType, arrayDim) ? 2 : 1;
     }
 
-
+    /**
+     * Makes the given variable name available.
+     *
+     * @param typeDesc  the type descriptor of the variable
+     * @param varName   variable name
+     * @param varNo     an index into the local variable array
+     */
     public void recordVariable(String typeDesc, String varName, int varNo,
                                SymbolTable tbl) throws CompileError
     {
@@ -495,39 +607,47 @@ public class JvstCodeGen extends MemberCodeGen {
         tbl.append(varName, decl);
     }
 
-
+    /* compileParameterList() returns the stack size used
+     * by the produced code.
+     *
+     * This method correctly computes the max_stack value.
+     *
+     * @param regno     the index of the local variable in which
+     *                  the first argument is received.
+     *                  (0: static method, 1: regular method.)
+     */
     public static int compileParameterList(Bytecode code,
                                 CtClass[] params, int regno) {
         if (params == null) {
-            code.addIconst(0);
-            code.addAnewarray(javaLangObject);
+            code.addIconst(0);                          // iconst_0
+            code.addAnewarray(javaLangObject);          // anewarray Object
             return 1;
         }
         CtClass[] args = new CtClass[1];
         int n = params.length;
-        code.addIconst(n);
-        code.addAnewarray(javaLangObject);
+        code.addIconst(n);                          // iconst_<n>
+        code.addAnewarray(javaLangObject);          // anewarray Object
         for (int i = 0; i < n; ++i) {
-            code.addOpcode(Bytecode.DUP);
-            code.addIconst(i);
+            code.addOpcode(Bytecode.DUP);           // dup
+            code.addIconst(i);                      // iconst_<i>
             if (params[i].isPrimitive()) {
                 CtPrimitiveType pt = (CtPrimitiveType)params[i];
                 String wrapper = pt.getWrapperName();
-                code.addNew(wrapper);
-                code.addOpcode(Bytecode.DUP);
-                int s = code.addLoad(regno, pt);
+                code.addNew(wrapper);               // new <wrapper>
+                code.addOpcode(Bytecode.DUP);       // dup
+                int s = code.addLoad(regno, pt);    // ?load <regno>
                 regno += s;
                 args[0] = pt;
                 code.addInvokespecial(wrapper, "<init>",
                             Descriptor.ofMethod(CtClass.voidType, args));
-
+                                                    // invokespecial
             }
             else {
-                code.addAload(regno);
+                code.addAload(regno);               // aload <regno>
                 ++regno;
             }
 
-            code.addOpcode(Bytecode.AASTORE);
+            code.addOpcode(Bytecode.AASTORE);       // aastore
         }
 
         return 8;
@@ -546,7 +666,7 @@ public class JvstCodeGen extends MemberCodeGen {
 
         if (type instanceof CtPrimitiveType) {
             CtPrimitiveType pt = (CtPrimitiveType)type;
-
+            // pt is not voidType.
             String wrapper = pt.getWrapperName();
             code.addCheckcast(wrapper);
             code.addInvokevirtual(wrapper, pt.getGetMethodName(),
@@ -559,7 +679,9 @@ public class JvstCodeGen extends MemberCodeGen {
         }
     }
 
-
+    /* Sets exprType, arrayDim, and className;
+     * If type is void, then this method does nothing.
+     */
     public void setType(CtClass type) throws CompileError {
         setType(type, 0);
     }
@@ -585,7 +707,8 @@ public class JvstCodeGen extends MemberCodeGen {
         }
     }
 
-
+    /* Performs implicit coercion from exprType to type.
+     */
     public void doNumCast(CtClass type) throws CompileError {
         if (arrayDim == 0 && !isRefType(exprType))
             if (type instanceof CtPrimitiveType) {

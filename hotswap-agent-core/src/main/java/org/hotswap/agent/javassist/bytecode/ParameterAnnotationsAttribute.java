@@ -1,4 +1,18 @@
-
+/*
+ * Javassist, a Java-bytecode translator toolkit.
+ * Copyright (C) 1999- Shigeru Chiba. All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License.  Alternatively, the contents of this file may be used under
+ * the terms of the GNU Lesser General Public License Version 2.1 or later,
+ * or the Apache License Version 2.0.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ */
 
 package org.hotswap.agent.javassist.bytecode;
 
@@ -14,39 +28,83 @@ import org.hotswap.agent.javassist.bytecode.AnnotationsAttribute.Renamer;
 import org.hotswap.agent.javassist.bytecode.annotation.Annotation;
 import org.hotswap.agent.javassist.bytecode.annotation.AnnotationsWriter;
 
-
+/**
+ * A class representing <code>RuntimeVisibleAnnotations_attribute</code> and
+ * <code>RuntimeInvisibleAnnotations_attribute</code>.
+ *
+ * <p>To obtain an ParameterAnnotationAttribute object, invoke
+ * <code>getAttribute(ParameterAnnotationsAttribute.invisibleTag)</code>
+ * in <code>MethodInfo</code>.
+ * The obtained attribute is a
+ * runtime invisible annotations attribute.  
+ * If the parameter is
+ * <code>ParameterAnnotationAttribute.visibleTag</code>, then the obtained
+ * attribute is a runtime visible one.
+ */
 public class ParameterAnnotationsAttribute extends AttributeInfo {
-
+    /**
+     * The name of the <code>RuntimeVisibleParameterAnnotations</code>
+     * attribute.
+     */
     public static final String visibleTag
         = "RuntimeVisibleParameterAnnotations";
 
-
+    /**
+     * The name of the <code>RuntimeInvisibleParameterAnnotations</code>
+     * attribute.
+     */
     public static final String invisibleTag
         = "RuntimeInvisibleParameterAnnotations";
-
+    /**
+     * Constructs
+     * a <code>Runtime(In)VisibleParameterAnnotations_attribute</code>.
+     *
+     * @param cp            constant pool
+     * @param attrname      attribute name (<code>visibleTag</code> or
+     *                      <code>invisibleTag</code>).
+     * @param info          the contents of this attribute.  It does not
+     *                      include <code>attribute_name_index</code> or
+     *                      <code>attribute_length</code>.
+     */
     public ParameterAnnotationsAttribute(ConstPool cp, String attrname,
                                          byte[] info) {
         super(cp, attrname, info);
     }
 
-
+    /**
+     * Constructs an empty
+     * <code>Runtime(In)VisibleParameterAnnotations_attribute</code>.
+     * A new annotation can be later added to the created attribute
+     * by <code>setAnnotations()</code>.
+     *
+     * @param cp            constant pool
+     * @param attrname      attribute name (<code>visibleTag</code> or
+     *                      <code>invisibleTag</code>).
+     * @see #setAnnotations(Annotation[][])
+     */
     public ParameterAnnotationsAttribute(ConstPool cp, String attrname) {
         this(cp, attrname, new byte[] { 0 });
     }
 
-
+    /**
+     * @param n     the attribute name.
+     */
     ParameterAnnotationsAttribute(ConstPool cp, int n, DataInputStream in)
         throws IOException
     {
         super(cp, n, in);
     }
 
-
+    /**
+     * Returns <code>num_parameters</code>. 
+     */
     public int numParameters() {
         return info[0] & 0xff;
     }
 
-
+    /**
+     * Copies this attribute and returns a new copy.
+     */
     @Override
     public AttributeInfo copy(ConstPool newCp, Map<String,String> classnames) {
         Copier copier = new Copier(info, constPool, newCp, classnames);
@@ -60,7 +118,18 @@ public class ParameterAnnotationsAttribute extends AttributeInfo {
         }
     }
 
-
+    /**
+     * Parses the annotations and returns a data structure representing
+     * that parsed annotations.  Note that changes of the node values of the
+     * returned tree are not reflected on the annotations represented by
+     * this object unless the tree is copied back to this object by
+     * <code>setAnnotations()</code>.
+     *
+     * @return Each element of the returned array represents an array of
+     * annotations that are associated with each method parameter.
+     *      
+     * @see #setAnnotations(Annotation[][])
+     */
     public Annotation[][] getAnnotations() {
         try {
             return new Parser(info, constPool).parseParameters();
@@ -70,7 +139,15 @@ public class ParameterAnnotationsAttribute extends AttributeInfo {
         }
     }
 
-
+    /**
+     * Changes the annotations represented by this object according to
+     * the given array of <code>Annotation</code> objects.
+     *
+     * @param params        the data structure representing the
+     *                      new annotations. Every element of this array
+     *                      is an array of <code>Annotation</code> and
+     *                      it represens annotations of each method parameter.
+     */
     public void setAnnotations(Annotation[][] params) {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         AnnotationsWriter writer = new AnnotationsWriter(output, constPool);
@@ -85,13 +162,16 @@ public class ParameterAnnotationsAttribute extends AttributeInfo {
             writer.close();
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e);      // should never reach here.
         }
 
         set(output.toByteArray());
     }
 
-
+    /**
+     * @param oldname       a JVM class name.
+     * @param newname       a JVM class name.
+     */
     @Override
     void renameClass(String oldname, String newname) {
         Map<String,String> map = new HashMap<String,String>();
@@ -112,7 +192,9 @@ public class ParameterAnnotationsAttribute extends AttributeInfo {
     @Override
     void getRefClasses(Map<String,String> classnames) { renameClass(classnames); }
 
-
+    /**
+     * Returns a string representation of this object.
+     */
     @Override
     public String toString() {
         Annotation[][] aa = getAnnotations();

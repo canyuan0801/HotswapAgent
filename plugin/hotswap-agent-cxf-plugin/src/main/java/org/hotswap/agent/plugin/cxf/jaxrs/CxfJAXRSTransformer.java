@@ -11,7 +11,9 @@ import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.PluginManagerInvoker;
 
-
+/**
+ * The Class CxfJAXRSTransformer.
+ */
 public class CxfJAXRSTransformer {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(CxfJAXRSTransformer.class);
@@ -51,7 +53,7 @@ public class CxfJAXRSTransformer {
     @OnClassLoadEvent(classNameRegexp = "org.apache.cxf.jaxrs.model.ClassResourceInfo")
     public static void patchClassResourceInfo(CtClass ctClass, ClassPool classPool) {
         try {
-            
+            // Add default constructor used in proxy creation
             CtConstructor c = CtNewConstructor.make("public " + ctClass.getSimpleName() + "() { super(null); }", ctClass);
             ctClass.addConstructor(c);
         } catch (CannotCompileException e) {

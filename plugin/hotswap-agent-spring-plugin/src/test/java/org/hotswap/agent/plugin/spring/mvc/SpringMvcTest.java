@@ -66,14 +66,14 @@ public class SpringMvcTest {
     @Test
     public void changeGetMappingAndMethodBody() throws Exception {
         System.out.println("SpringMvcTest.changeGetMappingAndMethodBody");
-
+        // warm up to fill all caches
         mockMvc.perform(get("/hello")).andExpect(status().isOk());
 
         int reloadTimes = 1;
-
+        // swap classes
         swappingRule.swapClasses(SampleRestController.class, SampleRestController2.class, reloadTimes++);
 
-
+        // make sure classes are swapped
         mockMvc.perform(get("/hello")).andExpect(status().isNotFound());
         mockMvc.perform(get("/helloSwapped")).andExpect(status().isOk())
                 .andExpect(content().string("Hello World Swapped"));
@@ -83,14 +83,14 @@ public class SpringMvcTest {
     @Test
     public void changeRequestMappingAndMethodBody() throws Exception {
         System.out.println("SpringMvcTest.changeRequestMappingAndMethodBody");
-
+        // warm up to fill all caches
         mockMvc.perform(get("/helloRequestMapping")).andExpect(status().isOk());
 
-
+        // swap classes
         int reloadTimes = 1;
         swappingRule.swapClasses(SampleRestController.class, SampleRestController2.class, reloadTimes);
 
-
+        // make sure classes are swapped
         mockMvc.perform(get("/helloRequestMapping")).andExpect(status().isNotFound());
         mockMvc.perform(get("/helloRequestMappingSwapped")).andExpect(status().isOk())
                 .andExpect(content().string("Hello World2 Swapped"));
