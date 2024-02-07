@@ -19,7 +19,7 @@ package org.hotswap.agent.javassist.bytecode;
 final class LongVector {
     static final int ASIZE = 128;
     static final int ABITS = 7;  // ASIZE = 2^ABITS
-    static final int VSIZE = 8;
+    static final int VSIZE = 8; // VSIZE shall be 2^n, thus relate to nth >= len
     private ConstInfo[][] objects;
     private int elements;
 
