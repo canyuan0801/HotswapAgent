@@ -46,24 +46,16 @@ public class AttributeInfo {
     }
 
     protected AttributeInfo(ConstPool cp, String attrname) {
-        this(cp, attrname, (byte[])null);
+        this(cp, attrname, (byte[]) null);
     }
 
-    /**
-     * Constructs an <code>attribute_info</code> structure.
-     *
-     * @param cp                constant pool table
-     * @param attrname          attribute name
-     * @param attrinfo          <code>info</code> field
-     *                          of <code>attribute_info</code> structure.
-     */
+
     public AttributeInfo(ConstPool cp, String attrname, byte[] attrinfo) {
         this(cp, cp.addUtf8Info(attrname), attrinfo);
     }
 
     protected AttributeInfo(ConstPool cp, int n, DataInputStream in)
-        throws IOException
-    {
+            throws IOException {
         constPool = cp;
         name = n;
         int len = in.readInt();
@@ -73,8 +65,7 @@ public class AttributeInfo {
     }
 
     static AttributeInfo read(ConstPool cp, DataInputStream in)
-        throws IOException
-    {
+            throws IOException {
         int name = in.readUnsignedShort();
         String nameStr = cp.getUtf8Info(name);
         char first = nameStr.charAt(0);
@@ -113,14 +104,14 @@ public class AttributeInfo {
             else if (nameStr.equals(NestMembersAttribute.tag))
                 return new NestMembersAttribute(cp, name, in);
             else if (nameStr.equals(AnnotationsAttribute.visibleTag)
-                     || nameStr.equals(AnnotationsAttribute.invisibleTag))
+                    || nameStr.equals(AnnotationsAttribute.invisibleTag))
                 // RuntimeVisibleAnnotations or RuntimeInvisibleAnnotations
                 return new AnnotationsAttribute(cp, name, in);
             else if (nameStr.equals(ParameterAnnotationsAttribute.visibleTag)
-                     || nameStr.equals(ParameterAnnotationsAttribute.invisibleTag))
+                    || nameStr.equals(ParameterAnnotationsAttribute.invisibleTag))
                 return new ParameterAnnotationsAttribute(cp, name, in);
             else if (nameStr.equals(TypeAnnotationsAttribute.visibleTag)
-                     || nameStr.equals(TypeAnnotationsAttribute.invisibleTag))
+                    || nameStr.equals(TypeAnnotationsAttribute.invisibleTag))
                 return new TypeAnnotationsAttribute(cp, name, in);
 
         if (first >= 'S')
@@ -138,60 +129,37 @@ public class AttributeInfo {
         return new AttributeInfo(cp, name, in);
     }
 
-    /**
-     * Returns an attribute name.
-     */
+
     public String getName() {
         return constPool.getUtf8Info(name);
     }
 
-    /**
-     * Returns a constant pool table.
-     */
-    public ConstPool getConstPool() { return constPool; }
 
-    /**
-     * Returns the length of this <code>attribute_info</code>
-     * structure.
-     * The returned value is <code>attribute_length + 6</code>.
-     */
+    public ConstPool getConstPool() {
+        return constPool;
+    }
+
+
     public int length() {
         return info.length + 6;
     }
 
-    /**
-     * Returns the <code>info</code> field
-     * of this <code>attribute_info</code> structure.
-     *
-     * <p>This method is not available if the object is an instance
-     * of <code>CodeAttribute</code>.
-     */
-    public byte[] get() { return info; }
 
-    /**
-     * Sets the <code>info</code> field
-     * of this <code>attribute_info</code> structure.
-     *
-     * <p>This method is not available if the object is an instance
-     * of <code>CodeAttribute</code>.
-     */
-    public void set(byte[] newinfo) { info = newinfo; }
+    public byte[] get() {
+        return info;
+    }
 
-    /**
-     * Makes a copy.  Class names are replaced according to the
-     * given <code>Map</code> object.
-     *
-     * @param newCp     the constant pool table used by the new copy.
-     * @param classnames        pairs of replaced and substituted
-     *                          class names.
-     */
-    public AttributeInfo copy(ConstPool newCp, Map<String,String> classnames)
-    {
+
+    public void set(byte[] newinfo) {
+        info = newinfo;
+    }
+
+
+    public AttributeInfo copy(ConstPool newCp, Map<String, String> classnames) {
         return new AttributeInfo(newCp, getName(), Arrays.copyOf(info, info.length));
     }
 
-    void write(DataOutputStream out) throws IOException
-    {
+    void write(DataOutputStream out) throws IOException {
         out.writeShort(name);
         out.writeInt(info.length);
         if (info.length > 0)
@@ -201,7 +169,7 @@ public class AttributeInfo {
     static int getLength(List<AttributeInfo> attributes) {
         int size = 0;
 
-        for (AttributeInfo attr:attributes)
+        for (AttributeInfo attr : attributes)
             size += attr.length();
 
         return size;
@@ -211,18 +179,18 @@ public class AttributeInfo {
         if (attributes == null)
             return null;
 
-        for (AttributeInfo ai:attributes)
+        for (AttributeInfo ai : attributes)
             if (ai.getName().equals(name))
                 return ai;
 
-        return null;            // no such attribute
+        return null;
     }
 
     static synchronized AttributeInfo remove(List<AttributeInfo> attributes, String name) {
         if (attributes == null)
             return null;
 
-        for (AttributeInfo ai:attributes)
+        for (AttributeInfo ai : attributes)
             if (ai.getName().equals(name))
                 if (attributes.remove(ai))
                     return ai;
@@ -231,12 +199,11 @@ public class AttributeInfo {
     }
 
     static void writeAll(List<AttributeInfo> attributes, DataOutputStream out)
-        throws IOException
-    {
+            throws IOException {
         if (attributes == null)
             return;
 
-        for (AttributeInfo attr:attributes)
+        for (AttributeInfo attr : attributes)
             attr.write(out);
     }
 
@@ -245,7 +212,7 @@ public class AttributeInfo {
             return null;
 
         List<AttributeInfo> newList = new ArrayList<AttributeInfo>();
-        for (AttributeInfo attr:attributes)
+        for (AttributeInfo attr : attributes)
             newList.add(attr.copy(cp, null));
 
         return newList;
@@ -257,32 +224,36 @@ public class AttributeInfo {
      * AnnotationsAttribute, and SignatureAttribute
      * override these methods.
      */
-    void renameClass(String oldname, String newname) {}
-    void renameClass(Map<String,String> classnames) {}
+    void renameClass(String oldname, String newname) {
+    }
+
+    void renameClass(Map<String, String> classnames) {
+    }
 
     static void renameClass(List<AttributeInfo> attributes, String oldname, String newname) {
         if (attributes == null)
             return;
 
-        for (AttributeInfo ai:attributes)
+        for (AttributeInfo ai : attributes)
             ai.renameClass(oldname, newname);
     }
 
-    static void renameClass(List<AttributeInfo> attributes, Map<String,String> classnames) {
+    static void renameClass(List<AttributeInfo> attributes, Map<String, String> classnames) {
         if (attributes == null)
             return;
 
-        for (AttributeInfo ai:attributes)
+        for (AttributeInfo ai : attributes)
             ai.renameClass(classnames);
     }
 
-    void getRefClasses(Map<String,String> classnames) {}
+    void getRefClasses(Map<String, String> classnames) {
+    }
 
-    static void getRefClasses(List<AttributeInfo> attributes, Map<String,String> classnames) {
+    static void getRefClasses(List<AttributeInfo> attributes, Map<String, String> classnames) {
         if (attributes == null)
             return;
 
-        for (AttributeInfo ai:attributes)
+        for (AttributeInfo ai : attributes)
             ai.getRefClasses(classnames);
     }
 }

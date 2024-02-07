@@ -16,10 +16,7 @@
 
 package org.hotswap.agent.javassist.bytecode;
 
-/**
- * A support class providing static methods and constants
- * for access modifiers such as public, private, ...
- */
+
 public class AccessFlag {
     public static final int PUBLIC    = 0x0001;
     public static final int PRIVATE   = 0x0002;
@@ -50,86 +47,57 @@ public class AccessFlag {
      * Turns the public bit on.  The protected and private bits are
      * cleared.
      */
-    public static int setPublic(int accflags) {
-        return (accflags & ~(PRIVATE | PROTECTED)) | PUBLIC;
+    public static int setPublic(int acc_flag) {
+        return (acc_flag & ~(PRIVATE | PROTECTED)) | PUBLIC;
     }
 
-    /**
-     * Turns the protected bit on.  The protected and public bits are
-     * cleared.
-     */
-    public static int setProtected(int accflags) {
-        return (accflags & ~(PRIVATE | PUBLIC)) | PROTECTED;
+
+    public static int setProtected(int acc_flag) {
+        return (acc_flag & ~(PRIVATE | PUBLIC)) | PROTECTED;
     }
 
-    /**
-     * Truns the private bit on.  The protected and private bits are
-     * cleared.
-     */
-    public static int setPrivate(int accflags) {
-        return (accflags & ~(PROTECTED | PUBLIC)) | PRIVATE;
+
+    public static int setPrivate(int acc_flag) {
+        return (acc_flag & ~(PROTECTED | PUBLIC)) | PRIVATE;
     }
 
-    /**
-     * Clears the public, protected, and private bits.
-     */
-    public static int setPackage(int accflags) {
-        return (accflags & ~(PROTECTED | PUBLIC | PRIVATE));
+
+    public static int setPackage(int acc_flag) {
+        return (acc_flag & ~(PROTECTED | PUBLIC | PRIVATE));
     }
 
-    /**
-     * Returns true if the access flags include the public bit.
-     */
-    public static boolean isPublic(int accflags) {
-        return (accflags & PUBLIC) != 0;
+
+    public static boolean isPublic(int acc_flag) {
+        return (acc_flag & PUBLIC) != 0;
     }
 
-    /**
-     * Returns true if the access flags include the protected bit.
-     */
-    public static boolean isProtected(int accflags) {
-        return (accflags & PROTECTED) != 0;
+
+    public static boolean isProtected(int acc_flag) {
+        return (acc_flag & PROTECTED) != 0;
     }
 
-    /**
-     * Returns true if the access flags include the private bit.
-     */
-    public static boolean isPrivate(int accflags) {
-        return (accflags & PRIVATE) != 0;
+
+    public static boolean isPrivate(int acc_flag) {
+        return (acc_flag & PRIVATE) != 0;
     }
 
-    /**
-     * Returns true if the access flags include neither public, protected,
-     * or private.
-     */
-    public static boolean isPackage(int accflags) {
-        return (accflags & (PROTECTED | PUBLIC | PRIVATE)) == 0;
+
+    public static boolean isPackage(int acc_flag) {
+        return (acc_flag & (PROTECTED | PUBLIC | PRIVATE)) == 0;
     }
 
-    /**
-     * Clears a specified bit in <code>accflags</code>.
-     */
-    public static int clear(int accflags, int clearBit) {
-        return accflags & ~clearBit;
+
+    public static int clear(int acc_flag, int clearBit) {
+        return acc_flag & ~clearBit;
     }
 
-    /**
-     * Converts a javassist.Modifier into
-     * a javassist.bytecode.AccessFlag.
-     *
-     * @param modifier          javassist.Modifier
-     */
+
     public static int of(int modifier) {
         return modifier;
     }
 
-    /**
-     * Converts a javassist.bytecode.AccessFlag
-     * into a javassist.Modifier.
-     *
-     * @param accflags          javassist.bytecode.Accessflag
-     */
-    public static int toModifier(int accflags) {
-        return accflags;
+
+    public static int toModifier(int acc_flag) {
+        return acc_flag;
     }
 }

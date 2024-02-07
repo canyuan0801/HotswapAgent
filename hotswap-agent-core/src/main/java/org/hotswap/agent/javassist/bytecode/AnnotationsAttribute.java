@@ -128,42 +128,18 @@ public class AnnotationsAttribute extends AttributeInfo {
      */
     public static final String invisibleTag = "RuntimeInvisibleAnnotations";
 
-    /**
-     * Constructs a <code>Runtime(In)VisibleAnnotations_attribute</code>.
-     *
-     * @param cp            constant pool
-     * @param attrname      attribute name (<code>visibleTag</code> or
-     *                      <code>invisibleTag</code>).
-     * @param info          the contents of this attribute.  It does not
-     *                      include <code>attribute_name_index</code> or
-     *                      <code>attribute_length</code>.
-     */
     public AnnotationsAttribute(ConstPool cp, String attrname, byte[] info) {
         super(cp, attrname, info);
     }
 
-    /**
-     * Constructs an empty
-     * <code>Runtime(In)VisibleAnnotations_attribute</code>.
-     * A new annotation can be later added to the created attribute
-     * by <code>setAnnotations()</code>.
-     *
-     * @param cp            constant pool
-     * @param attrname      attribute name (<code>visibleTag</code> or
-     *                      <code>invisibleTag</code>).
-     * @see #setAnnotations(Annotation[])
-     */
     public AnnotationsAttribute(ConstPool cp, String attrname) {
         this(cp, attrname, new byte[] { 0, 0 });
     }
 
-    /**
-     * @param n     the attribute name.
-     */
-    AnnotationsAttribute(ConstPool cp, int n, DataInputStream in)
+    AnnotationsAttribute(ConstPool cp, int attr_name, DataInputStream in)
         throws IOException
     {
-        super(cp, n, in);
+        super(cp, attr_name, in);
     }
 
     /**
@@ -173,9 +149,6 @@ public class AnnotationsAttribute extends AttributeInfo {
         return ByteArray.readU16bit(info, 0);
     }
 
-    /**
-     * Copies this attribute and returns a new copy.
-     */
     @Override
     public AttributeInfo copy(ConstPool newCp, Map<String,String> classnames) {
         Copier copier = new Copier(info, constPool, newCp, classnames);
@@ -188,15 +161,6 @@ public class AnnotationsAttribute extends AttributeInfo {
         }
     }
 
-    /**
-     * Parses the annotations and returns a data structure representing
-     * the annotation with the specified type.  See also
-     * <code>getAnnotations()</code> as to the returned data structure.
-     *
-     * @param type      the annotation type.
-     * @return null if the specified annotation type is not included.
-     * @see #getAnnotations()
-     */
     public Annotation getAnnotation(String type) {
         Annotation[] annotations = getAnnotations();
         for (int i = 0; i < annotations.length; i++) {
@@ -207,12 +171,6 @@ public class AnnotationsAttribute extends AttributeInfo {
         return null;
     }
 
-    /**
-     * Adds an annotation.  If there is an annotation with the same type,
-     * it is removed before the new annotation is added.
-     *
-     * @param annotation        the added annotation.
-     */
     public void addAnnotation(Annotation annotation) {
         String type = annotation.getTypeName();
         Annotation[] annotations = getAnnotations();
