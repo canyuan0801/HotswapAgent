@@ -31,17 +31,6 @@ import org.hotswap.agent.javassist.bytecode.ClassFile;
 import org.hotswap.agent.javassist.bytecode.Descriptor;
 import org.hotswap.agent.javassist.bytecode.Opcode;
 import org.hotswap.agent.javassist.expr.ExprEditor;
-
-/* Note:
- *
- * This class is an abstract class and several methods just return null
- * or throw an exception.  Those methods are overridden in subclasses
- * of this class.  Read the source code of CtClassType if you are
- * interested in the implementation of Javassist.
- *
- * Subclasses of CtClass are CtClassType, CtPrimitiveType, and CtArray.
- */
-
 /**
  * An instance of <code>CtClass</code> represents a class.
  * It is obtained from <code>ClassPool</code>.
@@ -66,78 +55,16 @@ public abstract class CtClass {
      */
     public static String debugDump = null;
 
-    /**
-     * The version number of this release.
-     */
-    public static final String version = "3.24.0-GA";
-
-    /**
-     * Prints the version number and the copyright notice.
-     *
-     * <p>The following command invokes this method:
-     *
-     * <pre>java -jar javassist.jar</pre>
-     */
-    public static void main(String[] args) {
-        System.out.println("Javassist version " + CtClass.version);
-        System.out.println("Copyright (C) 1999-2018 Shigeru Chiba."
-                           + " All Rights Reserved.");
-    }
-
     static final String javaLangObject = "java.lang.Object";
 
-    /**
-     * The <code>CtClass</code> object representing
-     * the <code>boolean</code> type.
-     */
     public static CtClass booleanType;
-
-    /**
-     * The <code>CtClass</code> object representing
-     * the <code>char</code> type.
-     */
     public static CtClass charType;
-
-    /**
-     * The <code>CtClass</code> object representing
-     * the <code>byte</code> type.
-     */
     public static CtClass byteType;
-
-    /**
-     * The <code>CtClass</code> object representing
-     * the <code>short</code> type.
-     */
     public static CtClass shortType;
-
-    /**
-     * The <code>CtClass</code> object representing
-     * the <code>int</code> type.
-     */
     public static CtClass intType;
-
-    /**
-     * The <code>CtClass</code> object representing
-     * the <code>long</code> type.
-     */
     public static CtClass longType;
-
-    /**
-     * The <code>CtClass</code> object representing
-     * the <code>float</code> type.
-     */
     public static CtClass floatType;
-
-    /**
-     * The <code>CtClass</code> object representing
-     * the <code>double</code> type.
-     */
     public static CtClass doubleType;
-
-    /**
-     * The <code>CtClass</code> object representing
-     * the <code>void</code> type.
-     */
     public static CtClass voidType;
 
     static CtClass[] primitiveTypes;
@@ -195,9 +122,6 @@ public abstract class CtClass {
         qualifiedName = name;
     }
 
-    /**
-     * Converts the object to a string.
-     */
     @Override
     public String toString() {
         StringBuffer buf = new StringBuffer(getClass().getName());
@@ -217,9 +141,6 @@ public abstract class CtClass {
         buffer.append(getName());
     }
 
-    /**
-     * Returns a <code>ClassPool</code> for this class.
-     */
     public ClassPool getClassPool() { return null; }
 
     /**
@@ -260,16 +181,10 @@ public abstract class CtClass {
         return null;
     }
 
-    /**
-     * Returns the uniform resource locator (URL) of the class file.
-     */
     public URL getURL() throws NotFoundException {
         throw new NotFoundException(getName());
     }
 
-    /**
-     * Returns true if the definition of the class has been modified.
-     */
     public boolean isModified() { return false; }
 
     /**
@@ -281,13 +196,6 @@ public abstract class CtClass {
      */
     public boolean isFrozen() { return true; }
 
-    /**
-     * Makes the class frozen.
-     *
-     * @see #isFrozen()
-     * @see #defrost()
-     * @since 3.6
-     */
     public void freeze() {}
 
     /* Note: this method is overridden by CtClassType
@@ -318,16 +226,8 @@ public abstract class CtClass {
         throw new RuntimeException("cannot defrost " + getName());
     }
 
-    /**
-     * Returns <code>true</code> if this object represents a primitive
-     * Java type: boolean, byte, char, short, int, long, float, double,
-     * or void.
-     */
     public boolean isPrimitive() { return false; }
 
-    /**
-     * Returns <code>true</code> if this object represents an array type.
-     */
     public boolean isArray() {
         return false;
     }
@@ -349,14 +249,8 @@ public abstract class CtClass {
         return this == clazz || getName().equals(clazz.getName());
     }
 
-    /**
-     * Obtains the fully-qualified name of the class.
-     */
     public String getName() { return qualifiedName; }
 
-    /**
-     * Obtains the not-qualified class name.
-     */
     public final String getSimpleName() {
         String qname = qualifiedName;
         int index = qname.lastIndexOf('.');
@@ -365,9 +259,6 @@ public abstract class CtClass {
         return qname.substring(index + 1);
     }
 
-    /**
-     * Obtains the package name.  It may be <code>null</code>.
-     */
     public final String getPackageName() {
         String qname = qualifiedName;
         int index = qname.lastIndexOf('.');
@@ -376,11 +267,6 @@ public abstract class CtClass {
         return qname.substring(0, index);
     }
 
-    /**
-     * Sets the class name
-     *
-     * @param name      fully-qualified name
-     */
     public void setName(String name) {
         checkModify();
         if (name != null)
