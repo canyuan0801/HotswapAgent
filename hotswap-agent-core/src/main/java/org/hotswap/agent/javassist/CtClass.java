@@ -16,21 +16,16 @@
 
 package org.hotswap.agent.javassist;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URL;
-import java.security.ProtectionDomain;
-import java.util.Collection;
-
 import org.hotswap.agent.javassist.bytecode.ClassFile;
 import org.hotswap.agent.javassist.bytecode.Descriptor;
 import org.hotswap.agent.javassist.bytecode.Opcode;
 import org.hotswap.agent.javassist.expr.ExprEditor;
+
+import java.io.*;
+import java.net.URL;
+import java.security.ProtectionDomain;
+import java.util.Collection;
+
 /**
  * An instance of <code>CtClass</code> represents a class.
  * It is obtained from <code>ClassPool</code>.
@@ -73,48 +68,48 @@ public abstract class CtClass {
         primitiveTypes = new CtClass[9];
 
         booleanType =
-            new CtPrimitiveType("boolean", 'Z', "java.lang.Boolean",
-                                "booleanValue", "()Z", Opcode.IRETURN,
-                                Opcode.T_BOOLEAN, 1);
+                new CtPrimitiveType("boolean", 'Z', "java.lang.Boolean",
+                        "booleanValue", "()Z", Opcode.IRETURN,
+                        Opcode.T_BOOLEAN, 1);
         primitiveTypes[0] = booleanType;
 
         charType = new CtPrimitiveType("char", 'C', "java.lang.Character",
-                                       "charValue", "()C", Opcode.IRETURN,
-                                       Opcode.T_CHAR, 1);
+                "charValue", "()C", Opcode.IRETURN,
+                Opcode.T_CHAR, 1);
         primitiveTypes[1] = charType;
 
         byteType = new CtPrimitiveType("byte", 'B', "java.lang.Byte",
-                                       "byteValue", "()B", Opcode.IRETURN,
-                                       Opcode.T_BYTE, 1);
+                "byteValue", "()B", Opcode.IRETURN,
+                Opcode.T_BYTE, 1);
         primitiveTypes[2] = byteType;
 
         shortType = new CtPrimitiveType("short", 'S', "java.lang.Short",
-                                        "shortValue", "()S", Opcode.IRETURN,
-                                        Opcode.T_SHORT, 1);
+                "shortValue", "()S", Opcode.IRETURN,
+                Opcode.T_SHORT, 1);
         primitiveTypes[3] = shortType;
 
         intType = new CtPrimitiveType("int", 'I', "java.lang.Integer",
-                                      "intValue", "()I", Opcode.IRETURN,
-                                      Opcode.T_INT, 1);
+                "intValue", "()I", Opcode.IRETURN,
+                Opcode.T_INT, 1);
         primitiveTypes[4] = intType;
 
         longType = new CtPrimitiveType("long", 'J', "java.lang.Long",
-                                       "longValue", "()J", Opcode.LRETURN,
-                                       Opcode.T_LONG, 2);
+                "longValue", "()J", Opcode.LRETURN,
+                Opcode.T_LONG, 2);
         primitiveTypes[5] = longType;
 
         floatType = new CtPrimitiveType("float", 'F', "java.lang.Float",
-                                        "floatValue", "()F", Opcode.FRETURN,
-                                        Opcode.T_FLOAT, 1);
+                "floatValue", "()F", Opcode.FRETURN,
+                Opcode.T_FLOAT, 1);
         primitiveTypes[6] = floatType;
 
         doubleType = new CtPrimitiveType("double", 'D', "java.lang.Double",
-                                         "doubleValue", "()D", Opcode.DRETURN,
-                                         Opcode.T_DOUBLE, 2);
+                "doubleValue", "()D", Opcode.DRETURN,
+                Opcode.T_DOUBLE, 2);
         primitiveTypes[7] = doubleType;
 
         voidType = new CtPrimitiveType("void", 'V', "java.lang.Void",
-                                       null, null, Opcode.RETURN, 0, 0);
+                null, null, Opcode.RETURN, 0, 0);
         primitiveTypes[8] = voidType;
     }
 
@@ -141,7 +136,9 @@ public abstract class CtClass {
         buffer.append(getName());
     }
 
-    public ClassPool getClassPool() { return null; }
+    public ClassPool getClassPool() {
+        return null;
+    }
 
     /**
      * Returns a class file for this class.
@@ -172,7 +169,9 @@ public abstract class CtClass {
      * @see CtClass#isFrozen()
      * @see CtClass#prune()
      */
-    public ClassFile getClassFile2() { return null; }
+    public ClassFile getClassFile2() {
+        return null;
+    }
 
     /**
      * Undocumented method.  Do not use; internal-use only.
@@ -185,7 +184,9 @@ public abstract class CtClass {
         throw new NotFoundException(getName());
     }
 
-    public boolean isModified() { return false; }
+    public boolean isModified() {
+        return false;
+    }
 
     /**
      * Returns true if the class has been loaded or written out
@@ -194,9 +195,12 @@ public abstract class CtClass {
      * @see #defrost()
      * @see #detach()
      */
-    public boolean isFrozen() { return true; }
+    public boolean isFrozen() {
+        return true;
+    }
 
-    public void freeze() {}
+    public void freeze() {
+    }
 
     /* Note: this method is overridden by CtClassType
      */
@@ -226,7 +230,9 @@ public abstract class CtClass {
         throw new RuntimeException("cannot defrost " + getName());
     }
 
-    public boolean isPrimitive() { return false; }
+    public boolean isPrimitive() {
+        return false;
+    }
 
     public boolean isArray() {
         return false;
@@ -249,7 +255,9 @@ public abstract class CtClass {
         return this == clazz || getName().equals(clazz.getName());
     }
 
-    public String getName() { return qualifiedName; }
+    public String getName() {
+        return qualifiedName;
+    }
 
     public final String getSimpleName() {
         String qname = qualifiedName;
@@ -287,7 +295,9 @@ public abstract class CtClass {
      * @see CtMember#getGenericSignature()
      * @since 3.17
      */
-    public String getGenericSignature() { return null; }
+    public String getGenericSignature() {
+        return null;
+    }
 
     /**
      * Sets the generic signature of the class.
@@ -353,20 +363,22 @@ public abstract class CtClass {
      * For the specification of the signatures, see Section 4.7.9.1 <i>Signatures</i>
      * of The Java Virtual Machine Specification (Java SE 8).
      *
-     * @param sig       a generic signature.
+     * @param sig a generic signature.
      * @see javassist.bytecode.SignatureAttribute.ClassSignature#encode()
      * @see javassist.bytecode.SignatureAttribute.MethodSignature#encode()
      * @see CtMember#setGenericSignature(String)
      * @since 3.17
      */
-    public void setGenericSignature(String sig) { checkModify(); }
+    public void setGenericSignature(String sig) {
+        checkModify();
+    }
 
     /**
      * Substitutes <code>newName</code> for all occurrences of a class
      * name <code>oldName</code> in the class file.
      *
-     * @param oldName           replaced class name
-     * @param newName           substituted class name
+     * @param oldName replaced class name
+     * @param newName substituted class name
      */
     public void replaceClassName(String oldName, String newName) {
         checkModify();
@@ -386,8 +398,8 @@ public abstract class CtClass {
      * to this method.  After this method finishes, that instance would
      * contain all the class names appearing in the class file.
      *
-     * @param map       the hashtable associating replaced class names
-     *                  with substituted names.
+     * @param map the hashtable associating replaced class names
+     *            with substituted names.
      */
     public void replaceClassName(ClassMap map) {
         checkModify();
@@ -407,19 +419,22 @@ public abstract class CtClass {
         if (cf != null) {
             ClassMap cm = new ClassMap() {
                 private static final long serialVersionUID = 1L;
+
                 @Override
                 public String put(String oldname, String newname) {
                     return put0(oldname, newname);
                 }
+
                 @Override
                 public String get(Object jvmClassName) {
-                    String n = toJavaName((String)jvmClassName);
+                    String n = toJavaName((String) jvmClassName);
                     put0(n, n);
                     return null;
                 }
 
                 @Override
-                public void fix(String name) {}
+                public void fix(String name) {
+                }
             };
             cf.getRefClasses(cm);
             return cm.values();
@@ -481,8 +496,8 @@ public abstract class CtClass {
      * @see CtMember#getAvailableAnnotations()
      * @since 3.3
      */
-    public Object[] getAvailableAnnotations(){
-       return new Object[0];
+    public Object[] getAvailableAnnotations() {
+        return new Object[0];
     }
 
     /**
@@ -508,8 +523,8 @@ public abstract class CtClass {
      * the class declaring that nested class (i.e. the enclosing
      * class is modified).
      *
-     * @param mod       modifiers encoded by
-     *                  <code>javassist.Modifier</code>
+     * @param mod modifiers encoded by
+     *            <code>javassist.Modifier</code>
      * @see Modifier
      */
     public void setModifiers(int mod) {
@@ -570,10 +585,10 @@ public abstract class CtClass {
      * Sets implemented interfaces.  If this object represents an interface,
      * this method sets the interfaces extended by that interface.
      *
-     * @param list              a list of the <code>CtClass</code> objects
-     *                          representing interfaces, or
-     *                          <code>null</code> if the class implements
-     *                          no interfaces.
+     * @param list a list of the <code>CtClass</code> objects
+     *             representing interfaces, or
+     *             <code>null</code> if the class implements
+     *             no interfaces.
      */
     public void setInterfaces(CtClass[] list) {
         checkModify();
@@ -595,7 +610,7 @@ public abstract class CtClass {
     }
 
 
-    public boolean isInnerClass()  throws NotFoundException {
+    public boolean isInnerClass() throws NotFoundException {
         return false;
     }
 
@@ -605,9 +620,9 @@ public abstract class CtClass {
      *
      * @return null if this class is not a local class or an anonymous
      * class.
-     * @deprecated The enclosing method might be a constructor.
-     *             Use {@link #getEnclosingBehavior()}.
      * @see #getEnclosingBehavior()
+     * @deprecated The enclosing method might be a constructor.
+     * Use {@link #getEnclosingBehavior()}.
      */
     @Deprecated
     public final CtMethod getEnclosingMethod() throws NotFoundException {
@@ -615,7 +630,7 @@ public abstract class CtClass {
         if (b == null)
             return null;
         else if (b instanceof CtMethod)
-            return (CtMethod)b;
+            return (CtMethod) b;
         else
             throw new NotFoundException(b.getLongName() + " is enclosing " + getName());
     }
@@ -640,8 +655,8 @@ public abstract class CtClass {
      * <p>The current implementation only supports a static nested class.
      * <code>isStatic</code> must be true.
      *
-     * @param name          the simple name of the nested class.
-     * @param isStatic      true if the nested class is static.
+     * @param name     the simple name of the nested class.
+     * @param isStatic true if the nested class is static.
      */
     public CtClass makeNestedClass(String name, boolean isStatic) {
         throw new RuntimeException(getName() + " is not a class");
@@ -653,7 +668,9 @@ public abstract class CtClass {
      * That array includes non-private fields inherited from the
      * superclasses.
      */
-    public CtField[] getFields() { return new CtField[0]; }
+    public CtField[] getFields() {
+        return new CtField[0];
+    }
 
     /**
      * Returns the field with the specified name.  The returned field
@@ -669,9 +686,9 @@ public abstract class CtClass {
      * Unlike Java, the JVM allows a class to have
      * multiple fields with the same name but different types.
      *
-     * @param name      the field name.
-     * @param desc      the type descriptor of the field.  It is available by
-     *                  {@link CtField#getSignature()}.
+     * @param name the field name.
+     * @param desc the type descriptor of the field.  It is available by
+     *             {@link CtField#getSignature()}.
      * @see CtField#getSignature()
      */
     public CtField getField(String name, String desc) throws NotFoundException {
@@ -681,7 +698,9 @@ public abstract class CtClass {
     /**
      * @return null     if the specified field is not found.
      */
-    CtField getField2(String name, String desc) { return null; }
+    CtField getField2(String name, String desc) {
+        return null;
+    }
 
     /**
      * Gets all the fields declared in the class.  The inherited fields
@@ -689,7 +708,9 @@ public abstract class CtClass {
      *
      * <p>Note: the result does not include inherited fields.
      */
-    public CtField[] getDeclaredFields() { return new CtField[0]; }
+    public CtField[] getDeclaredFields() {
+        return new CtField[0];
+    }
 
     /**
      * Retrieves the field with the specified name among the fields
@@ -708,9 +729,9 @@ public abstract class CtClass {
      *
      * <p>Note: this method does not search the super classes.
      *
-     * @param name      the field name.
-     * @param desc      the type descriptor of the field.  It is available by
-     *                  {@link CtField#getSignature()}.
+     * @param name the field name.
+     * @param desc the type descriptor of the field.  It is available by
+     *             {@link CtField#getSignature()}.
      * @see CtField#getSignature()
      */
     public CtField getDeclaredField(String name, String desc) throws NotFoundException {
@@ -739,32 +760,22 @@ public abstract class CtClass {
      * For details of the method descriptor, see the JVM specification
      * or <code>javassist.bytecode.Descriptor</code>.
      *
-     * @param desc      method descriptor
+     * @param desc method descriptor
      * @see javassist.bytecode.Descriptor
      */
     public CtConstructor getConstructor(String desc)
-        throws NotFoundException
-    {
+            throws NotFoundException {
         throw new NotFoundException("no such constructor");
     }
 
-    /**
-     * Gets all the constructors declared in the class.
-     *
-     * @see javassist.CtConstructor
-     */
+
     public CtConstructor[] getDeclaredConstructors() {
         return new CtConstructor[0];
     }
 
-    /**
-     * Returns a constructor receiving the specified parameters.
-     *
-     * @param params    parameter types.
-     */
+
     public CtConstructor getDeclaredConstructor(CtClass[] params)
-        throws NotFoundException
-    {
+            throws NotFoundException {
         String desc = Descriptor.ofConstructor(params);
         return getConstructor(desc);
     }
@@ -799,14 +810,13 @@ public abstract class CtClass {
      * called method descriptor,
      * which is defined in the JVM specification.
      *
-     * @param name      method name
-     * @param desc      method descriptor
+     * @param name method name
+     * @param desc method descriptor
      * @see CtBehavior#getSignature()
      * @see javassist.bytecode.Descriptor
      */
     public CtMethod getMethod(String name, String desc)
-        throws NotFoundException
-    {
+            throws NotFoundException {
         throw new NotFoundException(name);
     }
 
@@ -826,13 +836,12 @@ public abstract class CtClass {
      *
      * <p>Note: this method does not search the superclasses.
      *
-     * @param name              method name
-     * @param params            parameter types
+     * @param name   method name
+     * @param params parameter types
      * @see javassist.CtMethod
      */
     public CtMethod getDeclaredMethod(String name, CtClass[] params)
-        throws NotFoundException
-    {
+            throws NotFoundException {
         throw new NotFoundException(name);
     }
 
@@ -843,7 +852,7 @@ public abstract class CtClass {
      *
      * <p>Note: this method does not search the superclasses.</p>
      *
-     * @param name      method name.
+     * @param name method name.
      * @since 3.19
      */
     public CtMethod[] getDeclaredMethods(String name) throws NotFoundException {
@@ -871,61 +880,29 @@ public abstract class CtClass {
      * @see #getClassInitializer()
      */
     public CtConstructor makeClassInitializer()
-        throws CannotCompileException
-    {
+            throws CannotCompileException {
         throw new CannotCompileException("not a class");
     }
 
-    /**
-     * Adds a constructor.  To add a class initializer (static constructor),
-     * call <code>makeClassInitializer()</code>.
-     *
-     * @see #makeClassInitializer()
-     */
     public void addConstructor(CtConstructor c)
-        throws CannotCompileException
-    {
+            throws CannotCompileException {
         checkModify();
     }
 
-    /**
-     * Removes a constructor declared in this class.
-     *
-     * @param c     removed constructor.
-     * @throws NotFoundException   if the constructor is not found.
-     */
     public void removeConstructor(CtConstructor c) throws NotFoundException {
         checkModify();
     }
 
-    /**
-     * Adds a method.
-     */
     public void addMethod(CtMethod m) throws CannotCompileException {
         checkModify();
     }
 
-    /**
-     * Removes a method declared in this class.
-     *
-     * @param m     removed method.
-     * @throws NotFoundException   if the method is not found.
-     */
     public void removeMethod(CtMethod m) throws NotFoundException {
         checkModify();
-     }
+    }
 
-    /**
-     * Adds a field.
-     *
-     * <p>The <code>CtField</code> belonging to another
-     * <code>CtClass</code> cannot be directly added to this class.
-     * Only a field created for this class can be added.
-     *
-     * @see javassist.CtField#CtField(CtField,CtClass)
-     */
     public void addField(CtField f) throws CannotCompileException {
-        addField(f, (CtField.Initializer)null);
+        addField(f, (CtField.Initializer) null);
     }
 
     /**
@@ -953,14 +930,12 @@ public abstract class CtClass {
      * to/from the modifier)
      * after it is added to the class by <code>addField()</code>.
      *
-     * @param init      an expression for the initial value.
-     *
+     * @param init an expression for the initial value.
      * @see javassist.CtField.Initializer#byExpr(String)
-     * @see javassist.CtField#CtField(CtField,CtClass)
+     * @see javassist.CtField#CtField(CtField, CtClass)
      */
     public void addField(CtField f, String init)
-        throws CannotCompileException
-    {
+            throws CannotCompileException {
         checkModify();
     }
 
@@ -982,22 +957,15 @@ public abstract class CtClass {
      * <p>This code adds an <code>int</code> field named "i".  The
      * initial value of this field is 1.
      *
-     * @param init      specifies the initial value of the field.
-     *
-     * @see javassist.CtField#CtField(CtField,CtClass)
+     * @param init specifies the initial value of the field.
+     * @see javassist.CtField#CtField(CtField, CtClass)
      */
     public void addField(CtField f, CtField.Initializer init)
-        throws CannotCompileException
-    {
+            throws CannotCompileException {
         checkModify();
     }
 
-    /**
-     * Removes a field declared in this class.
-     *
-     * @param f     removed field.
-     * @throws NotFoundException   if the field is not found.
-     */
+
     public void removeField(CtField f) throws NotFoundException {
         checkModify();
     }
@@ -1016,7 +984,7 @@ public abstract class CtClass {
      * getClassFile().getAttributes()
      * </pre>
      *
-     * @param name              attribute name
+     * @param name attribute name
      * @see javassist.bytecode.AttributeInfo
      */
     public byte[] getAttribute(String name) {
@@ -1041,8 +1009,8 @@ public abstract class CtClass {
      * getClassFile().addAttribute(info)
      * </pre>
      *
-     * @param name      attribute name
-     * @param data      attribute value
+     * @param name attribute name
+     * @param data attribute value
      * @see javassist.bytecode.AttributeInfo
      */
     public void setAttribute(String name, byte[] data) {
@@ -1055,11 +1023,10 @@ public abstract class CtClass {
      * on every <code>CtMethod</code> and <code>CtConstructor</code> object
      * in the class.
      *
-     * @param converter         specifies how to modify.
+     * @param converter specifies how to modify.
      */
     public void instrument(CodeConverter converter)
-        throws CannotCompileException
-    {
+            throws CannotCompileException {
         checkModify();
     }
 
@@ -1069,11 +1036,10 @@ public abstract class CtClass {
      * on every <code>CtMethod</code> and <code>CtConstructor</code> object
      * in the class.
      *
-     * @param editor            specifies how to modify.
+     * @param editor specifies how to modify.
      */
     public void instrument(ExprEditor editor)
-        throws CannotCompileException
-    {
+            throws CannotCompileException {
         checkModify();
     }
 
@@ -1131,14 +1097,13 @@ public abstract class CtClass {
      * work with a security manager or a signed jar file because a
      * protection domain is not specified.
      *
-     * @param neighbor    A class belonging to the same package that this
-     *                    class belongs to.  It is used to load the class.
-     * @see ClassPool#toClass(CtClass,Class)
+     * @param neighbor A class belonging to the same package that this
+     *                 class belongs to.  It is used to load the class.
+     * @see ClassPool#toClass(CtClass, Class)
      * @see #toClass(java.lang.invoke.MethodHandles.Lookup)
      * @since 3.24
      */
-    public Class<?> toClass(Class<?> neighbor) throws CannotCompileException
-    {
+    public Class<?> toClass(Class<?> neighbor) throws CannotCompileException {
         return getClassPool().toClass(this, neighbor);
     }
 
@@ -1157,14 +1122,13 @@ public abstract class CtClass {
      * work with a security manager or a signed jar file because a
      * protection domain is not specified.
      *
-     * @param lookup    used when loading the class.  It has to have
-     *                  an access right to define a new class.
-     * @see ClassPool#toClass(CtClass,java.lang.invoke.MethodHandles.Lookup)
+     * @param lookup used when loading the class.  It has to have
+     *               an access right to define a new class.
+     * @see ClassPool#toClass(CtClass, java.lang.invoke.MethodHandles.Lookup)
      * @since 3.24
      */
     public Class<?> toClass(java.lang.invoke.MethodHandles.Lookup lookup)
-        throws CannotCompileException
-    {
+            throws CannotCompileException {
         return getClassPool().toClass(this, lookup);
     }
 
@@ -1190,18 +1154,17 @@ public abstract class CtClass {
      * <p>Note: this method calls <code>toClass()</code>
      * in <code>ClassPool</code>.
      *
-     * @param loader        the class loader used to load this class.
-     *                      If it is null, the class loader returned by
-     *                      {@link ClassPool#getClassLoader()} is used.
-     * @param domain        the protection domain that the class belongs to.
-     *                      If it is null, the default domain created
-     *                      by <code>java.lang.ClassLoader</code> is used.
-     * @see ClassPool#toClass(CtClass,java.lang.ClassLoader)
+     * @param loader the class loader used to load this class.
+     *               If it is null, the class loader returned by
+     *               {@link ClassPool#getClassLoader()} is used.
+     * @param domain the protection domain that the class belongs to.
+     *               If it is null, the default domain created
+     *               by <code>java.lang.ClassLoader</code> is used.
+     * @see ClassPool#toClass(CtClass, java.lang.ClassLoader)
      * @since 3.3
      */
     public Class<?> toClass(ClassLoader loader, ProtectionDomain domain)
-        throws CannotCompileException
-    {
+            throws CannotCompileException {
         ClassPool cp = getClassPool();
         if (loader == null)
             loader = cp.getClassLoader();
@@ -1216,12 +1179,11 @@ public abstract class CtClass {
      * work with a security manager or a signed jar file because a
      * protection domain is not specified.
      *
-     * @deprecated      Replaced by {@link #toClass(ClassLoader,ProtectionDomain)}
+     * @deprecated Replaced by {@link #toClass(ClassLoader, ProtectionDomain)}
      */
     @Deprecated
     public final Class<?> toClass(ClassLoader loader)
-        throws CannotCompileException
-    {
+            throws CannotCompileException {
         return getClassPool().toClass(this, null, loader, null);
     }
 
@@ -1261,14 +1223,15 @@ public abstract class CtClass {
      * is on by default.  Otherwise, it is off.  The default value of
      * <code>ClassPool.doPruning</code> is false.
      *
-     * @param stop      disallow pruning if true.  Otherwise, allow.
+     * @param stop disallow pruning if true.  Otherwise, allow.
      * @return the previous status of pruning.  true if pruning is already stopped.
-     *
      * @see #detach()
      * @see #prune()
      * @see ClassPool#doPruning
      */
-    public boolean stopPruning(boolean stop) { return true; }
+    public boolean stopPruning(boolean stop) {
+        return true;
+    }
 
     /**
      * Discards unnecessary attributes, in particular,
@@ -1293,19 +1256,20 @@ public abstract class CtClass {
      * @see #stopPruning(boolean)
      * @see #detach()
      * @see ClassPool#doPruning
-     *
      * @see #toBytecode()
      * @see #toClass(Class)
      * @see #writeFile()
      * @see #instrument(CodeConverter)
      * @see #instrument(ExprEditor)
      */
-    public void prune() {}
+    public void prune() {
+    }
 
     /* Called by get() in ClassPool.
      * CtClassType overrides this method.
      */
-    void incGetCounter() {}
+    void incGetCounter() {
+    }
 
     /**
      * If this method is called, the class file will be
@@ -1320,7 +1284,8 @@ public abstract class CtClass {
      *
      * @since 3.8.1
      */
-    public void rebuildClassFile() {}
+    public void rebuildClassFile() {
+    }
 
     /**
      * Converts this class to a class file.
@@ -1334,25 +1299,15 @@ public abstract class CtClass {
         DataOutputStream out = new DataOutputStream(barray);
         try {
             toBytecode(out);
-        }
-        finally {
+        } finally {
             out.close();
         }
 
         return barray.toByteArray();
     }
 
-    /**
-     * Writes a class file represented by this <code>CtClass</code>
-     * object in the current directory.
-     * Once this method is called, further modifications are not
-     * possible any more.
-     *
-     * @see #debugWriteFile()
-     */
     public void writeFile()
-        throws NotFoundException, IOException, CannotCompileException
-    {
+            throws NotFoundException, IOException, CannotCompileException {
         writeFile(".");
     }
 
@@ -1362,17 +1317,15 @@ public abstract class CtClass {
      * Once this method is called, further modifications are not
      * possible any more.
      *
-     * @param directoryName     it must end without a directory separator.
+     * @param directoryName it must end without a directory separator.
      * @see #debugWriteFile(String)
      */
     public void writeFile(String directoryName)
-        throws CannotCompileException, IOException
-    {
+            throws CannotCompileException, IOException {
         DataOutputStream out = makeFileOutput(directoryName);
         try {
             toBytecode(out);
-        }
-        finally {
+        } finally {
             out.close();
         }
     }
@@ -1380,25 +1333,18 @@ public abstract class CtClass {
     protected DataOutputStream makeFileOutput(String directoryName) {
         String classname = getName();
         String filename = directoryName + File.separatorChar
-            + classname.replace('.', File.separatorChar) + ".class";
+                + classname.replace('.', File.separatorChar) + ".class";
         int pos = filename.lastIndexOf(File.separatorChar);
         if (pos > 0) {
             String dir = filename.substring(0, pos);
-            if (!dir.equals("."))
+            if (!dir.equals(".")) // TODO 这里为什么会是一个点呢
                 new File(dir).mkdirs();
         }
 
         return new DataOutputStream(new BufferedOutputStream(
-                                      new DelayedFileOutputStream(filename)));
+                new DelayedFileOutputStream(filename)));
     }
 
-    /**
-     * Writes a class file as <code>writeFile()</code> does although this
-     * method does not prune or freeze the class after writing the class
-     * file.  Note that, once <code>writeFile()</code> or <code>toBytecode()</code>
-     * is called, it cannot be called again since the class is pruned and frozen.
-     * This method would be useful for debugging.
-     */
     public void debugWriteFile() {
         debugWriteFile(".");
     }
@@ -1410,7 +1356,7 @@ public abstract class CtClass {
      * is called, it cannot be called again since the class is pruned and frozen.
      * This method would be useful for debugging.
      *
-     * @param directoryName     it must end without a directory separator.
+     * @param directoryName it must end without a directory separator.
      */
     public void debugWriteFile(String directoryName) {
         try {
@@ -1418,8 +1364,7 @@ public abstract class CtClass {
             writeFile(directoryName);
             defrost();
             stopPruning(p);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -1475,11 +1420,10 @@ public abstract class CtClass {
      *
      * <p>This method dose not close the output stream in the end.
      *
-     * @param out       the output stream that a class file is written to.
+     * @param out the output stream that a class file is written to.
      */
     public void toBytecode(DataOutputStream out)
-        throws CannotCompileException, IOException
-    {
+            throws CannotCompileException, IOException {
         throw new CannotCompileException("not a class");
     }
 
@@ -1490,7 +1434,7 @@ public abstract class CtClass {
      * If the returned name is XYZ, then any method or field names
      * in this class do not start with XYZ.
      *
-     * @param prefix        the prefix of the member name.
+     * @param prefix the prefix of the member name.
      */
     public String makeUniqueName(String prefix) {
         throw new RuntimeException("not available in " + getName());
@@ -1499,5 +1443,6 @@ public abstract class CtClass {
     /* Invoked from ClassPool#compress().
      * This method is overridden by CtClassType.
      */
-    void compress() {}
+    void compress() {
+    }
 }
