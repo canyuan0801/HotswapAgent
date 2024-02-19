@@ -30,16 +30,16 @@ public final class CtPrimitiveType extends CtClass {
     private int dataSize;
 
     CtPrimitiveType(String name, char desc, String wrapper,
-                    String methodName, String mDesc, int opcode, int atype,
-                    int size) {
+                    String methodName, String mDesc, int opcode, int arrType,
+                    int dataSize) {
         super(name);
         descriptor = desc;
         wrapperName = wrapper;
         getMethodName = methodName;
         mDescriptor = mDesc;
         returnOp = opcode;
-        arrayType = atype;
-        dataSize = size;
+        arrayType = arrType;
+        this.dataSize = dataSize;
     }
 
     /**

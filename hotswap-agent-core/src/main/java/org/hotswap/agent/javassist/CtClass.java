@@ -406,7 +406,6 @@ public abstract class CtClass {
         ClassFile cf = getClassFile2();
         if (cf != null) {
             ClassMap cm = new ClassMap() {
-                /** default serialVersionUID */
                 private static final long serialVersionUID = 1L;
                 @Override
                 public String put(String oldname, String newname) {
@@ -428,30 +427,14 @@ public abstract class CtClass {
         return null;
     }
 
-    /**
-     * Determines whether this object represents a class or an interface.
-     * It returns <code>true</code> if this object represents an interface.
-     */
     public boolean isInterface() {
         return false;
     }
 
-    /**
-     * Determines whether this object represents an annotation type.
-     * It returns <code>true</code> if this object represents an annotation type.
-     *
-     * @since 3.2
-     */
     public boolean isAnnotation() {
         return false;
     }
 
-    /**
-     * Determines whether this object represents an enum.
-     * It returns <code>true</code> if this object represents an enum.
-     *
-     * @since 3.2
-     */
     public boolean isEnum() {
         return false;
     }
@@ -469,54 +452,20 @@ public abstract class CtClass {
         return 0;
     }
 
-    /**
-     * Returns true if the class has the specified annotation type.
-     *
-     * @param annotationType the annotation type.
-     * @return <code>true</code> if the annotation is found, otherwise <code>false</code>.
-     * @since 3.11
-     */
     public boolean hasAnnotation(Class<?> annotationType) {
         return hasAnnotation(annotationType.getName());
     }
 
-    /**
-     * Returns true if the class has the specified annotation type.
-     *
-     * @param annotationTypeName the name of annotation type.
-     * @return <code>true</code> if the annotation is found, otherwise <code>false</code>.
-     * @since 3.21
-     */
+
     public boolean hasAnnotation(String annotationTypeName) {
         return false;
     }
 
-    /**
-     * Returns the annotation if the class has the specified annotation type.
-     * For example, if an annotation <code>@Author</code> is associated
-     * with this class, an <code>Author</code> object is returned.
-     * The member values can be obtained by calling methods on
-     * the <code>Author</code> object.
-     *
-     * @param clz the annotation type.
-     * @return the annotation if found, otherwise <code>null</code>.
-     * @since 3.11
-     */
+
     public Object getAnnotation(Class<?> clz) throws ClassNotFoundException {
         return null;
     }
 
-    /**
-     * Returns the annotations associated with this class.
-     * For example, if an annotation <code>@Author</code> is associated
-     * with this class, the returned array contains an <code>Author</code>
-     * object.  The member values can be obtained by calling methods on
-     * the <code>Author</code> object.
-     *
-     * @return an array of annotation-type objects.
-     * @see CtMember#getAnnotations()
-     * @since 3.1
-     */
     public Object[] getAnnotations() throws ClassNotFoundException {
         return new Object[0];
     }
@@ -548,13 +497,6 @@ public abstract class CtClass {
         return getNestedClasses();
     }
 
-    /**
-     * Returns an array of nested classes declared in the class.
-     * Nested classes are inner classes, anonymous classes, local classes,
-     * and static nested classes.
-     *
-     * @since 3.2
-     */
     public CtClass[] getNestedClasses() throws NotFoundException {
         return new CtClass[0];
     }
@@ -574,14 +516,6 @@ public abstract class CtClass {
         checkModify();
     }
 
-    /**
-     * Determines whether the class directly or indirectly extends
-     * the given class.  If this class extends a class A and
-     * the class A extends a class B, then subclassof(B) returns true.
-     *
-     * <p>This method returns true if the given class is identical to
-     * the class represented by this object.
-     */
     public boolean subclassOf(CtClass superclass) {
         return false;
     }
@@ -645,11 +579,7 @@ public abstract class CtClass {
         checkModify();
     }
 
-    /**
-     * Adds an interface.
-     *
-     * @param anInterface       the added interface.
-     */
+
     public void addInterface(CtClass anInterface) {
         checkModify();
     }
@@ -664,12 +594,7 @@ public abstract class CtClass {
         return null;
     }
 
-    /**
-     * Checks if ctClass is inner class.
-     *
-     * @return true, if is inner class
-     * @throws NotFoundException the not found exception
-     */
+
     public boolean isInnerClass()  throws NotFoundException {
         return false;
     }
@@ -1534,13 +1459,11 @@ public abstract class CtClass {
 
         @Override
         public void flush() throws IOException {
-            init();
             file.flush();
         }
 
         @Override
         public void close() throws IOException {
-            init();
             file.close();
         }
     }
