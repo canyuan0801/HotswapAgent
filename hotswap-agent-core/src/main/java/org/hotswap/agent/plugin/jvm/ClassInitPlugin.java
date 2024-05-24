@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2023 the HotswapAgent authors.
+ * Copyright 2013-2024 the HotswapAgent authors.
  *
  * This file is part of HotswapAgent.
  *
@@ -128,6 +128,9 @@ public class ClassInitPlugin {
                             if (m != null) {
                                 m.setAccessible(true);
                                 m.invoke(null, new Object[] {});
+                                LOGGER.debug("Initializer {} invoked for class {}", HOTSWAP_AGENT_CLINIT_METHOD, className);
+                            } else {
+                                LOGGER.error("Class initializer {} not found", HOTSWAP_AGENT_CLINIT_METHOD);
                             }
                         } catch (Exception e) {
                             LOGGER.error("Error initializing redefined class {}", e, className);
